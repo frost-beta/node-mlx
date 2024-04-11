@@ -1,0 +1,6 @@
+[submodule "deps/mlx"]
+	path = deps/mlx
+	url = https://github.com/ml-explore/mlx
+[submodule "deps/kizunapi"]
+	path = deps/kizunapi
+	url = https://github.com/photoionization/kizunapi

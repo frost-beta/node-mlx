@@ -1,0 +1,27 @@
+{
+  "name": "@frost-beta/mlx",
+  "version": "0.0.1",
+  "description": "Node-API bindings for MLX",
+  "main": "lib/index.js",
+  "scripts": {
+    "install": "prebuild-install -r napi || echo 'No prebuilt binary of MLX found.'",
+    "build": "cmake-js build"
+  },
+  "author": "zcbenz",
+  "license": "MIT",
+  "dependencies": {
+    "prebuild-install": "7.1.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/frost-beta/node-mlx"
+  },
+  "binary": {
+    "napi_versions": [
+      9
+    ]
+  },
+  "devDependencies": {
+    "cmake-js": "7.3.0"
+  }
+}
