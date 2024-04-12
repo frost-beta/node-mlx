@@ -3,6 +3,8 @@
 namespace {
 
 napi_value Init(napi_env env, napi_value exports) {
+  InitDevice(env, exports);
+  InitStream(env, exports);
   InitArray(env, exports);
   return exports;
 }
