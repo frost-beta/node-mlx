@@ -35,24 +35,6 @@ struct Type<mx::array> {
 
  private:
   static napi_value Item(mx::array* a, napi_env env);
-  static mx::array Var(mx::array* a,
-                       IntOrVector axis,
-                       std::optional<bool> keepdims,
-                       std::optional<int> ddof,
-                       mx::StreamOrDevice s);
-  static std::vector<mx::array> Split(
-      mx::array* a,
-      std::variant<int, std::vector<int>> indices,
-      std::optional<int> axis,
-      mx::StreamOrDevice s);
-  static mx::array ArgMin(mx::array* a,
-                          std::optional<int> axis,
-                          std::optional<bool> keepdims,
-                          mx::StreamOrDevice s);
-  static mx::array ArgMax(mx::array* a,
-                          std::optional<int> axis,
-                          std::optional<bool> keepdims,
-                          mx::StreamOrDevice s);
 };
 
 }  // namespace ki

@@ -9,7 +9,7 @@
 namespace mx = mlx::core;
 
 using IntOrVector = std::variant<std::monostate, int, std::vector<int>>;
-using ScalarOrArray = std::variant<mx::array, bool, float>;
+using ScalarOrArray = std::variant<bool, float, mx::array>;
 
 // In js land the objects are always stored as pointers, when a value is needed
 // from C++ land, we do a copy.
@@ -33,6 +33,13 @@ inline std::vector<int> GetReduceAxes(IntOrVector value, int dims) {
   std::vector<int> all(dims);
   std::iota(all.begin(), all.end(), 0);
   return all;
+}
+
+// Convert a int or vector into shape.
+inline std::vector<int> ToShape(std::variant<int, std::vector<int>> shape) {
+  if (auto i = std::get_if<int>(&shape); i)
+    return {*i};
+  return std::move(std::get<std::vector<int>>(shape));
 }
 
 // Convert a ScalarOrArray arg to array.
