@@ -1,5 +1,5 @@
-#ifndef SRC_UTIL_H_
-#define SRC_UTIL_H_
+#ifndef SRC_UTILS_H_
+#define SRC_UTILS_H_
 
 #include <numeric>
 
@@ -7,6 +7,9 @@
 #include <kizunapi.h>
 
 namespace mx = mlx::core;
+
+using IntOrVector = std::variant<std::monostate, int, std::vector<int>>;
+using ScalarOrArray = std::variant<mx::array, bool, float>;
 
 // In js land the objects are always stored as pointers, when a value is needed
 // from C++ land, we do a copy.
@@ -19,8 +22,7 @@ inline std::optional<T> NodeObjToCppValue(napi_env env, napi_value value) {
 }
 
 // Get axis arg from js value.
-using IntOrVec = std::variant<std::monostate, int, std::vector<int>>;
-inline std::vector<int> GetReduceAxes(IntOrVec value, int dims) {
+inline std::vector<int> GetReduceAxes(IntOrVector value, int dims) {
   // Try vector first.
   if (auto v = std::get_if<std::vector<int>>(&value); v)
     return std::move(*v);
@@ -33,16 +35,31 @@ inline std::vector<int> GetReduceAxes(IntOrVec value, int dims) {
   return all;
 }
 
+// Convert a ScalarOrArray arg to array.
+inline mx::array ToArray(ScalarOrArray value,
+                         std::optional<mx::Dtype> dtype = std::nullopt) {
+  if (auto a = std::get_if<mx::array>(&value); a)
+    return std::move(*a);
+  if (auto b = std::get_if<bool>(&value); b)
+    return mx::array(*b, dtype.value_or(mx::bool_));
+  if (auto f = std::get_if<float>(&value); f) {
+    mx::Dtype out_dtype = dtype.value_or(mx::float32);
+    return mx::array(*f, mx::issubdtype(out_dtype, mx::floating) ? out_dtype
+                                                                 : mx::float32);
+  }
+  throw std::invalid_argument("Invalid type passed to ToArray");
+}
+
 // A template converter for ops that accept |axis|.
 inline
 std::function<mx::array(const mx::array& a,
-                        IntOrVec axis,
+                        IntOrVector axis,
                         mx::StreamOrDevice s)>
 DimOpWrapper(mx::array(*func)(const mx::array&,
                               const std::vector<int>&,
                               mx::StreamOrDevice)) {
   return [func](const mx::array& a,
-                IntOrVec axis,
+                IntOrVector axis,
                 mx::StreamOrDevice s) {
     return func(a, GetReduceAxes(std::move(axis), a.ndim()), s);
   };
@@ -51,7 +68,7 @@ DimOpWrapper(mx::array(*func)(const mx::array&,
 // A template converter for ops that accept |axis| and |keepdims|.
 inline
 std::function<mx::array(const mx::array& a,
-                        IntOrVec axis,
+                        IntOrVector axis,
                         std::optional<bool> keepdims,
                         mx::StreamOrDevice s)>
 DimOpWrapper(mx::array(*func)(const mx::array&,
@@ -59,7 +76,7 @@ DimOpWrapper(mx::array(*func)(const mx::array&,
                               bool,
                               mx::StreamOrDevice)) {
   return [func](const mx::array& a,
-                IntOrVec axis,
+                IntOrVector axis,
                 std::optional<bool> keepdims,
                 mx::StreamOrDevice s) {
     return func(a, GetReduceAxes(std::move(axis), a.ndim()),
@@ -93,4 +110,4 @@ CumOpWrapper(mx::array(*func)(const mx::array&,
   };
 }
 
-#endif  // SRC_UTIL_H_
+#endif  // SRC_UTILS_H_

@@ -1,5 +1,5 @@
 #include "src/stream.h"
-#include "src/util.h"
+#include "src/utils.h"
 
 namespace ki {
 
