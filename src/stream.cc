@@ -37,19 +37,6 @@ std::optional<mx::Stream> Type<mx::Stream>::FromNode(napi_env env,
   return NodeObjToCppValue<mx::Stream>(env, value);
 }
 
-// static
-std::optional<mx::StreamOrDevice> Type<mx::StreamOrDevice>::FromNode(
-    napi_env env,
-    napi_value value) {
-  std::optional<mx::Stream> stream = Type<mx::Stream>::FromNode(env, value);
-  if (stream)
-    return *stream;
-  std::optional<mx::Device> device = Type<mx::Device>::FromNode(env, value);
-  if (device)
-    return *device;
-  return std::nullopt;
-}
-
 }  // namespace ki
 
 void InitStream(napi_env env, napi_value exports) {

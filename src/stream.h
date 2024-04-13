@@ -21,13 +21,6 @@ struct Type<mx::Stream> {
                                             napi_value value);
 };
 
-template<>
-struct Type<mx::StreamOrDevice> {
-  static constexpr const char* name = "StreamOrDevice";
-  static std::optional<mx::StreamOrDevice> FromNode(napi_env env,
-                                                    napi_value value);
-};
-
 }  // namespace ki
 
 #endif  // SRC_STREAM_H_

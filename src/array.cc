@@ -98,6 +98,9 @@ struct Type<mx::array> {
     // Disambiguate the 2 overloads of shape().
     using shape_fun = const std::vector<int>& (mx::array::*)() const;
     shape_fun shape = &mx::array::shape;
+    // Disambiguate the 3 overloads of transpose().
+    using t_fun = mx::array (*)(const mx::array&, mx::StreamOrDevice);
+    t_fun t = &mx::transpose;
     // Define array's properties.
     DefineProperties(env, prototype,
                      Property("size", Getter(&mx::array::size)),
@@ -105,11 +108,67 @@ struct Type<mx::array> {
                      Property("itemsize", Getter(&mx::array::itemsize)),
                      Property("nbytes", Getter(&mx::array::nbytes)),
                      Property("shape", Getter(shape)),
-                     Property("dtype", Getter(&mx::array::dtype)));
+                     Property("dtype", Getter(&mx::array::dtype)),
+                     Property("T", Getter(t)));
+    // Disambiguate the 2 overloads of flatten().
+    using flatten_fun = mx::array (*)(const mx::array&, int, int,
+                                      mx::StreamOrDevice);
+    flatten_fun flatten = &mx::flatten;
+    // Disambiguate the 3 overloads of transpose().
+    // FIXME(zcbenz): Support other overloads like the python binding does.
+    using transpose_fun = mx::array (*)(const mx::array&, std::vector<int>,
+                                        mx::StreamOrDevice);
+    transpose_fun transpose = &mx::transpose;
+    // Disambiguate the 2 overloads of round().
+    using round_fun = mx::array (*)(const mx::array&, int, mx::StreamOrDevice);
+    round_fun round = &mx::round;
+    // Disambiguate the 2 overloads of diagonal().
+    using diagonal_fun = mx::array (*)(const mx::array&, int, int, int,
+                                       mx::StreamOrDevice);
+    diagonal_fun diagonal = &mx::diagonal;
+    // Disambiguate the 2 overloads of diag().
+    using diag_fun = mx::array (*)(const mx::array&, int, mx::StreamOrDevice);
+    diag_fun diag = &mx::diag;
     // Define array's methods.
     Set(env, prototype,
         "item", MemberFunction(&Item),
-        "astype", MemberFunction(&mx::astype));
+        "astype", MemberFunction(&mx::astype),
+        "flatten", MemberFunction(flatten),
+        "reshape", MemberFunction(&mx::reshape),
+        "squeeze", MemberFunction(DimOpWrapper(&mx::squeeze)),
+        "abs", MemberFunction(&mx::abs),
+        "square", MemberFunction(&mx::square),
+        "sqrt", MemberFunction(&mx::sqrt),
+        "rsqrt", MemberFunction(&mx::rsqrt),
+        "reciprocal", MemberFunction(&mx::reciprocal),
+        "exp", MemberFunction(&mx::exp),
+        "log", MemberFunction(&mx::log),
+        "log2", MemberFunction(&mx::log2),
+        "log10", MemberFunction(&mx::log10),
+        "sin", MemberFunction(&mx::sin),
+        "cos", MemberFunction(&mx::cos),
+        "log1p", MemberFunction(&mx::log1p),
+        "all", MemberFunction(DimOpWrapper(&mx::all)),
+        "any", MemberFunction(DimOpWrapper(&mx::any)),
+        "moveaxis", MemberFunction(&mx::moveaxis),
+        "transpose", MemberFunction(transpose),
+        "sum", MemberFunction(DimOpWrapper(&mx::sum)),
+        "prod", MemberFunction(DimOpWrapper(&mx::prod)),
+        "min", MemberFunction(DimOpWrapper(&mx::min)),
+        "max", MemberFunction(DimOpWrapper(&mx::max)),
+        "logsumexp", MemberFunction(DimOpWrapper(&mx::logsumexp)),
+        "mean", MemberFunction(DimOpWrapper(&mx::mean)),
+        "var", MemberFunction(&Var),
+        "split", MemberFunction(&Split),
+        "argmin", MemberFunction(&ArgMin),
+        "argmax", MemberFunction(&ArgMax),
+        "cumsum", MemberFunction(CumOpWrapper(&mx::cumsum)),
+        "cumprod", MemberFunction(CumOpWrapper(&mx::cumprod)),
+        "cummax", MemberFunction(CumOpWrapper(&mx::cummax)),
+        "cummin", MemberFunction(CumOpWrapper(&mx::cummin)),
+        "round", MemberFunction(round),
+        "diagonal", MemberFunction(diagonal),
+        "diag", MemberFunction(diag));
   }
 
   static napi_value Item(mx::array* a, napi_env env) {
@@ -143,6 +202,44 @@ struct Type<mx::array> {
         // FIXME(zcbenz): Represent complex number in JS.
         return Undefined(env);
     }
+  }
+  static mx::array Var(mx::array* a,
+                       IntOrVec axis,
+                       std::optional<bool> keepdims,
+                       std::optional<int> ddof,
+                       mx::StreamOrDevice s) {
+    return mx::var(*a, GetReduceAxes(std::move(axis), a->ndim()),
+                   keepdims.value_or(false), ddof.value_or(0), s);
+  }
+  static std::vector<mx::array> Split(
+      mx::array* a,
+      std::variant<int, std::vector<int>> indices,
+      std::optional<int> axis,
+      mx::StreamOrDevice s) {
+    if (auto i = std::get_if<int>(&indices); i) {
+      return mx::split(*a, *i, axis.value_or(0), s);
+    } else {
+      return mx::split(*a, std::move(std::get<std::vector<int>>(indices)),
+                       axis.value_or(0), s);
+    }
+  }
+  static mx::array ArgMin(mx::array* a,
+                          std::optional<int> axis,
+                          std::optional<bool> keepdims,
+                          mx::StreamOrDevice s) {
+    if (axis)
+      return mx::argmin(*a, *axis, keepdims.value_or(false), s);
+    else
+      return mx::argmin(*a, keepdims.value_or(false), s);
+  }
+  static mx::array ArgMax(mx::array* a,
+                          std::optional<int> axis,
+                          std::optional<bool> keepdims,
+                          mx::StreamOrDevice s) {
+    if (axis)
+      return mx::argmax(*a, *axis, keepdims.value_or(false), s);
+    else
+      return mx::argmax(*a, keepdims.value_or(false), s);
   }
 
   static inline napi_status ToNode(napi_env env,
