@@ -91,6 +91,30 @@ DimOpWrapper(mx::array(*func)(const mx::array&,
   };
 }
 
+// A template converter for ops that accept |k| and |axis|.
+inline
+std::function<mx::array(const mx::array& a,
+                        int k,
+                        std::optional<int> axis,
+                        mx::StreamOrDevice s)>
+KthOpWrapper(mx::array(*func1)(const mx::array&,
+                               int,
+                               int,
+                               mx::StreamOrDevice),
+             mx::array(*func2)(const mx::array&,
+                               int,
+                               mx::StreamOrDevice)) {
+  return [func1, func2](const mx::array& a,
+                        int k,
+                        std::optional<int> axis,
+                        mx::StreamOrDevice s) {
+    if (axis)
+      return func1(a, k, *axis, s);
+    else
+      return func2(a, k, s);
+  };
+}
+
 // A template converter for |cum| ops.
 inline
 std::function<mx::array(const mx::array& a,

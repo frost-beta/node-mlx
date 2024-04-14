@@ -204,36 +204,6 @@ mx::array ArgSort(const mx::array& a,
     return mx::argsort(a, s);
 }
 
-mx::array Partition(const mx::array& a,
-                    int kth,
-                    std::optional<int> axis,
-                    mx::StreamOrDevice s) {
-  if (axis)
-    return mx::partition(a, kth, *axis, s);
-  else
-    return mx::partition(a, kth, s);
-}
-
-mx::array ArgPartition(const mx::array& a,
-                       int kth,
-                       std::optional<int> axis,
-                       mx::StreamOrDevice s) {
-  if (axis)
-    return mx::argpartition(a, kth, *axis, s);
-  else
-    return mx::argpartition(a, kth, s);
-}
-
-mx::array TopK(const mx::array& a,
-               int k,
-               std::optional<int> axis,
-               mx::StreamOrDevice s) {
-  if (axis)
-    return mx::topk(a, k, *axis, s);
-  else
-    return mx::topk(a, k, s);
-}
-
 mx::array Softmax(const mx::array& a,
                   IntOrVector axis,
                   bool precise,
@@ -259,14 +229,41 @@ mx::array Stack(std::vector<mx::array> arrays,
     return mx::stack(std::move(arrays), s);
 }
 
-mx::array Repeat(const mx::array& a,
-                 int repeats,
-                 std::optional<int> axis,
-                 mx::StreamOrDevice s) {
-  if (axis)
-    return mx::repeat(a, repeats, *axis, s);
+mx::array Pad(const mx::array& a,
+              std::variant<int,
+                           std::tuple<int>,
+                           std::pair<int, int>,
+                           std::vector<std::pair<int, int>>> width,
+              const mx::array& constant,
+              mx::StreamOrDevice s) {
+  if (auto i = std::get_if<int>(&width); i)
+    return mx::pad(a, *i, constant, s);
+  if (auto ti = std::get_if<std::tuple<int>>(&width); ti)
+    return mx::pad(a, std::get<0>(*ti), constant, s);
+  if (auto tii = std::get_if<std::pair<int, int>>(&width); tii)
+    return mx::pad(a, *tii, constant, s);
+  auto v = std::get<std::vector<std::pair<int, int>>>(width);
+  if (v.size() == 1)
+    return mx::pad(a, v[0], constant, s);
   else
-    return mx::repeat(a, repeats, s);
+    return mx::pad(a, v, constant, s);
+}
+
+mx::array AsStrided(const mx::array& a,
+                    std::optional<std::vector<int>> shape,
+                    std::optional<std::vector<size_t>> strides,
+                    std::optional<size_t> offset,
+                    mx::StreamOrDevice s) {
+  std::vector<int> a_shape = shape.value_or(a.shape());
+  std::vector<size_t> a_strides;
+  if (strides) {
+    a_strides = std::move(*strides);
+  } else {
+    a_strides = std::vector<size_t>(a_shape.size(), 1);
+    for (int i = a_shape.size() - 1; i > 0; i--)
+      a_strides[i - 1] = a_shape[i] * a_strides[i];
+  }
+  return as_strided(a, a_shape, a_strides, offset.value_or(0), s);
 }
 
 }  // namespace ops
@@ -367,14 +364,20 @@ void InitOps(napi_env env, napi_value exports) {
           "argmax", &ops::ArgMax,
           "sort", &ops::Sort,
           "argsort", &ops::ArgSort,
-          "partition", &ops::Partition,
-          "argpartition", &ops::ArgPartition,
-          "topk", &ops::TopK,
+          "partition", KthOpWrapper(&mx::partition, &mx::partition),
+          "argpartition", KthOpWrapper(&mx::argpartition, &mx::argpartition),
+          "topk", KthOpWrapper(&mx::topk, &mx::topk),
           "broadcastTo", &mx::broadcast_to,
           "softmax", &ops::Softmax,
           "concatenate", &ops::Concatenate,
           "stack", &ops::Stack,
           "meshgrid", &mx::meshgrid,
-          "repeat", &ops::Repeat,
-          "clip", &mx::clip);
+          "repeat", KthOpWrapper(&mx::repeat, &mx::repeat),
+          "clip", &mx::clip,
+          "pad", &ops::Pad,
+          "asStrided", &ops::AsStrided,
+          "cumsum", CumOpWrapper(&mx::cumsum),
+          "cumprod", CumOpWrapper(&mx::cumprod),
+          "cummax", CumOpWrapper(&mx::cummax),
+          "cummin", CumOpWrapper(&mx::cummin));
 }
