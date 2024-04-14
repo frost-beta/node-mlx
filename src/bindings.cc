@@ -8,6 +8,7 @@ napi_value Init(napi_env env, napi_value exports) {
   InitArray(env, exports);
   InitMetal(env, exports);
   InitOps(env, exports);
+  InitIO(env, exports);
   return exports;
 }
 
