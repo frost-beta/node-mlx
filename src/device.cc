@@ -12,13 +12,16 @@ struct TypeBridge<mx::Device> {
 
 // static
 napi_status Type<mx::Device::DeviceType>::ToNode(
-    napi_env env, mx::Device::DeviceType type, napi_value* result) {
+    napi_env env,
+    mx::Device::DeviceType type,
+    napi_value* result) {
   return ConvertToNode(env, static_cast<int>(type), result);
 }
 
 // static
 std::optional<mx::Device::DeviceType> Type<mx::Device::DeviceType>::FromNode(
-    napi_env env, napi_value value) {
+    napi_env env,
+    napi_value value) {
   std::optional<int> type = ki::FromNode<int>(env, value);
   if (!type)
     return std::nullopt;

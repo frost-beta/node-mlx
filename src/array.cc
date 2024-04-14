@@ -14,6 +14,8 @@ struct TypeBridge<mx::Dtype> {
   }
 };
 
+// Define finalize for array, which is called for arrays created from js, and
+// arrays passed from C++ to js.
 template<>
 struct TypeBridge<mx::array> {
   static inline void Finalize(mx::array* ptr) {
