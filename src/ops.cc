@@ -1,6 +1,52 @@
 #include "src/array.h"
 #include "src/ops.h"
 
+// A template converter for ops that accept |k| and |axis|.
+inline
+std::function<mx::array(const mx::array& a,
+                        int k,
+                        std::optional<int> axis,
+                        mx::StreamOrDevice s)>
+KthOpWrapper(mx::array(*func1)(const mx::array&,
+                               int,
+                               int,
+                               mx::StreamOrDevice),
+             mx::array(*func2)(const mx::array&,
+                               int,
+                               mx::StreamOrDevice)) {
+  return [func1, func2](const mx::array& a,
+                        int k,
+                        std::optional<int> axis,
+                        mx::StreamOrDevice s) {
+    if (axis)
+      return func1(a, k, *axis, s);
+    else
+      return func2(a, k, s);
+  };
+}
+
+// A template converter for |atleast_nd| ops.
+inline
+std::function<napi_value(napi_env env,
+                         std::variant<mx::array, std::vector<mx::array>> arrays,
+                         mx::StreamOrDevice s)>
+NdOpWrapper(mx::array(*func1)(const mx::array&,
+                              mx::StreamOrDevice),
+            std::vector<mx::array>(*func2)(const std::vector<mx::array>&,
+                                           mx::StreamOrDevice)) {
+  return [func1, func2](napi_env env,
+                        std::variant<mx::array, std::vector<mx::array>> arrays,
+                        mx::StreamOrDevice s) {
+    if (auto a = std::get_if<mx::array>(&arrays); a) {
+      return ki::ToNode(env, func1(*a, s));
+    } else {
+      return ki::ToNode(
+          env,
+          func2(std::move(std::get<std::vector<mx::array>>(arrays)), s));
+    }
+  };
+}
+
 namespace ops {
 
 mx::array Flatten(const mx::array& a,
@@ -86,7 +132,7 @@ mx::array Full(std::variant<int, std::vector<int>> shape,
                ScalarOrArray vals,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
-  return mx::full(ToShape(std::move(shape)),
+  return mx::full(ToIntVector(std::move(shape)),
                   ToArray(std::move(vals), std::move(dtype)),
                   s);
 }
@@ -94,13 +140,13 @@ mx::array Full(std::variant<int, std::vector<int>> shape,
 mx::array Zeros(std::variant<int, std::vector<int>> shape,
                 std::optional<mx::Dtype> dtype,
                 mx::StreamOrDevice s) {
-  return mx::zeros(ToShape(std::move(shape)), dtype.value_or(mx::float32), s);
+  return mx::zeros(ToIntVector(std::move(shape)), dtype.value_or(mx::float32), s);
 }
 
 mx::array Ones(std::variant<int, std::vector<int>> shape,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
-  return mx::ones(ToShape(std::move(shape)), dtype.value_or(mx::float32), s);
+  return mx::ones(ToIntVector(std::move(shape)), dtype.value_or(mx::float32), s);
 }
 
 mx::array Eye(int n,
@@ -266,6 +312,181 @@ mx::array AsStrided(const mx::array& a,
   return as_strided(a, a_shape, a_strides, offset.value_or(0), s);
 }
 
+mx::array Convolve(const mx::array& a,
+                   const mx::array& v,
+                   std::optional<std::string> mode,
+                   mx::StreamOrDevice s) {
+  if (a.ndim() != 1 || v.ndim() != 1)
+    throw std::invalid_argument("[convolve] Inputs must be 1D.");
+  if (a.size() == 0 || v.size() == 0)
+    throw std::invalid_argument("[convolve] Inputs cannot be empty.");
+
+  mx::array in = a.size() < v.size() ? v : a;
+  mx::array wt = a.size() < v.size() ? a : v;
+  wt = mx::slice(wt, {wt.shape(0) - 1}, {-wt.shape(0) - 1}, {-1}, s);
+
+  in = mx::reshape(std::move(in), {1, -1, 1}, s);
+  wt = mx::reshape(std::move(wt), {1, -1, 1}, s);
+
+  int padding = 0;
+
+  std::string m = mode.value_or("full");
+  if (m == "full") {
+    padding = wt.size() - 1;
+  } else if (m == "valid") {
+    padding = 0;
+  } else if (m == "same") {
+    if (wt.size() % 2) {
+      padding = wt.size() / 2;
+    } else {
+      int pad_l = wt.size() / 2;
+      int pad_r = std::max(0, pad_l - 1);
+      in = mx::pad(in, {{0, 0}, {pad_l, pad_r}, {0, 0}}, mx::array(0), s);
+    }
+  } else {
+    throw std::invalid_argument("[convolve] Invalid mode.");
+  }
+
+  mx::array out = mx::conv1d(in, wt, /*stride = */ 1, /*padding = */ padding,
+                             /*dilation = */ 1, /*groups = */ 1, s);
+  return reshape(out, {-1}, s);
+}
+
+mx::array Conv2d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::variant<std::monostate, int, std::pair<int, int>> stride,
+    std::variant<std::monostate, int, std::pair<int, int>> padding,
+    std::variant<std::monostate, int, std::pair<int, int>> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  std::pair<int, int> stride_pair(1, 1);
+  if (auto i = std::get_if<int>(&stride); i)
+    stride_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&stride); p)
+    stride_pair = std::move(*p);
+
+  std::pair<int, int> padding_pair(0, 0);
+  if (auto i = std::get_if<int>(&padding); i)
+    padding_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&padding); p)
+    padding_pair = std::move(*p);
+
+  std::pair<int, int> dilation_pair(1, 1);
+  if (auto i = std::get_if<int>(&dilation); i)
+    dilation_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&dilation); p)
+    dilation_pair = std::move(*p);
+
+  return conv2d(input, weight, stride_pair, padding_pair, dilation_pair,
+                groups.value_or(1), s);
+}
+
+mx::array ConvGeneral(
+    const mx::array& input,
+    const mx::array& weight,
+    std::optional<std::variant<int, std::vector<int>>> stride,
+    std::variant<std::monostate,
+                 int,
+                 std::vector<int>,
+                 std::pair<std::vector<int>, std::vector<int>>> padding,
+    std::optional<std::variant<int, std::vector<int>>> kernel_dilation,
+    std::optional<std::variant<int, std::vector<int>>> input_dilation,
+    std::optional<int> groups,
+    std::optional<bool> flip,
+    mx::StreamOrDevice s) {
+  std::vector<int> padding_lo_vec = {0};
+  std::vector<int> padding_hi_vec = {0};
+  if (auto i = std::get_if<int>(&padding); i) {
+    padding_lo_vec = {*i};
+    padding_hi_vec = {*i};
+  } else if (auto v = std::get_if<std::vector<int>>(&padding); v) {
+    padding_lo_vec = std::move(*v);
+    padding_hi_vec = padding_lo_vec;
+  } else if (auto p = std::get_if<std::pair<std::vector<int>,
+                                            std::vector<int>>>(&padding);
+             p) {
+    padding_lo_vec = std::move(p->first);
+    padding_hi_vec = std::move(p->second);
+  }
+
+  return mx::conv_general(std::move(input),
+                          std::move(weight),
+                          ToIntVector(std::move(stride.value_or(1))),
+                          std::move(padding_lo_vec),
+                          std::move(padding_hi_vec),
+                          ToIntVector(std::move(kernel_dilation.value_or(1))),
+                          ToIntVector(std::move(input_dilation.value_or(1))),
+                          groups.value_or(1),
+                          flip.value_or(false),
+                          s);
+}
+
+mx::array Round(const mx::array& a,
+                std::optional<int> decimals,
+                mx::StreamOrDevice s) {
+  return mx::round(a, decimals.value_or(0), s);
+}
+
+mx::array Tensordot(const mx::array& a,
+                    const mx::array& b,
+                    std::variant<std::monostate,
+                                 int,
+                                 std::vector<std::vector<int>>> axes,
+                    mx::StreamOrDevice s) {
+  if (auto i = std::get_if<int>(&axes); i)
+    return mx::tensordot(a, b, *i, s);
+  if (auto v = std::get_if<std::vector<std::vector<int>>>(&axes); v) {
+    if (v->size() != 2) {
+      throw std::invalid_argument(
+          "[tensordot] axes must be a list of two lists.");
+    }
+    return mx::tensordot(a, b, (*v)[0], (*v)[1], s);
+  }
+  // The |axes| arg default to 2.
+  return mx::tensordot(a, b, 2, s);
+}
+
+mx::array Tile(const mx::array& a,
+               std::variant<int, std::vector<int>> reps,
+               mx::StreamOrDevice s) {
+  if (auto i = std::get_if<int>(&reps); i)
+    return mx::tile(a, {*i}, s);
+  else
+    return mx::tile(a, std::get<std::vector<int>>(reps), s);
+}
+
+mx::array Diagonal(const mx::array& a,
+                   std::optional<int> offset,
+                   std::optional<int> axis1,
+                   std::optional<int> axis2,
+                   mx::StreamOrDevice s) {
+  return mx::diagonal(a, offset.value_or(0), axis1.value_or(0),
+                      axis2.value_or(1), s);
+}
+
+mx::array Diag(const mx::array& a,
+               std::optional<int> k,
+               mx::StreamOrDevice s) {
+  return mx::diag(a, k.value_or(0), s);
+}
+
+bool IsSubDtype(std::variant<mx::Dtype, mx::Dtype::Category> dtype,
+                std::variant<mx::Dtype, mx::Dtype::Category> category) {
+  if (auto d = std::get_if<mx::Dtype>(&dtype); d) {
+    if (auto c = std::get_if<mx::Dtype>(&category); c)
+      return mx::issubdtype(*d, *c);
+    else
+      return mx::issubdtype(*d, std::get<mx::Dtype::Category>(category));
+  } else {
+    if (auto c = std::get_if<mx::Dtype>(&category); c)
+      return mx::issubdtype(std::get<mx::Dtype::Category>(dtype), *c);
+    else
+      return mx::issubdtype(std::get<mx::Dtype::Category>(dtype),
+                            std::get<mx::Dtype::Category>(category));
+  }
+}
+
 }  // namespace ops
 
 void InitOps(napi_env env, napi_value exports) {
@@ -379,5 +600,25 @@ void InitOps(napi_env env, napi_value exports) {
           "cumsum", CumOpWrapper(&mx::cumsum),
           "cumprod", CumOpWrapper(&mx::cumprod),
           "cummax", CumOpWrapper(&mx::cummax),
-          "cummin", CumOpWrapper(&mx::cummin));
+          "cummin", CumOpWrapper(&mx::cummin),
+          "convolve", &ops::Convolve,
+          "conv1d", &mx::conv1d,
+          "conv2d", &ops::Conv2d,
+          "convGeneral", &ops::ConvGeneral,
+          "where", &mx::where,
+          "round", &ops::Round,
+          "quantizedMatmul", &mx::quantized_matmul,
+          "quantize", &mx::quantize,
+          "dequantize", &mx::dequantize,
+          "tensordot", &ops::Tensordot,
+          "inner", &mx::inner,
+          "outer", &mx::outer,
+          "tile", &ops::Tile,
+          "addmm", &mx::addmm,
+          "diagonal", &ops::Diagonal,
+          "diag", &ops::Diag,
+          "atleast1d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_1d),
+          "atleast2d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_2d),
+          "atleast3d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_3d),
+          "issubdtype", &ops::IsSubDtype);
 }

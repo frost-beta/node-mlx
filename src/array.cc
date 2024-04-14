@@ -72,6 +72,37 @@ std::optional<mx::Dtype> Type<mx::Dtype>::FromNode(napi_env env,
 }
 
 // static
+napi_status Type<mx::Dtype::Category>::ToNode(
+    napi_env env, mx::Dtype::Category type, napi_value* result) {
+  return ConvertToNode(env, static_cast<int>(type), result);
+}
+
+// static
+std::optional<mx::Dtype::Category> Type<mx::Dtype::Category>::FromNode(
+    napi_env env, napi_value value) {
+  std::optional<int> type = ki::FromNode<int>(env, value);
+  if (!type)
+    return std::nullopt;
+  if (*type == static_cast<int>(mx::Dtype::Category::complexfloating))
+    return mx::Dtype::Category::complexfloating;
+  if (*type == static_cast<int>(mx::Dtype::Category::floating))
+    return mx::Dtype::Category::floating;
+  if (*type == static_cast<int>(mx::Dtype::Category::inexact))
+    return mx::Dtype::Category::inexact;
+  if (*type == static_cast<int>(mx::Dtype::Category::signedinteger))
+    return mx::Dtype::Category::signedinteger;
+  if (*type == static_cast<int>(mx::Dtype::Category::unsignedinteger))
+    return mx::Dtype::Category::unsignedinteger;
+  if (*type == static_cast<int>(mx::Dtype::Category::integer))
+    return mx::Dtype::Category::integer;
+  if (*type == static_cast<int>(mx::Dtype::Category::number))
+    return mx::Dtype::Category::number;
+  if (*type == static_cast<int>(mx::Dtype::Category::generic))
+    return mx::Dtype::Category::generic;
+  return std::nullopt;
+}
+
+// static
 mx::array* Type<mx::array>::Constructor(napi_env env,
                                         napi_value value,
                                         std::optional<mx::Dtype> dtype) {
@@ -109,16 +140,6 @@ void Type<mx::array>::Define(napi_env env,
                    Property("shape", Getter(shape)),
                    Property("dtype", Getter(&mx::array::dtype)),
                    Property("T", Getter(t)));
-  // Disambiguate the 2 overloads of round().
-  using round_fun = mx::array (*)(const mx::array&, int, mx::StreamOrDevice);
-  round_fun round = &mx::round;
-  // Disambiguate the 2 overloads of diagonal().
-  using diagonal_fun = mx::array (*)(const mx::array&, int, int, int,
-                                     mx::StreamOrDevice);
-  diagonal_fun diagonal = &mx::diagonal;
-  // Disambiguate the 2 overloads of diag().
-  using diag_fun = mx::array (*)(const mx::array&, int, mx::StreamOrDevice);
-  diag_fun diag = &mx::diag;
   // Define array's methods.
   Set(env, prototype,
       "item", MemberFunction(&Item),
@@ -156,9 +177,9 @@ void Type<mx::array>::Define(napi_env env,
       "cumprod", MemberFunction(CumOpWrapper(&mx::cumprod)),
       "cummax", MemberFunction(CumOpWrapper(&mx::cummax)),
       "cummin", MemberFunction(CumOpWrapper(&mx::cummin)),
-      "round", MemberFunction(round),
-      "diagonal", MemberFunction(diagonal),
-      "diag", MemberFunction(diag));
+      "round", MemberFunction(&ops::Round),
+      "diagonal", MemberFunction(&ops::Diagonal),
+      "diag", MemberFunction(&ops::Diag));
 }
 
 // static
@@ -232,6 +253,16 @@ void InitArray(napi_env env, napi_value exports) {
           "float32", &mx::float32,
           "bfloat16", &mx::bfloat16,
           "complex64", &mx::complex64);
+
+  ki::Set(env, exports,
+          "complexfloating", mx::complexfloating,
+          "floating", mx::floating,
+          "inexact", mx::inexact,
+          "signedinteger", mx::signedinteger,
+          "unsignedinteger", mx::unsignedinteger,
+          "integer", mx::integer,
+          "number", mx::number,
+          "generic", mx::generic);
 
   ki::Set(env, exports,
           "array", ki::Class<mx::array>());

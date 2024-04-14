@@ -19,6 +19,16 @@ struct Type<mx::Dtype> {
 };
 
 template<>
+struct Type<mx::Dtype::Category> {
+  static constexpr const char* name = "DtypeCategory";
+  static napi_status ToNode(napi_env env,
+                            mx::Dtype::Category value,
+                            napi_value* result);
+  static std::optional<mx::Dtype::Category> FromNode(napi_env env,
+                                                     napi_value value);
+};
+
+template<>
 struct Type<mx::array> {
   static constexpr const char* name = "array";
   static mx::array* Constructor(napi_env env,
