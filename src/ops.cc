@@ -38,9 +38,9 @@ NdOpWrapper(mx::array(*func1)(const mx::array&,
                         std::variant<mx::array, std::vector<mx::array>> arrays,
                         mx::StreamOrDevice s) {
     if (auto a = std::get_if<mx::array>(&arrays); a) {
-      return ki::ToNode(env, func1(*a, s));
+      return ki::ToNodeValue(env, func1(*a, s));
     } else {
-      return ki::ToNode(
+      return ki::ToNodeValue(
           env,
           func2(std::move(std::get<std::vector<mx::array>>(arrays)), s));
     }

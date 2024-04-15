@@ -15,7 +15,7 @@ using ScalarOrArray = std::variant<bool, float, mx::array>;
 // from C++ land, we do a copy.
 template<typename T>
 inline std::optional<T> NodeObjToCppValue(napi_env env, napi_value value) {
-  std::optional<T*> ptr = ki::FromNode<T*>(env, value);
+  std::optional<T*> ptr = ki::FromNodeTo<T*>(env, value);
   if (!ptr)
     return std::nullopt;
   return *ptr.value();

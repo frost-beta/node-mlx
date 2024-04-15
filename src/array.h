@@ -29,7 +29,7 @@ struct Type<mx::Dtype::Category> {
 };
 
 template<>
-struct Type<mx::array> {
+struct Type<mx::array> : public AllowPassByValue<mx::array> {
   static constexpr const char* name = "array";
   static mx::array* Constructor(napi_env env,
                                 napi_value value,
@@ -37,9 +37,6 @@ struct Type<mx::array> {
   static void Define(napi_env env,
                      napi_value constructor,
                      napi_value prototype);
-  static napi_status ToNode(napi_env env,
-                            mx::array a,
-                            napi_value* result);
   static std::optional<mx::array> FromNode(napi_env env,
                                            napi_value value);
 

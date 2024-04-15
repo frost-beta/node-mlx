@@ -14,15 +14,6 @@ struct TypeBridge<mx::Dtype> {
   }
 };
 
-// Define finalize for array, which is called for arrays created from js, and
-// arrays passed from C++ to js.
-template<>
-struct TypeBridge<mx::array> {
-  static inline void Finalize(mx::array* ptr) {
-    delete ptr;
-  }
-};
-
 // static
 void Type<mx::Dtype>::Define(napi_env env,
                              napi_value constructor,
@@ -82,7 +73,7 @@ napi_status Type<mx::Dtype::Category>::ToNode(
 // static
 std::optional<mx::Dtype::Category> Type<mx::Dtype::Category>::FromNode(
     napi_env env, napi_value value) {
-  std::optional<int> type = ki::FromNode<int>(env, value);
+  std::optional<int> type = FromNodeTo<int>(env, value);
   if (!type)
     return std::nullopt;
   if (*type == static_cast<int>(mx::Dtype::Category::complexfloating))
@@ -113,10 +104,10 @@ mx::array* Type<mx::array>::Constructor(napi_env env,
     return nullptr;
   switch (type) {
     case napi_boolean:
-      return new mx::array(ki::FromNode<bool>(env, value).value(),
+      return new mx::array(FromNodeTo<bool>(env, value).value(),
                            dtype.value_or(mx::bool_));
     case napi_number:
-      return new mx::array(ki::FromNode<float>(env, value).value(),
+      return new mx::array(FromNodeTo<float>(env, value).value(),
                            dtype.value_or(mx::float32));
     default:
       return nullptr;
@@ -185,22 +176,14 @@ void Type<mx::array>::Define(napi_env env,
 }
 
 // static
-napi_status Type<mx::array>::ToNode(napi_env env,
-                                    mx::array a,
-                                    napi_value* result) {
-  return ManagePointerInJSWrapper(env, new mx::array(std::move(a)), result);
-}
-
-// static
 std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
                                                    napi_value value) {
-  if (auto p = ki::FromNode<mx::array*>(env, value); p)
-    return *p.value();
-  if (auto b = ki::FromNode<bool>(env, value); b)
+  // FIXME(zcbenz): Accept array as input.
+  if (auto b = FromNodeTo<bool>(env, value); b)
     return mx::array(*b, mx::bool_);
-  if (auto f = ki::FromNode<float>(env, value); f)
+  if (auto f = FromNodeTo<float>(env, value); f)
     return mx::array(*f, mx::float32);
-  return std::nullopt;
+  return AllowPassByValue<mx::array>::FromNode(env, value);
 }
 
 // static
@@ -208,29 +191,29 @@ napi_value Type<mx::array>::Item(mx::array* a, napi_env env) {
   a->eval();
   switch (a->dtype()) {
     case mx::bool_:
-      return ki::ToNode(env, a->item<bool>());
+      return ToNodeValue(env, a->item<bool>());
     case mx::uint8:
-      return ki::ToNode(env, a->item<uint8_t>());
+      return ToNodeValue(env, a->item<uint8_t>());
     case mx::uint16:
-      return ki::ToNode(env, a->item<uint16_t>());
+      return ToNodeValue(env, a->item<uint16_t>());
     case mx::uint32:
-      return ki::ToNode(env, a->item<uint32_t>());
+      return ToNodeValue(env, a->item<uint32_t>());
     case mx::uint64:
-      return ki::ToNode(env, a->item<uint64_t>());
+      return ToNodeValue(env, a->item<uint64_t>());
     case mx::int8:
-      return ki::ToNode(env, a->item<int8_t>());
+      return ToNodeValue(env, a->item<int8_t>());
     case mx::int16:
-      return ki::ToNode(env, a->item<int16_t>());
+      return ToNodeValue(env, a->item<int16_t>());
     case mx::int32:
-      return ki::ToNode(env, a->item<int32_t>());
+      return ToNodeValue(env, a->item<int32_t>());
     case mx::int64:
-      return ki::ToNode(env, a->item<int64_t>());
+      return ToNodeValue(env, a->item<int64_t>());
     case mx::float16:
-      return ki::ToNode(env, static_cast<float>(a->item<mx::float16_t>()));
+      return ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
     case mx::float32:
-      return ki::ToNode(env, a->item<float>());
+      return ToNodeValue(env, a->item<float>());
     case mx::bfloat16:
-      return ki::ToNode(env, static_cast<float>(a->item<mx::bfloat16_t>()));
+      return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
     case mx::complex64:
       // FIXME(zcbenz): Represent complex number in JS.
       return Undefined(env);
