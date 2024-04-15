@@ -11,6 +11,7 @@ napi_value Init(napi_env env, napi_value exports) {
   InitIO(env, exports);
   InitRandom(env, exports);
   InitFFT(env, exports);
+  InitLinalg(env, exports);
   return exports;
 }
 
