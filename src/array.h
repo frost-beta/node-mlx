@@ -31,6 +31,7 @@ struct Type<mx::Dtype::Category> {
 template<>
 struct Type<mx::array> : public AllowPassByValue<mx::array> {
   static constexpr const char* name = "array";
+  static constexpr bool allow_function_call = true;
   static mx::array* Constructor(napi_env env,
                                 napi_value value,
                                 std::optional<mx::Dtype> dtype);

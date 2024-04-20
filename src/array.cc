@@ -109,6 +109,17 @@ mx::array* Type<mx::array>::Constructor(napi_env env,
     case napi_number:
       return new mx::array(FromNodeTo<float>(env, value).value(),
                            dtype.value_or(mx::float32));
+    case napi_object: {
+      if (ki::IsArray(env, value)) {
+        auto v = FromNodeTo<std::vector<float>>(env, value);
+        if (v) {
+          return new mx::array(v->begin(),
+                               {static_cast<int>(v->size())},
+                               mx::float32);
+        }
+      }
+      [[fallthrough]];
+    }
     default:
       return nullptr;
   }
@@ -176,17 +187,6 @@ void Type<mx::array>::Define(napi_env env,
 }
 
 // static
-std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
-                                                   napi_value value) {
-  // FIXME(zcbenz): Accept array as input.
-  if (auto b = FromNodeTo<bool>(env, value); b)
-    return mx::array(*b, mx::bool_);
-  if (auto f = FromNodeTo<float>(env, value); f)
-    return mx::array(*f, mx::float32);
-  return AllowPassByValue<mx::array>::FromNode(env, value);
-}
-
-// static
 napi_value Type<mx::array>::Item(mx::array* a, napi_env env) {
   a->eval();
   switch (a->dtype()) {
@@ -240,6 +240,7 @@ void InitArray(napi_env env, napi_value exports) {
           "complex64", &mx::complex64);
 
   ki::Set(env, exports,
+          "DtypeCategory", ki::Class<mx::Dtype::Category>(),
           "complexfloating", mx::complexfloating,
           "floating", mx::floating,
           "inexact", mx::inexact,
