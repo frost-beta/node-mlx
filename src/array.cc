@@ -61,7 +61,7 @@ napi_status Type<mx::Dtype>::ToNode(napi_env env,
 // static
 std::optional<mx::Dtype> Type<mx::Dtype>::FromNode(napi_env env,
                                                    napi_value value) {
-  return NodeObjToCppValue<mx::Dtype>(env, value);
+  return AllowPassByValue<mx::Dtype>::FromNode(env, value);
 }
 
 // static

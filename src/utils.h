@@ -11,16 +11,6 @@ namespace mx = mlx::core;
 using IntOrVector = std::variant<std::monostate, int, std::vector<int>>;
 using ScalarOrArray = std::variant<bool, float, mx::array>;
 
-// In js land the objects are always stored as pointers, when a value is needed
-// from C++ land, we do a copy.
-template<typename T>
-inline std::optional<T> NodeObjToCppValue(napi_env env, napi_value value) {
-  std::optional<T*> ptr = ki::FromNodeTo<T*>(env, value);
-  if (!ptr)
-    return std::nullopt;
-  return *ptr.value();
-}
-
 // Get axis arg from js value.
 inline std::vector<int> GetReduceAxes(IntOrVector value, int dims) {
   // Try vector first.
