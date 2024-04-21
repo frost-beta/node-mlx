@@ -1,4 +1,5 @@
 import mx from '..';
+import {assertArray, assertArrayAllTrue, assertArrayAllFalse, permutations} from './utils';
 import {assert} from 'chai';
 
 describe('dtype', () => {
@@ -153,19 +154,48 @@ describe('array', () => {
       assert.equal(x.dtype, mx.int32);
       assert.deepEqual(x.tolist(), [1, 2, 3]);
     });
+
+    it('boolConversion', () => {
+      let x = mx.array(true);
+      assertArrayAllTrue(x);
+      x = mx.array(false);
+      assertArrayAllFalse(x);
+    });
+
+    it('constructionFromLists', () => {
+      let x = mx.array([]);
+      assert.equal(x.size, 0);
+      assert.deepEqual(x.shape, [0]);
+      assert.equal(x.dtype, mx.float32);
+
+      x = mx.array([[], [], []]);
+      assert.equal(x.size, 0);
+      assert.deepEqual(x.shape, [3, 0]);
+      assert.equal(x.dtype, mx.float32);
+
+      x = mx.array([[[], []], [[], []], [[], []]]);
+      assert.equal(x.size, 0);
+      assert.deepEqual(x.shape, [3, 2, 0]);
+      assert.equal(x.dtype, mx.float32);
+
+      assert.throws(() => {
+        x = mx.array([[[], []], [[]], [[], []]]);
+      }, Error);
+
+      assert.throws(() => {
+        x = mx.array([[[], []], [[1.0, 2.0], []], [[], []]]);
+      }, Error);
+
+      assert.throws(() => {
+        x = mx.array([[0, 1], [[0, 1], 1]]);
+      }, Error);
+
+      x = mx.array([[1.0, 2.0], [0.0, 3.9]], mx.bool_);
+      assert.equal(x.dtype, mx.bool_);
+      assertArrayAllTrue(mx.arrayEqual(x, mx.array([[true, true], [false, true]])));
+
+      x = mx.array([[1.0, 2.0], [0.0, 3.9]], mx.int32);
+      assertArrayAllTrue(mx.arrayEqual(x, mx.array([[1, 2], [0, 3]])));
+    });
   });
 });
-
-function assertArray(a: mx.array, assertion: (arrays: boolean[]) => void) {
-  assert.isTrue(a instanceof mx.array);
-  assert.equal(a.dtype, mx.bool_);
-  if (a.ndim == 0) {
-    assertion([ a.item() as boolean ]);
-  } else {
-    const list = a.tolist();
-    assertion(list as boolean[]);
-  }
-}
-
-const assertArrayAllTrue = (a) => assertArray(a, (arrays) => assert.notInclude(arrays, false));
-const assertArrayAllFalse = (a) => assertArray(a, (arrays) => assert.notInclude(arrays, true));

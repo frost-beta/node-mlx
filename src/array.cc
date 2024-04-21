@@ -5,13 +5,103 @@ namespace ki {
 
 namespace {
 
-// create on heap if T is pointer, otherwise create on stack.
+// Create on heap if T is pointer, otherwise create on stack.
 template<typename T, typename... Args>
 inline T CreateInstance(Args&&... args) {
   if constexpr (std::is_pointer_v<T>)
     return new std::remove_pointer_t<T>(std::forward<Args>(args)...);
   else
     return typename T::value_type(std::forward<Args>(args)...);
+}
+
+// Get the shape of input nested array.
+bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
+  uint32_t length;
+  if (napi_get_array_length(env, value, &length) != napi_ok)
+    return false;
+  shape->push_back(static_cast<int>(length));
+  if (shape->back() == 0)
+    return true;
+  napi_value el;
+  if (napi_get_element(env, value, 0, &el) != napi_ok)
+    return false;
+  if (IsArray(env, el))
+    return GetShape(env, el, shape);
+  if (auto a = FromNodeTo<mx::array*>(env, el); a) {
+    for (int i = 0; i < a.value()->ndim(); ++i)
+      shape->push_back(a.value()->shape(i));
+    return true;
+  }
+  return true;
+}
+
+// Validate whether the shape of input array is valid, and get information about
+// the input.
+bool ValidateInputArray(napi_env env,
+                        napi_value value,
+                        const std::vector<int>& shape,
+                        bool* is_number,
+                        size_t dim = 0) {
+  if (dim >= shape.size()) {
+    napi_throw_type_error(env, nullptr,
+                          "Initialization encountered extra dimension.");
+    return false;
+  }
+
+  uint32_t length;
+  if (napi_get_array_length(env, value, &length) != napi_ok)
+    return false;
+  if (shape[dim] != length) {
+    napi_throw_type_error(env, nullptr,
+                          "Initialization encountered non-uniform length.");
+    return false;
+  }
+  if (shape[dim] == 0)
+    return true;
+
+  for (uint32_t i = 0; i < length; ++i) {
+    napi_value el;
+    if (napi_get_element(env, value, i, &el) != napi_ok)
+      return false;
+    if (IsArray(env, el)) {
+      if (ValidateInputArray(env, el, shape, is_number, dim + 1))
+        continue;
+      else
+        return false;
+    }
+    napi_valuetype type;
+    if (napi_typeof(env, el, &type) != napi_ok)
+      return false;
+    if (type == napi_boolean)
+      *is_number = false;
+    else if (type == napi_number)
+      *is_number = true;
+    else
+      return false;
+  }
+  return true;
+}
+
+// Put all nested elements of array into a flat vector.
+template<typename T>
+bool FlattenArray(napi_env env, napi_value value, std::vector<T>* result) {
+  uint32_t length;
+  if (napi_get_array_length(env, value, &length) != napi_ok)
+    return false;
+  for (uint32_t i = 0; i < length; ++i) {
+    napi_value el;
+    if (napi_get_element(env, value, i, &el) != napi_ok)
+      return false;
+    if (IsArray(env, el)) {
+      FlattenArray(env, el, result);
+    } else {
+      std::optional<T> out = FromNodeTo<T>(env, el);
+      if (!out)
+        return false;
+      result->push_back(std::move(*out));
+    }
+  }
+  return true;
 }
 
 // Implements the constructor of array, which can create on stack or heap.
@@ -29,17 +119,26 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
                                dtype.value_or(mx::bool_));
     case napi_object: {
       if (ki::IsArray(env, value)) {
-        if (auto v = FromNodeTo<std::vector<float>>(env, value); v) {
-          return CreateInstance<T>(
-              v->begin(),
-              std::vector<int>{static_cast<int>(v->size())},
-              dtype.value_or(mx::float32));
-        }
-        if (auto b = FromNodeTo<std::vector<bool>>(env, value); b) {
-          return CreateInstance<T>(
-              b->begin(),
-              std::vector<int>{static_cast<int>(b->size())},
-              dtype.value_or(mx::bool_));
+        std::vector<int> shape;
+        if (!GetShape(env, value, &shape))
+          return T();
+        bool is_number = true;
+        if (!ValidateInputArray(env, value, shape, &is_number))
+          return T();
+        if (is_number) {
+          std::vector<float> result;
+          if (!FlattenArray(env, value, &result))
+            return T();
+          return CreateInstance<T>(result.begin(),
+                                   std::move(shape),
+                                   dtype.value_or(mx::float32));
+        } else {
+          std::vector<bool> result;
+          if (!FlattenArray(env, value, &result))
+            return T();
+          return CreateInstance<T>(result.begin(),
+                                   std::move(shape),
+                                   dtype.value_or(mx::bool_));
         }
       }
       [[fallthrough]];
