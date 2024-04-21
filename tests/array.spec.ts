@@ -1,5 +1,5 @@
 import mx from '..';
-import {assertArray, assertArrayAllTrue, assertArrayAllFalse, permutations} from './utils';
+import {assertArray, assertArrayAllTrue, assertArrayAllFalse} from './utils';
 import {assert} from 'chai';
 
 describe('dtype', () => {

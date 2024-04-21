@@ -164,6 +164,16 @@ mx::array Identity(int n,
   return mx::identity(n, dtype.value_or(mx::float32), s);
 }
 
+mx::array AllClose(const mx::array& a,
+                   const mx::array& b,
+                   std::optional<double> rtol,
+                   std::optional<double> atol,
+                   std::optional<bool> equal_nan,
+                   mx::StreamOrDevice s) {
+  return mx::allclose(a, b, rtol.value_or(1e-5), atol.value_or(1e-8),
+                      equal_nan.value_or(false), s);
+}
+
 mx::array Tri(int n,
               std::optional<int> m,
               std::optional<int> k,
@@ -179,7 +189,7 @@ mx::array Transpose(const mx::array& a,
   if (axis)
     return mx::transpose(a, GetReduceAxes(std::move(*axis), a.ndim()), s);
   else
-    return mx::transpose(a);
+    return mx::transpose(a, s);
 }
 
 mx::array Var(const mx::array& a,
@@ -557,7 +567,7 @@ void InitOps(napi_env env, napi_value exports) {
           "identity", &ops::Identity,
           "tri", &ops::Tri,
           "tril", &mx::tril,
-          "allclose", &mx::allclose,
+          "allclose", &ops::AllClose,
           "isclose", &mx::isclose,
           "all", DimOpWrapper(&mx::all),
           "any", DimOpWrapper(&mx::any),

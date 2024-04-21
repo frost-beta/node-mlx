@@ -13,6 +13,7 @@ export function assertArray(a: mx.array, assertion: (arrays: boolean[]) => void)
 }
 
 export const assertArrayAllTrue = (a) => assertArray(a, (arrays) => assert.notInclude(arrays, false));
+export const assertArrayNotAllTrue = (a) => assertArray(a, (arrays) => assert.include(arrays, false));
 export const assertArrayAllFalse = (a) => assertArray(a, (arrays) => assert.notInclude(arrays, true));
 
 export function* permutations(array: any[], num: number) {

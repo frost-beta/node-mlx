@@ -197,25 +197,22 @@ napi_value ArrayToNodeValue(napi_env env,
                             const mx::array& a,
                             size_t index = 0,
                             int dim = 0) {
-  if (dim == a.ndim() - 1) {
-    // The last dimension only has scalars and the stride is always 1.
-    napi_value ret = nullptr;
-    napi_create_array_with_length(env, a.shape(dim), &ret);
-    for (size_t i = 0; i < a.shape(dim); ++i) {
+  napi_value ret;
+  if (napi_create_array_with_length(env, a.shape(dim), &ret) != napi_ok)
+    return nullptr;
+  size_t stride = a.strides()[dim];
+  for (size_t i = 0; i < a.shape(dim); ++i) {
+    if (dim == a.ndim() - 1) {
+      // The last dimension only has scalars.
       napi_set_element(env, ret, i,
-                       ToNodeValue(env,
-                                   static_cast<U>(a.data<T>()[index + i])));
+                       ToNodeValue(env, static_cast<U>(a.data<T>()[index])));
+    } else {
+      napi_set_element(env, ret, i,
+                       ArrayToNodeValue<T, U>(env, a, index, dim + 1));
     }
-    return ret;
-  } else {
-    std::vector<napi_value> ret;
-    size_t stride = a.strides()[dim];
-    for (int i = 0; i < a.shape(dim); ++i) {
-      ret.push_back(ArrayToNodeValue<T, U>(env, a, index, dim + 1));
-      index += stride;
-    }
-    return ToNodeValue(env, ret);
+    index += stride;
   }
+  return ret;
 }
 
 // Implementation of the tolist method.
@@ -373,7 +370,7 @@ void Type<mx::array>::Define(napi_env env,
                    Property("nbytes", Getter(&mx::array::nbytes)),
                    Property("shape", Getter(shape)),
                    Property("dtype", Getter(&mx::array::dtype)),
-                   Property("T", Getter(t)));
+                   Property("T", Getter(MemberFunction(t))));
   // Define array's methods.
   Set(env, prototype,
       "item", MemberFunction(&Item),
@@ -397,6 +394,7 @@ void Type<mx::array>::Define(napi_env env,
       "all", MemberFunction(DimOpWrapper(&mx::all)),
       "any", MemberFunction(DimOpWrapper(&mx::any)),
       "moveaxis", MemberFunction(&mx::moveaxis),
+      "swapaxes", MemberFunction(&mx::swapaxes),
       "transpose", MemberFunction(&ops::Transpose),
       "sum", MemberFunction(DimOpWrapper(&mx::sum)),
       "prod", MemberFunction(DimOpWrapper(&mx::prod)),

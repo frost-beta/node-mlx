@@ -22,19 +22,17 @@ DimOpWrapper(mx::array(*func)(const mx::array&,
 // A template converter for ops that accept |axis| and |keepdims|.
 inline
 std::function<mx::array(const mx::array& a,
-                        IntOrVector axis,
-                        std::optional<bool> keepdims,
-                        mx::StreamOrDevice s)>
+                        ki::Arguments* args)>
 DimOpWrapper(mx::array(*func)(const mx::array&,
                               const std::vector<int>&,
                               bool,
                               mx::StreamOrDevice)) {
   return [func](const mx::array& a,
-                IntOrVector axis,
-                std::optional<bool> keepdims,
-                mx::StreamOrDevice s) {
-    return func(a, GetReduceAxes(std::move(axis), a.ndim()),
-                keepdims.value_or(false), s);
+                ki::Arguments* args) {
+    auto axis = args->TryGetNext<IntOrVector>().value_or(std::monostate());
+    auto keepdims = args->TryGetNext<bool>().value_or(false);
+    auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
+    return func(a, GetReduceAxes(std::move(axis), a.ndim()), keepdims, s);
   };
 }
 
