@@ -21,20 +21,25 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
   if (napi_typeof(env, value, &type) != napi_ok)
     return T();
   switch (type) {
-    case napi_boolean:
-      return CreateInstance<T>(FromNodeTo<bool>(env, value).value(),
-                               dtype.value_or(mx::bool_));
     case napi_number:
       return CreateInstance<T>(FromNodeTo<float>(env, value).value(),
                                dtype.value_or(mx::float32));
+    case napi_boolean:
+      return CreateInstance<T>(FromNodeTo<bool>(env, value).value(),
+                               dtype.value_or(mx::bool_));
     case napi_object: {
       if (ki::IsArray(env, value)) {
-        auto v = FromNodeTo<std::vector<float>>(env, value);
-        if (v) {
+        if (auto v = FromNodeTo<std::vector<float>>(env, value); v) {
           return CreateInstance<T>(
               v->begin(),
               std::vector<int>{static_cast<int>(v->size())},
-              mx::float32);
+              dtype.value_or(mx::float32));
+        }
+        if (auto b = FromNodeTo<std::vector<bool>>(env, value); b) {
+          return CreateInstance<T>(
+              b->begin(),
+              std::vector<int>{static_cast<int>(b->size())},
+              dtype.value_or(mx::bool_));
         }
       }
       [[fallthrough]];
@@ -42,6 +47,15 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
     default:
       return T();
   }
+}
+
+// Implementation of the length property.
+int Length(mx::array* a, napi_env env) {
+  if (a->ndim() == 0) {
+    napi_throw_type_error(env, nullptr, "0-dimensional array has no length.");
+    return 0;
+  }
+  return a->shape(0);
 }
 
 // Convert the array to scalar.
@@ -72,7 +86,7 @@ napi_value Item(mx::array* a, napi_env env) {
       return ToNodeValue(env, a->item<float>());
     case mx::bfloat16:
       return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
-    case mx::complex64:
+    default:
       // FIXME(zcbenz): Represent complex number in JS.
       return Undefined(env);
   }
@@ -135,7 +149,7 @@ napi_value ToList(mx::array* a, napi_env env) {
       return ArrayToNodeValue<float>(env, *a);
     case mx::bfloat16:
       return ArrayToNodeValue<mx::bfloat16_t, float>(env, *a);
-    case mx::complex64:
+    default:
       // FIXME(zcbenz): Represent complex number in JS.
       return Undefined(env);
   }
@@ -166,9 +180,8 @@ void Type<mx::Dtype>::Define(napi_env env,
 napi_status Type<mx::Dtype>::ToNode(napi_env env,
                                     const mx::Dtype& value,
                                     napi_value* result) {
-  // Since Dtype is represented as a class, we have to store it as a pointer
-  // in js, so converting it to js usually would involve a heap allocation. To
-  // avoid that let's just find the global const.
+  // Make sure the same Dtype ends up converting to the same object so it is
+  // possible to compare Dtype in JS.
   if (value == mx::bool_)
     return ConvertToNode(env, &mx::bool_, result);
   if (value == mx::uint8)
@@ -239,7 +252,7 @@ std::optional<mx::Dtype::Category> Type<mx::Dtype::Category>::FromNode(
 mx::array* Type<mx::array>::Constructor(napi_env env,
                                         napi_value value,
                                         std::optional<mx::Dtype> dtype) {
-  return CreateArray<mx::array*>(env, value, std::nullopt);
+  return CreateArray<mx::array*>(env, value, std::move(dtype));
 }
 
 // static
@@ -254,6 +267,7 @@ void Type<mx::array>::Define(napi_env env,
   t_fun t = &mx::transpose;
   // Define array's properties.
   DefineProperties(env, prototype,
+                   Property("length", Getter(MemberFunction(&Length))),
                    Property("size", Getter(&mx::array::size)),
                    Property("ndim", Getter(&mx::array::ndim)),
                    Property("itemsize", Getter(&mx::array::itemsize)),

@@ -54,8 +54,9 @@ type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 export function array(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32'): array;
 
 export class array {
-  constructor(value: boolean | number | number[], dtype: Dtype? = 'float32');
+  constructor(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32');
 
+  length: number;
   astype(dtype: Dtype, s?: StreamOrDevice): array;
   at(index: number, s?: StreamOrDevice): array;
   item(): boolean | number;

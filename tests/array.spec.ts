@@ -83,6 +83,77 @@ describe('array', () => {
                   (arrays) => assert.deepEqual(arrays, [false, false, true]));
     });
   });
+
+  describe('array', () => {
+    it('arrayBasics', () => {
+      let x = mx.array(1);
+      assert.equal(x.size, 1);
+      assert.equal(x.ndim, 0);
+      assert.equal(x.itemsize, 4);
+      assert.equal(x.nbytes, 4);
+      assert.deepEqual(x.shape, []);
+      assert.equal(x.dtype, mx.float32);
+      assert.equal(x.item(), 1);
+      assert.isTrue(typeof x.item() === 'number');
+
+      assert.throws(() => {
+        x.length;
+      }, TypeError);
+
+      x = mx.array(1, mx.uint32);
+      assert.equal(x.item(), 1);
+      assert.isTrue(typeof x.item() === 'number');
+
+      x = mx.array(1, mx.int64);
+      assert.equal(x.item(), 1);
+      assert.isTrue(typeof x.item() === 'number');
+
+      x = mx.array(1, mx.bfloat16);
+      assert.equal(x.item(), 1.0);
+
+      x = mx.array(1.0);
+      assert.equal(x.size, 1);
+      assert.equal(x.ndim, 0);
+      assert.deepEqual(x.shape, []);
+      assert.equal(x.dtype, mx.float32);
+      assert.equal(x.item(), 1.0);
+      assert.isTrue(typeof x.item() === 'number');
+
+      x = mx.array(false);
+      assert.equal(x.size, 1);
+      assert.equal(x.ndim, 0);
+      assert.deepEqual(x.shape, []);
+      assert.equal(x.dtype, mx.bool_);
+      assert.equal(x.item(), false);
+      assert.isTrue(typeof x.item() === 'boolean');
+
+      x = mx.array([true, false, true]);
+      assert.equal(x.dtype, mx.bool_);
+      assert.equal(x.ndim, 1);
+      assert.deepEqual(x.shape, [3]);
+      assert.equal(x.length, 3);
+
+      x = mx.array([true, false, true], mx.float32);
+      assert.equal(x.dtype, mx.float32);
+
+      x = mx.array([0, 1, 2]);
+      assert.equal(x.dtype, mx.float32);
+      assert.equal(x.ndim, 1);
+      assert.deepEqual(x.shape, [3]);
+
+      x = mx.array([0, 1, 2], mx.float32);
+      assert.equal(x.dtype, mx.float32);
+
+      x = mx.array([0.0, 1.0, 2.0]);
+      assert.equal(x.dtype, mx.float32);
+      assert.equal(x.ndim, 1);
+      assert.deepEqual(x.shape, [3]);
+
+      x = mx.array([1, 2, 3], mx.int32);
+      assert.equal(x.dtype, mx.int32);
+      assert.deepEqual(x.tolist(), [1, 2, 3]);
+    });
+  });
 });
 
 function assertArray(a: mx.array, assertion: (arrays: boolean[]) => void) {
