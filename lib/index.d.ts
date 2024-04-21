@@ -24,6 +24,7 @@ export class Dtype {
   size: number;
 }
 
+export const bool: Dtype;
 export const bool_: Dtype;
 export const uint8: Dtype;
 export const uint16: Dtype;
@@ -50,6 +51,7 @@ export const number: DtypeCategory
 export const generic: DtypeCategory
 
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
+type ScalarOrArray = MultiDimensionalArray<boolean | number> | array;
 
 export function array(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32'): array;
 
@@ -106,8 +108,6 @@ export class array {
   T: array;
   var(s?: StreamOrDevice): array;
 }
-
-type ScalarOrArray = boolean | number | number[] | array;
 
 export function abs(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function add(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;

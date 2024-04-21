@@ -197,5 +197,103 @@ describe('array', () => {
       x = mx.array([[1.0, 2.0], [0.0, 3.9]], mx.int32);
       assertArrayAllTrue(mx.arrayEqual(x, mx.array([[1, 2], [0, 3]])));
     });
+
+    it('arrayToList', () => {
+      const types = [mx.bool_, mx.uint32, mx.int32, mx.int64, mx.float32];
+      for (const t of types) {
+        const xSingle = mx.array(1, t);
+        assertArrayAllTrue(mx.equal(xSingle.tolist(), 1));
+      }
+
+      const valsMultiple = [1, 2, 3, 4];
+      const xMultiple = mx.array(valsMultiple);
+      assertArrayAllTrue(mx.equal(xMultiple.tolist(), valsMultiple));
+
+      const vals2D = [[1, 2], [3, 4]];
+      const x2D = mx.array(vals2D);
+      assertArrayAllTrue(mx.equal(x2D.tolist(), vals2D));
+
+      const valsBool = [[1, 0], [0, 1]];
+      const xBool = mx.array(valsBool, mx.bool_);
+      assertArrayAllTrue(mx.equal(xBool.tolist(), valsBool));
+
+      const valsFloat = [[1.5, 2.5], [3.5, 4.5]];
+      const xFloat = mx.array(valsFloat);
+      assertArrayAllTrue(mx.equal(xFloat.tolist(), valsFloat));
+
+      const vals3D = [[[0.5, 1.5], [2.5, 3.5]], [[4.5, 5.5], [6.5, 7.5]]];
+      const x3D = mx.array(vals3D);
+      assertArrayAllTrue(mx.equal(x3D.tolist(), vals3D));
+
+      const valsEmpty = [];
+      const xEmpty = mx.array(valsEmpty);
+      assertArrayAllTrue(mx.equal(xEmpty.tolist(), valsEmpty));
+
+      const valsEmpty2D = [[], []];
+      const xEmpty2D = mx.array(valsEmpty2D);
+      assertArrayAllTrue(mx.equal(xEmpty2D.tolist(), valsEmpty2D));
+
+      const valsHalf = [1.0, 2.0, 3.0, 4.0, 5.0];
+      const xHalfFloat16 = mx.array(valsHalf, mx.float16);
+      assertArrayAllTrue(mx.equal(xHalfFloat16.tolist(), valsHalf));
+
+      const xHalfBfloat16 = mx.array(valsHalf, mx.bfloat16);
+      assertArrayAllTrue(mx.equal(xHalfBfloat16.tolist(), valsHalf));
+    });
+
+    it('dtypeJSScalarPromotion', () => {
+      const tests = [
+        [mx.bool, mx.multiply, false, mx.bool],
+        [mx.bool, mx.multiply, 0, mx.float32],
+        [mx.bool, mx.multiply, 1.0, mx.float32],
+        [mx.int8, mx.multiply, false, mx.int8],
+        [mx.int8, mx.multiply, 0, mx.float32],
+        [mx.int8, mx.multiply, 1.0, mx.float32],
+        [mx.int16, mx.multiply, false, mx.int16],
+        [mx.int16, mx.multiply, 0, mx.float32],
+        [mx.int16, mx.multiply, 1.0, mx.float32],
+        [mx.int32, mx.multiply, false, mx.int32],
+        [mx.int32, mx.multiply, 0, mx.float32],
+        [mx.int32, mx.multiply, 1.0, mx.float32],
+        [mx.int64, mx.multiply, false, mx.int64],
+        [mx.int64, mx.multiply, 0, mx.float32],
+        [mx.int64, mx.multiply, 1.0, mx.float32],
+        [mx.uint8, mx.multiply, false, mx.uint8],
+        [mx.uint8, mx.multiply, 0, mx.float32],
+        [mx.uint8, mx.multiply, 1.0, mx.float32],
+        [mx.uint16, mx.multiply, false, mx.uint16],
+        [mx.uint16, mx.multiply, 0, mx.float32],
+        [mx.uint16, mx.multiply, 1.0, mx.float32],
+        [mx.uint32, mx.multiply, false, mx.uint32],
+        [mx.uint32, mx.multiply, 0, mx.float32],
+        [mx.uint32, mx.multiply, 1.0, mx.float32],
+        [mx.uint64, mx.multiply, false, mx.uint64],
+        [mx.uint64, mx.multiply, 0, mx.float32],
+        [mx.uint64, mx.multiply, 1.0, mx.float32],
+        [mx.float32, mx.multiply, false, mx.float32],
+        [mx.float32, mx.multiply, 0, mx.float32],
+        [mx.float32, mx.multiply, 1.0, mx.float32],
+        [mx.float16, mx.multiply, false, mx.float16],
+        [mx.float16, mx.multiply, 0, mx.float32],
+        [mx.float16, mx.multiply, 1.0, mx.float32],
+      ];
+
+      for (const [dtypeIn, f, v, dtypeOut] of tests) {
+        const x = mx.array(0, dtypeIn as mx.Dtype);
+        const y = (f as (a, dtype) => mx.array)(x, v);
+        assert.equal(y.dtype, dtypeOut);
+      }
+    });
+
+    it('arrayTypeCast', () => {
+      const a = mx.array([0.1, 2.3, -1.3]);
+      const b = [0, 2, -1];
+
+      assert.deepEqual(a.astype(mx.int32).tolist(), b);
+      assert.equal(a.astype(mx.int32).dtype, mx.int32);
+
+      const c = mx.array(b).astype(mx.float32);
+      assert.equal(c.dtype, mx.float32);
+    });
   });
 });

@@ -434,6 +434,7 @@ std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
 void InitArray(napi_env env, napi_value exports) {
   ki::Set(env, exports,
           "Dtype", ki::Class<mx::Dtype>(),
+          "bool", &mx::bool_,
           "bool_", &mx::bool_,
           "uint8", &mx::uint8,
           "uint16", &mx::uint16,
