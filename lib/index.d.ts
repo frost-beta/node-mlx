@@ -49,14 +49,17 @@ export const integer: DtypeCategory
 export const number: DtypeCategory
 export const generic: DtypeCategory
 
-export function array(value: boolean | number | number[], dtype: Dtype? = 'float32'): array;
+type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
+
+export function array(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32'): array;
 
 export class array {
   constructor(value: boolean | number | number[], dtype: Dtype? = 'float32');
 
   astype(dtype: Dtype, s?: StreamOrDevice): array;
   at(index: number, s?: StreamOrDevice): array;
-  item(index: number, s?: StreamOrDevice): any;
+  item(): boolean | number;
+  tolist(): MultiDimensionalArray<boolean | number>;
   dtype: Dtype;
   itemsize: number;
   nbytes?: number;
@@ -103,7 +106,7 @@ export class array {
   var(s?: StreamOrDevice): array;
 }
 
-type ScalarOrArray = number | number[] | boolean | boolean[] | array;
+type ScalarOrArray = boolean | number | number[] | array;
 
 export function abs(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function add(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
@@ -145,6 +148,7 @@ export function diagonal(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function divide(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function divmod(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): [array, array];
 export function equal(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
+export function notEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function erf(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function erfinv(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function exp(array: ScalarOrArray, s?: StreamOrDevice): array;

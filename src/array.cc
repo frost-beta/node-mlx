@@ -3,6 +3,146 @@
 
 namespace ki {
 
+namespace {
+
+// create on heap if T is pointer, otherwise create on stack.
+template<typename T, typename... Args>
+inline T CreateInstance(Args&&... args) {
+  if constexpr (std::is_pointer_v<T>)
+    return new std::remove_pointer_t<T>(std::forward<Args>(args)...);
+  else
+    return typename T::value_type(std::forward<Args>(args)...);
+}
+
+// Implements the constructor of array, which can create on stack or heap.
+template<typename T>
+T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
+  napi_valuetype type;
+  if (napi_typeof(env, value, &type) != napi_ok)
+    return T();
+  switch (type) {
+    case napi_boolean:
+      return CreateInstance<T>(FromNodeTo<bool>(env, value).value(),
+                               dtype.value_or(mx::bool_));
+    case napi_number:
+      return CreateInstance<T>(FromNodeTo<float>(env, value).value(),
+                               dtype.value_or(mx::float32));
+    case napi_object: {
+      if (ki::IsArray(env, value)) {
+        auto v = FromNodeTo<std::vector<float>>(env, value);
+        if (v) {
+          return CreateInstance<T>(
+              v->begin(),
+              std::vector<int>{static_cast<int>(v->size())},
+              mx::float32);
+        }
+      }
+      [[fallthrough]];
+    }
+    default:
+      return T();
+  }
+}
+
+// Convert the array to scalar.
+napi_value Item(mx::array* a, napi_env env) {
+  a->eval();
+  switch (a->dtype()) {
+    case mx::bool_:
+      return ToNodeValue(env, a->item<bool>());
+    case mx::uint8:
+      return ToNodeValue(env, a->item<uint8_t>());
+    case mx::uint16:
+      return ToNodeValue(env, a->item<uint16_t>());
+    case mx::uint32:
+      return ToNodeValue(env, a->item<uint32_t>());
+    case mx::uint64:
+      return ToNodeValue(env, a->item<uint64_t>());
+    case mx::int8:
+      return ToNodeValue(env, a->item<int8_t>());
+    case mx::int16:
+      return ToNodeValue(env, a->item<int16_t>());
+    case mx::int32:
+      return ToNodeValue(env, a->item<int32_t>());
+    case mx::int64:
+      return ToNodeValue(env, a->item<int64_t>());
+    case mx::float16:
+      return ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
+    case mx::float32:
+      return ToNodeValue(env, a->item<float>());
+    case mx::bfloat16:
+      return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
+    case mx::complex64:
+      // FIXME(zcbenz): Represent complex number in JS.
+      return Undefined(env);
+  }
+}
+
+// Convert mx::array to JS array.
+template<typename T, typename U = T>
+napi_value ArrayToNodeValue(napi_env env,
+                            const mx::array& a,
+                            size_t index = 0,
+                            int dim = 0) {
+  if (dim == a.ndim() - 1) {
+    // The last dimension only has scalars and the stride is always 1.
+    napi_value ret = nullptr;
+    napi_create_array_with_length(env, a.shape(dim), &ret);
+    for (size_t i = 0; i < a.shape(dim); ++i) {
+      napi_set_element(env, ret, i,
+                       ToNodeValue(env,
+                                   static_cast<U>(a.data<T>()[index + i])));
+    }
+    return ret;
+  } else {
+    std::vector<napi_value> ret;
+    size_t stride = a.strides()[dim];
+    for (int i = 0; i < a.shape(dim); ++i) {
+      ret.push_back(ArrayToNodeValue<T, U>(env, a, index, dim + 1));
+      index += stride;
+    }
+    return ToNodeValue(env, ret);
+  }
+}
+
+// Implementation of the tolist method.
+napi_value ToList(mx::array* a, napi_env env) {
+  if (a->ndim() == 0)
+    return Item(a, env);
+  a->eval();
+  switch (a->dtype()) {
+    case mx::bool_:
+      return ArrayToNodeValue<bool>(env, *a);
+    case mx::uint8:
+      return ArrayToNodeValue<uint8_t>(env, *a);
+    case mx::uint16:
+      return ArrayToNodeValue<uint16_t>(env, *a);
+    case mx::uint32:
+      return ArrayToNodeValue<uint32_t>(env, *a);
+    case mx::uint64:
+      return ArrayToNodeValue<uint64_t>(env, *a);
+    case mx::int8:
+      return ArrayToNodeValue<int8_t>(env, *a);
+    case mx::int16:
+      return ArrayToNodeValue<int16_t>(env, *a);
+    case mx::int32:
+      return ArrayToNodeValue<int32_t>(env, *a);
+    case mx::int64:
+      return ArrayToNodeValue<int64_t>(env, *a);
+    case mx::float16:
+      return ArrayToNodeValue<mx::float16_t, float>(env, *a);
+    case mx::float32:
+      return ArrayToNodeValue<float>(env, *a);
+    case mx::bfloat16:
+      return ArrayToNodeValue<mx::bfloat16_t, float>(env, *a);
+    case mx::complex64:
+      // FIXME(zcbenz): Represent complex number in JS.
+      return Undefined(env);
+  }
+}
+
+}  // namespace
+
 // Allow passing Dtype to js directly, no memory management involved as they are
 // static globals.
 template<>
@@ -99,30 +239,7 @@ std::optional<mx::Dtype::Category> Type<mx::Dtype::Category>::FromNode(
 mx::array* Type<mx::array>::Constructor(napi_env env,
                                         napi_value value,
                                         std::optional<mx::Dtype> dtype) {
-  napi_valuetype type;
-  if (napi_typeof(env, value, &type) != napi_ok)
-    return nullptr;
-  switch (type) {
-    case napi_boolean:
-      return new mx::array(FromNodeTo<bool>(env, value).value(),
-                           dtype.value_or(mx::bool_));
-    case napi_number:
-      return new mx::array(FromNodeTo<float>(env, value).value(),
-                           dtype.value_or(mx::float32));
-    case napi_object: {
-      if (ki::IsArray(env, value)) {
-        auto v = FromNodeTo<std::vector<float>>(env, value);
-        if (v) {
-          return new mx::array(v->begin(),
-                               {static_cast<int>(v->size())},
-                               mx::float32);
-        }
-      }
-      [[fallthrough]];
-    }
-    default:
-      return nullptr;
-  }
+  return CreateArray<mx::array*>(env, value, std::nullopt);
 }
 
 // static
@@ -147,6 +264,7 @@ void Type<mx::array>::Define(napi_env env,
   // Define array's methods.
   Set(env, prototype,
       "item", MemberFunction(&Item),
+      "tolist", MemberFunction(&ToList),
       "astype", MemberFunction(&mx::astype),
       "flatten", MemberFunction(&ops::Flatten),
       "reshape", MemberFunction(&mx::reshape),
@@ -187,37 +305,15 @@ void Type<mx::array>::Define(napi_env env,
 }
 
 // static
-napi_value Type<mx::array>::Item(mx::array* a, napi_env env) {
-  a->eval();
-  switch (a->dtype()) {
-    case mx::bool_:
-      return ToNodeValue(env, a->item<bool>());
-    case mx::uint8:
-      return ToNodeValue(env, a->item<uint8_t>());
-    case mx::uint16:
-      return ToNodeValue(env, a->item<uint16_t>());
-    case mx::uint32:
-      return ToNodeValue(env, a->item<uint32_t>());
-    case mx::uint64:
-      return ToNodeValue(env, a->item<uint64_t>());
-    case mx::int8:
-      return ToNodeValue(env, a->item<int8_t>());
-    case mx::int16:
-      return ToNodeValue(env, a->item<int16_t>());
-    case mx::int32:
-      return ToNodeValue(env, a->item<int32_t>());
-    case mx::int64:
-      return ToNodeValue(env, a->item<int64_t>());
-    case mx::float16:
-      return ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
-    case mx::float32:
-      return ToNodeValue(env, a->item<float>());
-    case mx::bfloat16:
-      return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
-    case mx::complex64:
-      // FIXME(zcbenz): Represent complex number in JS.
-      return Undefined(env);
-  }
+std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
+                                                   napi_value value) {
+  // The default FromNode method only accepts array instance, with the custom
+  // FromNode converter we can pass scalars to ops directly, making calls like
+  // mx.equal(1, 2) possible.
+  auto a = CreateArray<std::optional<mx::array>>(env, value, std::nullopt);
+  if (a)
+    return a;
+  return AllowPassByValue<mx::array>::FromNode(env, value);
 }
 
 }  // namespace ki

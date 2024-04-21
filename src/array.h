@@ -40,9 +40,6 @@ struct Type<mx::array> : public AllowPassByValue<mx::array> {
                      napi_value prototype);
   static std::optional<mx::array> FromNode(napi_env env,
                                            napi_value value);
-
- private:
-  static napi_value Item(mx::array* a, napi_env env);
 };
 
 }  // namespace ki
