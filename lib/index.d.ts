@@ -74,8 +74,10 @@ export class array {
   shape: number[];
   size: number;
   abs(s?: StreamOrDevice): array;
-  all(s?: StreamOrDevice): array;
-  any(s?: StreamOrDevice): array;
+  all(keepdims?: boolean, s?: StreamOrDevice): array;
+  all(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+  any(keepdims?: boolean, s?: StreamOrDevice): array;
+  any(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   argmax(keepdims?: bool, s?: StreamOrDevice): array;
   argmax(axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
   argmin(keepdims?: bool, s?: StreamOrDevice): array;
@@ -118,9 +120,11 @@ export class array {
 // Ops.
 export function abs(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function add(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
-export function all(array: ScalarOrArray, s?: StreamOrDevice): array;
+export function all(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
+export function all(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function allclose(array1: ScalarOrArray, array2: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): boolean;
-export function any(array: ScalarOrArray, s?: StreamOrDevice): array;
+export function any(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
+export function any(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function arange(start: number, stop?: number, step?: number, dtype?: Dtype, s?: StreamOrDevice): array;
 export function arange(stop: number, dtype?: Dtype, s?: StreamOrDevice): array;
 export function arccos(array: ScalarOrArray, s?: StreamOrDevice): array;

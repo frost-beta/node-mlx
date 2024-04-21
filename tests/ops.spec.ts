@@ -609,7 +609,6 @@ describe('ops', () => {
     const result = mx.abs(a);
     const expected = mx.array([1.0, 1.0, 2.0, 3.0]);
     assert.deepEqual(result.tolist(), expected.tolist());
-
     assert.isTrue((result.tolist() as number[]).every(x => x === Math.abs(x)));
   });
 
@@ -676,5 +675,147 @@ describe('ops', () => {
     const result = mx.reciprocal(a);
     const expected = mx.array([10, 2, 1, 0.5]);
     assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('logaddexp', () => {
+    let a = mx.array([0, 1, 2, 9.0]);
+    let b = mx.array([1, 0, 4, 2.5]);
+
+    let result = mx.logaddexp(a, b);
+    let expected = mx.array([1.31326, 1.31326, 4.12693, 9.0015]);
+
+    assertArrayAllTrue(mx.isclose(result, expected));
+
+    a = mx.array([NaN]);
+    b = mx.array([0.0]);
+    assert.isTrue(isNaN(mx.logaddexp(a, b).item() as number));
+  });
+
+  it('log', () => {
+    const a = mx.array([1, 0.5, 10, 100]);
+    const result = mx.log(a);
+    const expected = mx.array([0., -0.6931472, 2.3025851, 4.6051702]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('log2', () => {
+    const a = mx.array([0.5, 1, 2, 10, 16]);
+    const result = mx.log2(a);
+    const expected = mx.array([-1., 0., 1., 3.321928, 4.]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('log10', () => {
+    const a = mx.array([0.1, 1, 10, 20, 100]);
+    const result = mx.log10(a);
+    const expected = mx.array([-1., 0., 1., 1.30103, 2.]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('exp', () => {
+    const a = mx.array([0, 0.5, -0.5, 5]);
+    const result = mx.exp(a);
+    const expected = mx.array([1.0, 1.6487213, 0.60653067, 148.41316]);
+    assertArrayAllTrue(mx.allclose(result, expected));
+  });
+
+  it('expm1', () => {
+    const a = mx.array([0, 0.5, -0.5, 5]);
+    const result = mx.expm1(a);
+    const expected = mx.array([0.0, 0.6487213, -0.39346933, 147.41316]);
+    assertArrayAllTrue(mx.allclose(result, expected, 1e-5, 1e-5));
+  });
+
+  it('erf', () => {
+    let inputs = [-5, 0.0, 0.5, 1.0, 2.0, 10.0];
+    const x = mx.array(inputs);
+    const expected = mx.array([-0.999999987, 0.0, 0.5205, 0.8427, 0.995322, 1.0]);
+    assertArrayAllTrue(mx.isclose(mx.erf(x), expected));
+  });
+
+  it('erfinv', () => {
+    let inputs = [-5.0, -1.0, 0.5, 0.0, 0.5, 1.0, 5.0];
+    const x = mx.array(inputs);
+    const expected = [NaN, -Infinity, 0.47693628, 0.0, 0.47693628, Infinity, NaN];
+    assertArrayAllTrue(mx.allclose(mx.erfinv(x), expected, 1e-5, 1e-5, true));
+  });
+
+  it('sin', () => {
+    const a = [0, Math.PI / 4, Math.PI / 2, Math.PI, 3 * Math.PI / 4, 2 * Math.PI];
+    const result = mx.sin(a);
+    const expected = mx.array([0, 0.707107, 1, -8.74228e-08, 0.707107, 1.74846e-07]);
+    assertArrayAllTrue(mx.allclose(result, expected));
+  });
+
+  it('cos', () => {
+    const a = [0, Math.PI / 4, Math.PI / 2, Math.PI, 3 * Math.PI / 4, 2 * Math.PI];
+    const result = mx.cos(a);
+    const expected = mx.array([1, 0.707107, -4.37114e-08, -1, -0.707107, 1]);
+    assertArrayAllTrue(mx.allclose(result, expected));
+  });
+
+  it('log1p', () => {
+    const a = mx.array([1, 0.5, 10, 100]);
+    const result = mx.log1p(a);
+    const expected = mx.array([0.6931472, 0.4054651, 2.3978953, 4.6151205]);
+    assertArrayAllTrue(mx.allclose(result, expected));
+  });
+
+  it('sigmoid', () => {
+    const a = mx.array([0.0, 1.0, -1.0, 5.0, -5.0]);
+    const result = mx.sigmoid(a);
+    const expected = [0.0, 1.0, -1.0, 5.0, -5.0].map(val => 1 / (1 + Math.exp(-val)));
+    assertArrayAllTrue(mx.allclose(result, expected));
+  });
+
+  it('allclose', () => {
+    let a = mx.array(1.0);
+    let b = mx.array(1.0);
+    assertArrayAllTrue(mx.allclose(a, b));
+
+    b = mx.array(1.1);
+    assertArrayAllFalse(mx.allclose(a, b));
+    assertArrayAllTrue(mx.allclose(a, b, 0.1));
+    assertArrayAllFalse(mx.allclose(a, b, 0.01));
+    assertArrayAllTrue(mx.allclose(a, b, 0.01, 0.1));
+
+    const c = mx.array(Infinity);
+    assertArrayAllTrue(mx.allclose(c, c));
+  });
+
+  it('isclose', () => {
+    let a = mx.array([Infinity, Infinity, -Infinity]);
+    let b = mx.array([Infinity, -Infinity, -Infinity]);
+    assert.deepEqual(mx.isclose(a, b).tolist(), [true, false, true]);
+
+    a = mx.array([NaN]);
+    assert.deepEqual(mx.isclose(a, a).tolist(), [false]);
+
+    a = mx.array([NaN]);
+    assert.deepEqual(mx.isclose(a, a, 1e-5, 1e-5, true).tolist(), [true]);
+  });
+
+  it('all', () => {
+    const a = mx.array([[true, false], [true, true]]);
+
+    assert.equal(mx.all(a).item(), false);
+    assert.deepEqual(mx.all(a, true).shape, [1, 1]);
+    assert.equal(mx.all(a, [0, 1]).item(), false);
+    assert.deepEqual(mx.all(a, [0]).tolist(), [true, false]);
+    assert.deepEqual(mx.all(a, [1]).tolist(), [false, true]);
+    assert.deepEqual(mx.all(a, 0).tolist(), [true, false]);
+    assert.deepEqual(mx.all(a, 1).tolist(), [false, true]);
+  });
+
+  it('any', () => {
+    const a = mx.array([[true, false], [false, false]]);
+
+    assert.equal(mx.any(a).item(), true);
+    assert.deepEqual(mx.any(a, true).shape, [1, 1]);
+    assert.equal(mx.any(a, [0, 1]).item(), true);
+    assert.deepEqual(mx.any(a, [0]).tolist(), [true, false]);
+    assert.deepEqual(mx.any(a, [1]).tolist(), [true, false]);
+    assert.deepEqual(mx.any(a, 0).tolist(), [true, false]);
+    assert.deepEqual(mx.any(a, 1).tolist(), [true, false]);
   });
 });
