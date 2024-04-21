@@ -174,6 +174,16 @@ mx::array AllClose(const mx::array& a,
                       equal_nan.value_or(false), s);
 }
 
+mx::array IsClose(const mx::array& a,
+                  const mx::array& b,
+                  std::optional<double> rtol,
+                  std::optional<double> atol,
+                  std::optional<bool> equal_nan,
+                  mx::StreamOrDevice s) {
+  return mx::isclose(a, b, rtol.value_or(1e-5), atol.value_or(1e-8),
+                     equal_nan.value_or(false), s);
+}
+
 mx::array Tri(int n,
               std::optional<int> m,
               std::optional<int> k,
@@ -222,24 +232,24 @@ std::vector<mx::array> Split(const mx::array& a,
   }
 }
 
-mx::array ArgMin(const mx::array& a,
-                 std::optional<int> axis,
-                 std::optional<bool> keepdims,
-                 mx::StreamOrDevice s) {
+mx::array ArgMin(const mx::array& a, ki::Arguments* args) {
+  auto axis = args->TryGetNext<int>();
+  auto keepdims = args->TryGetNext<bool>().value_or(false);
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
   if (axis)
-    return mx::argmin(a, *axis, keepdims.value_or(false), s);
+    return mx::argmin(a, *axis, keepdims, s);
   else
-    return mx::argmin(a, keepdims.value_or(false), s);
+    return mx::argmin(a, keepdims, s);
 }
 
-mx::array ArgMax(const mx::array& a,
-                 std::optional<int> axis,
-                 std::optional<bool> keepdims,
-                 mx::StreamOrDevice s) {
+mx::array ArgMax(const mx::array& a, ki::Arguments* args) {
+  auto axis = args->TryGetNext<int>();
+  auto keepdims = args->TryGetNext<bool>().value_or(false);
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
   if (axis)
-    return mx::argmax(a, *axis, keepdims.value_or(false), s);
+    return mx::argmax(a, *axis, keepdims, s);
   else
-    return mx::argmax(a, keepdims.value_or(false), s);
+    return mx::argmax(a, keepdims, s);
 }
 
 mx::array Sort(const mx::array& a,
@@ -568,7 +578,7 @@ void InitOps(napi_env env, napi_value exports) {
           "tri", &ops::Tri,
           "tril", &mx::tril,
           "allclose", &ops::AllClose,
-          "isclose", &mx::isclose,
+          "isclose", &ops::IsClose,
           "all", DimOpWrapper(&mx::all),
           "any", DimOpWrapper(&mx::any),
           "minimum", &mx::minimum,
@@ -588,7 +598,7 @@ void InitOps(napi_env env, napi_value exports) {
           "max", DimOpWrapper(&mx::max),
           "logsumexp", DimOpWrapper(&mx::logsumexp),
           "mean", DimOpWrapper(&mx::mean),
-          "var", &ops::Var,
+          "variance", &ops::Var,
           "std", &ops::Std,
           "split", &ops::Split,
           "argmin", &ops::ArgMin,

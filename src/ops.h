@@ -85,13 +85,9 @@ std::vector<mx::array> Split(const mx::array& a,
                              std::optional<int> axis,
                              mx::StreamOrDevice s);
 mx::array ArgMin(const mx::array& a,
-                 std::optional<int> axis,
-                 std::optional<bool> keepdims,
-                 mx::StreamOrDevice s);
+                 ki::Arguments* args);
 mx::array ArgMax(const mx::array& a,
-                 std::optional<int> axis,
-                 std::optional<bool> keepdims,
-                 mx::StreamOrDevice s);
+                 ki::Arguments* args);
 mx::array Round(const mx::array& a,
                 std::optional<int> decimals,
                 mx::StreamOrDevice s);

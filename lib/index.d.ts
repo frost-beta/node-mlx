@@ -57,10 +57,10 @@ export const generic: DtypeCategory
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 type ScalarOrArray = MultiDimensionalArray<boolean | number> | array;
 
-export function array(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32'): array;
+export function array(value: ScalarOrArray, dtype: Dtype? = 'float32'): array;
 
 export class array {
-  constructor(value: MultiDimensionalArray<boolean | number>, dtype: Dtype? = 'float32');
+  constructor(value: ScalarOrArray, dtype: Dtype? = 'float32');
 
   length: number;
   astype(dtype: Dtype, s?: StreamOrDevice): array;
@@ -76,8 +76,10 @@ export class array {
   abs(s?: StreamOrDevice): array;
   all(s?: StreamOrDevice): array;
   any(s?: StreamOrDevice): array;
-  argmax(s?: StreamOrDevice): array;
-  argmin(s?: StreamOrDevice): array;
+  argmax(keepdims?: bool, s?: StreamOrDevice): array;
+  argmax(axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
+  argmin(keepdims?: bool, s?: StreamOrDevice): array;
+  argmin(axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
   cos(s?: StreamOrDevice): array;
   cummax(s?: StreamOrDevice): array;
   cummin(s?: StreamOrDevice): array;
@@ -110,7 +112,7 @@ export class array {
   sum(s?: StreamOrDevice): array;
   transpose(s?: StreamOrDevice): array;
   T: array;
-  var(s?: StreamOrDevice): array;
+  variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 }
 
 // Ops.
@@ -127,8 +129,10 @@ export function arcsin(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arcsinh(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arctan(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arctanh(array: ScalarOrArray, s?: StreamOrDevice): array;
-export function argmax(array: ScalarOrArray, s?: StreamOrDevice): array;
-export function argmin(array: ScalarOrArray, s?: StreamOrDevice): array;
+export function argmax(array: ScalarOrArray, keepdims?: bool, s?: StreamOrDevice): array;
+export function argmax(array: ScalarOrArray, axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
+export function argmin(array: ScalarOrArray, keepdims?: bool, s?: StreamOrDevice): array;
+export function argmin(array: ScalarOrArray, axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
 export function argpartition(array: ScalarOrArray, kth: number, s?: StreamOrDevice): array;
 export function argsort(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arrayEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
@@ -170,7 +174,7 @@ export function greater(array1: ScalarOrArray, array2: ScalarOrArray, s?: Stream
 export function greaterEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function identity(n: number, dtype?: Dtype, s?: StreamOrDevice): array;
 export function inner(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
-export function isclose(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
+export function isclose(array1: ScalarOrArray, array2: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): array;
 export function isinf(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function isnan(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function isneginf(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -249,7 +253,7 @@ export function transpose(array: ScalarOrArray, axes?: number[], s?: StreamOrDev
 export function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
 export function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
 export function triu(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
-export function variance(array: ScalarOrArray, s?: StreamOrDevice): array;
+export function variance(array: ScalarOrArray, indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 export function where(condition: ScalarOrArray, x: array | null, y: array | null, s?: StreamOrDevice): array;
 export function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
 export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;

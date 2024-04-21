@@ -527,4 +527,154 @@ describe('ops', () => {
     assert.deepEqual(mx.max(x, 0).tolist(), [3, 4]);
     assert.deepEqual(mx.max(x, 1).tolist(), [2, 4]);
   });
+
+  it('argminArgmax', () => {
+    let data = [[1, 2, 3], [4, 5, 6], [7, 8, 9]];
+    let x = mx.array(data);
+
+    assert.deepEqual(mx.argmin(x, 0, true).tolist(), [[0, 0, 0]]);
+    assert.deepEqual(mx.argmin(x, 1, true).tolist(), [[0], [0], [0]]);
+    assert.deepEqual(mx.argmin(x, 0).tolist(), [0, 0, 0]);
+    assert.deepEqual(mx.argmin(x, 1).tolist(), [0, 0, 0]);
+    assert.deepEqual(mx.argmin(x, true).tolist(), [[0]]);
+    assert.equal(mx.argmin(x).item(), 0);
+
+    assert.deepEqual(mx.argmax(x, 0, true).tolist(), [[2, 2, 2]]);
+    assert.deepEqual(mx.argmax(x, 1, true).tolist(), [[2], [2], [2]]);
+    assert.deepEqual(mx.argmax(x, 0).tolist(), [2, 2, 2]);
+    assert.deepEqual(mx.argmax(x, 1).tolist(), [2, 2, 2]);
+    assert.deepEqual(mx.argmax(x, true).tolist(), [[8]]);
+    assert.equal(mx.argmax(x).item(), 8);
+  });
+
+  it('broadcast', () => {
+    let a = mx.array(mx.reshape(mx.arange(200), [10, 20]));
+    let b = mx.broadcastTo(a, [30, 10, 20]);
+    assert.deepEqual([30, 10, 20], b.shape);
+    assertArrayAllTrue(mx.equal(mx.broadcastTo(a, [30, 10, 20]), b));
+
+    b = mx.broadcastTo(a, [1, 10, 20]);
+    assert.deepEqual([1, 10, 20], b.shape);
+    assertArrayAllTrue(mx.equal(mx.reshape(a, [1, 10, 20]), b));
+
+    b = mx.broadcastTo(1, [10, 20]);
+    assert.deepEqual([10, 20], b.shape);
+    assertArrayAllTrue(mx.equal(mx.onesLike(b), b));
+  });
+
+  it('logsumexp', () => {
+    const x = mx.array([[1.0, 2.0], [3.0, 4.0]]);
+    const expected = 4.44;
+    assert.closeTo(mx.logsumexp(x).item() as number, expected, 0.01);
+  });
+
+  it('mean', () => {
+    const x = mx.array([[1, 2], [3, 4]]);
+    assert.equal(mx.mean(x).item(), 2.5);
+    const y = mx.mean(x, true);
+    assert.equal(y.item(), 2.5);
+    assert.deepEqual(y.shape, [1, 1]);
+
+    assert.deepEqual(mx.mean(x, 0).tolist(), [2, 3]);
+    assert.deepEqual(mx.mean(x, 1).tolist(), [1.5, 3.5]);
+  });
+
+  it('var', () => {
+    let x = mx.array([[1, 2], [3, 4]]);
+    assert.equal(mx.variance(x).item(), 1.25);
+    let y = mx.variance(x, null, true);
+    assert.equal(y.item(), 1.25);
+    assert.deepEqual(y.shape, [1, 1]);
+
+    assert.deepEqual(mx.variance(x, 0).tolist(), [1.0, 1.0]);
+    assert.deepEqual(mx.variance(x, 1).tolist(), [0.25, 0.25]);
+
+    x = mx.array([1.0, 2.0]);
+    let out = mx.variance(x, null, false, 2);
+    assert.equal(out.item(), Infinity);
+
+    x = mx.array([1.0, 2.0]);
+    out = mx.variance(x, null, false, 3);
+    assert.equal(out.item(), Infinity);
+  });
+
+  it('std', () => {
+    const x = mx.arange(10);
+    const expected = 2.87;
+    assert.closeTo(mx.std(x).item() as number, expected, 0.01);
+  });
+
+  it('abs', () => {
+    const a = mx.array([-1.0, 1.0, -2.0, 3.0]);
+    const result = mx.abs(a);
+    const expected = mx.array([1.0, 1.0, 2.0, 3.0]);
+    assert.deepEqual(result.tolist(), expected.tolist());
+
+    assert.isTrue((result.tolist() as number[]).every(x => x === Math.abs(x)));
+  });
+
+  it('negative', () => {
+    const a = mx.array([-1.0, 1.0, -2.0, 3.0]);
+    let result = mx.negative(a);
+    let expected = mx.array([1.0, -1.0, 2.0, -3.0]);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
+  it('sign', () => {
+    const a = mx.array([-1.0, 1.0, 0.0, -2.0, 3.0]);
+    let result = mx.sign(a);
+    let expected = mx.array([-1.0, 1.0, 0.0, -1.0, 1.0]);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
+  it('logicalNot', () => {
+    const a = mx.array([-1.0, 1.0, 0.0, 1.0, -2.0, 3.0]);
+    let result = mx.logicalNot(a);
+    let expected = mx.array([false, false, true, false, false, false]);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
+  it('logicalAnd', () => {
+    const a = mx.array([true, false, true, false]);
+    const b = mx.array([true, true, false, false]);
+    let result = mx.logicalAnd(a, b);
+    let expected = mx.array([true, false, false, false]);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
+  it('logicalOr', () => {
+    const a = mx.array([true, false, true, false]);
+    const b = mx.array([true, true, false, false]);
+    const result = mx.logicalOr(a, b);
+    const expected = mx.array([true, true, true, false]);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
+  it('square', () => {
+    const a = mx.array([0.1, 0.5, 1.0, 10.0]);
+    const result = mx.square(a);
+    const expected = mx.array([0.01, 0.25, 1.0, 100.0]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('sqrt', () => {
+    const a = mx.array([0.1, 0.5, 1.0, 10.0]);
+    const result = mx.sqrt(a);
+    const expected = mx.array([0.316227766, 0.707106781, 1.0, 3.16227766]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('rsqrt', () => {
+    const a = mx.array([0.1, 0.5, 1.0, 10.0]);
+    const result = mx.rsqrt(a);
+    const expected = mx.array([3.16227766, 1.414213562, 1.0, 0.316227766]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
+
+  it('reciprocal', () => {
+    const a = mx.array([0.1, 0.5, 1.0, 2.0]);
+    const result = mx.reciprocal(a);
+    const expected = mx.array([10, 2, 1, 0.5]);
+    assertArrayAllTrue(mx.isclose(result, expected));
+  });
 });

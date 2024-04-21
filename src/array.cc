@@ -119,9 +119,13 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
                                dtype.value_or(mx::bool_));
     case napi_object: {
       if (ki::IsArray(env, value)) {
+        // When JS array is passed, first get its shape, then validate it and
+        // decide a proper dtype for it.
         std::vector<int> shape;
         if (!GetShape(env, value, &shape))
           return T();
+        // FIXME(zcbenz): Currently we assume the input array only includes
+        // primitive types, we should support mx.array embedded in JS array.
         bool is_number = true;
         if (!ValidateInputArray(env, value, shape, &is_number))
           return T();
@@ -139,6 +143,13 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
           return CreateInstance<T>(result.begin(),
                                    std::move(shape),
                                    dtype.value_or(mx::bool_));
+        }
+      } else {
+        // Test if it is an mx.array instance.
+        auto a = FromNodeTo<mx::array*>(env, value);
+        if (a) {
+          return CreateInstance<T>(mx::astype(*a.value(),
+                                   dtype.value_or(a.value()->dtype())));
         }
       }
       [[fallthrough]];
@@ -253,7 +264,7 @@ napi_value ToList(mx::array* a, napi_env env) {
 
 }  // namespace
 
-// Allow passing Dtype to js directly, no memory management involved as they are
+// Allow passing Dtype to JS directly, no memory management involved as they are
 // static globals.
 template<>
 struct TypeBridge<mx::Dtype> {
@@ -402,7 +413,7 @@ void Type<mx::array>::Define(napi_env env,
       "max", MemberFunction(DimOpWrapper(&mx::max)),
       "logsumexp", MemberFunction(DimOpWrapper(&mx::logsumexp)),
       "mean", MemberFunction(DimOpWrapper(&mx::mean)),
-      "var", MemberFunction(&ops::Var),
+      "variance", MemberFunction(&ops::Var),
       "split", MemberFunction(&ops::Split),
       "argmin", MemberFunction(&ops::ArgMin),
       "argmax", MemberFunction(&ops::ArgMax),
