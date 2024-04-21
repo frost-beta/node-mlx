@@ -1,3 +1,4 @@
+// Device.
 export type DeviceType = number;
 
 export const cpu: DeviceType;
@@ -10,6 +11,7 @@ export class Device {
 export function defaultDevice(): Device;
 export function setDefaultDevice(device: Device);
 
+// Stream.
 export class Stream {
   device: Device;
 }
@@ -20,6 +22,7 @@ export function newStream(device: Device): Stream;
 
 type StreamOrDevice = Stream | Device | DeviceType | undefined;
 
+// Dtype.
 export class Dtype {
   size: number;
 }
@@ -50,6 +53,7 @@ export const integer: DtypeCategory
 export const number: DtypeCategory
 export const generic: DtypeCategory
 
+// Array.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 type ScalarOrArray = MultiDimensionalArray<boolean | number> | array;
 
@@ -109,10 +113,11 @@ export class array {
   var(s?: StreamOrDevice): array;
 }
 
+// Ops.
 export function abs(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function add(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function all(array: ScalarOrArray, s?: StreamOrDevice): array;
-export function allclose(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): boolean;
+export function allclose(array1: ScalarOrArray, array2: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): boolean;
 export function any(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arange(start: number, stop?: number, step?: number, dtype?: Dtype, s?: StreamOrDevice): array;
 export function arange(stop: number, dtype?: Dtype, s?: StreamOrDevice): array;
@@ -187,7 +192,8 @@ export function matmul(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamO
 export function max(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function max(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function maximum(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
-export function mean(array: ScalarOrArray, s?: StreamOrDevice): array;
+export function mean(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
+export function mean(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function meshgrid(...arrays?: array[]): array[];
 export function min(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function min(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
@@ -247,3 +253,18 @@ export function variance(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function where(condition: ScalarOrArray, x: array | null, y: array | null, s?: StreamOrDevice): array;
 export function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
 export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
+
+// Random.
+namespace random {
+  export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;
+  export function categorical(logits: ScalarOrArray, axis?: number, shape?: number[], numSamples?: number, key?: array, s?: StreamOrDevice): array;
+  export function gumbel(shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function key(seed: BigInt): any;
+  export function normal(shape?: number[], dtype?: Dtype, loc?: number, scale?: number, key?: array, s?: StreamOrDevice): array;
+  export function multivariateNormal(mean: array, cov: array, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function randint(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function seed(seed: BigInt): void;
+  export function split(array: array, num?: number, s?: StreamOrDevice): array;
+  export function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function uniform(low?: ScalarOrArray, high?: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+}

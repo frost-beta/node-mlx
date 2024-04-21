@@ -9,14 +9,16 @@ mx::array Split(const mx::array& a,
   return mx::random::split(a, num.value_or(2), s);
 }
 
-mx::array Uniform(const mx::array& low,
-                  const mx::array& high,
+mx::array Uniform(std::optional<mx::array> low,
+                  std::optional<mx::array> high,
                   std::optional<std::vector<int>> shape,
                   std::optional<mx::Dtype> dtype,
                   std::optional<mx::array> key,
                   mx::StreamOrDevice s) {
   return mx::random::uniform(
-      low, high, std::move(shape.value_or(std::vector<int>())),
+      std::move(low.value_or(mx::array(0))),
+      std::move(high.value_or(mx::array(1))),
+      std::move(shape.value_or(std::vector<int>())),
       dtype.value_or(mx::float32), std::move(key), s);
 }
 
@@ -88,19 +90,24 @@ mx::array Gumbel(std::optional<std::vector<int>> shape,
                             dtype.value_or(mx::float32), std::move(key), s);
 }
 
-mx::array Categorical(const mx::array& logits,
-                      std::optional<int> optional_axis,
-                      std::optional<std::vector<int>> shape,
-                      std::optional<int> num_samples,
-                      std::optional<mx::array> key,
-                      mx::StreamOrDevice s) {
-  if (shape && num_samples) {
+mx::array Categorical(
+    const mx::array& logits,
+    std::optional<int> optional_axis,
+    // Use variant to explicitly allow passing null/undefined as shape.
+    std::optional<std::variant<std::monostate, std::vector<int>>> shape,
+    std::optional<int> num_samples,
+    std::optional<mx::array> key,
+    mx::StreamOrDevice s) {
+  bool has_shape = shape && std::get_if<std::vector<int>>(&shape.value());
+  if (has_shape && num_samples) {
     throw std::invalid_argument(
         "[categorical] At most one of shape or num_samples can be specified.");
   }
   int axis = optional_axis.value_or(-1);
-  if (shape)
-    return mx::random::categorical(logits, axis, *shape, key, s);
+  if (has_shape) {
+    return mx::random::categorical(logits, axis,
+                                   std::get<std::vector<int>>(*shape), key, s);
+  }
   if (num_samples)
     return mx::random::categorical(logits, axis, *num_samples, key, s);
   return mx::random::categorical(logits, axis, key, s);
