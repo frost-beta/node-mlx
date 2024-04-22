@@ -270,6 +270,8 @@ export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 // @ts-ignore
 export function eval(...args: ScalarOrArray[]): void;
 export function asyncEval(...args: ScalarOrArray[]): void;
+export function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
+export function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
 
 // Metal.
 export namespace metal {

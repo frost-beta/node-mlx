@@ -1,0 +1,25 @@
+Convert python test code to TypeScript using mocha and chai's assert APIs.
+
+Use 2 spaces indentation.
+Add ; after statements.
+Remove comments.
+Do not include import or require statements.
+Do not put spaces before output's lines.
+Use ' instead of " for strings.
+Convert to camelCase for snake_case names, for example array_equal => arrayEqual, ones_like => onesLike, logical_not => logicalNot.
+Do not convert mx.array_equal to mx.equal, convert it mx.arrayEqual instead.
+For names like tolist/isnan, do not change caps, for example isnan => isnan, allclose => allclose.
+For comparions like `a == b`, use global op `mx.equal(a, b)` instead.
+Remove "Test" prefix from test names, e.g. TestEquality => equality.
+Use () => instead of function() for defining functions.
+Use const when possible, but use let if the same name is reused in the same scope.
+Use true/false instead of True/False.
+Convert python tuples to TypeScript Arrays.
+For calls of len function, convert to the length property.
+Use `assertArrayAllFalse` and `assertArrayAllTrue` helpers for assersion the results of ops like mx.equal.
+Use `assert.deepEqual` to compare JavaScript arrays, for example assert.deepEqual(x.tolist(), [1.0, 1.0]);.
+Use `assert.equal` to compare other things like dtype.
+For arithmetic operations like a + b, use ops instead, for example a + b to mx.add(a, b) , a % b to mx.remainder(a, b), a * b to mx.multiply(a, b).
+The TypeScript APIs does not take object arguments, so convert code like mx.array(2, dtype=dt) to mx.array(2, dt).
+
+Write code inside markdown codeblock.
