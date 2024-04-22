@@ -122,13 +122,13 @@ describe('random', () => {
 
     mean = mx.array([4.0, 7.0]);
     cov = mx.array([[2, 0.5], [0.5, 1]]);
-    let data = mx.random.multivariateNormal(mean, cov, [nTest], mx.float32, key);
+    let data = mx.random.multivariateNormal(mean, cov, [nTest], mx.float32, key, mx.cpu);
 
     checkJointlyGaussian(data, mean, cov);
 
     mean = mx.arange(3);
     cov = mx.array([[1, -1, 0.5], [-1, 1, -0.5], [0.5, -0.5, 1]]);
-    data = mx.random.multivariateNormal(mean, cov, [nTest], mx.float32, key);
+    data = mx.random.multivariateNormal(mean, cov, [nTest], mx.float32, key, mx.cpu);
     checkJointlyGaussian(data, mean, cov);
   });
 
