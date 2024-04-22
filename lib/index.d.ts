@@ -262,6 +262,21 @@ export function where(condition: ScalarOrArray, x: array | null, y: array | null
 export function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
 export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 
+// Transforms.
+export function eval(...args: array[]): void;
+
+// Metal.
+namespace metal {
+  export function isAvailable(): boolean;
+  export function getActiveMemory(): number;
+  export function getPeakMemory(): number;
+  export function getCacheMemory(): number;
+  export function setMemoryLimit(limit: number, relaxed?: boolean = true): number;
+  export function setCacheLimit(limit: number): number;
+  export function startCapture(path: string): boolean;
+  export function stopCapture(): void;
+}
+
 // Random.
 namespace random {
   export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;
