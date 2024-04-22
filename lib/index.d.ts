@@ -277,6 +277,22 @@ namespace metal {
   export function stopCapture(): void;
 }
 
+// FFT.
+namespace fft {
+  export function fft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
+  export function ifft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
+  export function fft2(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function ifft2(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function fftn(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function ifftn(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function rfft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
+  export function irfft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
+  export function rfft2(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function irfft2(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function rfftn(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+  export function irfftn(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
+}
+
 // Random.
 namespace random {
   export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;

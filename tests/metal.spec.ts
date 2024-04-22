@@ -1,7 +1,7 @@
 import mx from '..';
 import {assert} from 'chai';
 
-describe('Metal', () => {
+describe('metal', () => {
   before(function() {
     if (!mx.metal.isAvailable())
       this.skip();
