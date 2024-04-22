@@ -277,6 +277,21 @@ namespace metal {
   export function stopCapture(): void;
 }
 
+// Random.
+namespace random {
+  export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;
+  export function categorical(logits: ScalarOrArray, axis?: number, shape?: number[], numSamples?: number, key?: array, s?: StreamOrDevice): array;
+  export function gumbel(shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function key(seed: BigInt): any;
+  export function normal(shape?: number[], dtype?: Dtype, loc?: number, scale?: number, key?: array, s?: StreamOrDevice): array;
+  export function multivariateNormal(mean: array, cov: array, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function randint(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function seed(seed: BigInt): void;
+  export function split(array: array, num?: number, s?: StreamOrDevice): array;
+  export function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function uniform(low?: ScalarOrArray, high?: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+}
+
 // FFT.
 namespace fft {
   export function fft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
@@ -293,17 +308,10 @@ namespace fft {
   export function irfftn(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
 }
 
-// Random.
-namespace random {
-  export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;
-  export function categorical(logits: ScalarOrArray, axis?: number, shape?: number[], numSamples?: number, key?: array, s?: StreamOrDevice): array;
-  export function gumbel(shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
-  export function key(seed: BigInt): any;
-  export function normal(shape?: number[], dtype?: Dtype, loc?: number, scale?: number, key?: array, s?: StreamOrDevice): array;
-  export function multivariateNormal(mean: array, cov: array, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
-  export function randint(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
-  export function seed(seed: BigInt): void;
-  export function split(array: array, num?: number, s?: StreamOrDevice): array;
-  export function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
-  export function uniform(low?: ScalarOrArray, high?: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+// Linear algebra.
+namespace linalg {
+  export function norm(array: ScalarOrArray, norm?: number | string, axes?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+  export function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
+  export function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
+  export function inv(array: ScalarOrArray, s?: StreamOrDevice): array;
 }

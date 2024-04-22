@@ -1,7 +1,7 @@
 import mx from '..';
 import {assert} from 'chai';
 
-// FIXME(zcbenz): The tests were written by ChatGPT, rewrite them after adding
+// TODO(zcbenz): The tests were written by ChatGPT, rewrite them after adding
 // support for complex numbers.
 describe('fft', () => {
   it('fft', () => {

@@ -1,5 +1,5 @@
 import mx from '..';
-import {assertArrayAllTrue, assertArrayNotAllTrue, assertArrayAllFalse} from './utils';
+import {assertArrayAllTrue, assertArrayAllFalse} from './utils';
 import {assert} from 'chai';
 
 describe('ops', () => {
