@@ -272,6 +272,14 @@ export function eval(...args: ScalarOrArray[]): void;
 export function asyncEval(...args: ScalarOrArray[]): void;
 export function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
 export function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
+type ValueAndGradFunctionScalar = (...args: array[]) => [array, array]
+type ValueAndGradFunctionGeneric = (...args: array[]) => [array[], array[]]
+export function valueAndGrad(func: (...args: array[]) => array, argnums?: number | number[]): ValueAndGradFunctionScalar;
+export function valueAndGrad(func: (...args: array[]) => array[], argnums?: number | number[]): ValueAndGradFunctionGeneric;
+type GradFunctionScalar = (...args: array[]) => array
+type GradFunctionGeneric = (...args: array[]) => array[]
+export function grad(func: (...args: array[]) => array, argnums?: number | number[]): GradFunctionScalar;
+export function grad(func: (...args: array[]) => array[], argnums?: number | number[]): GradFunctionGeneric;
 
 // Metal.
 export namespace metal {
