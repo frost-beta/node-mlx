@@ -8,17 +8,19 @@ export class Device {
   type: DeviceType;
 }
 
+type DeviceOrType = Device | DeviceType;
+
 export function defaultDevice(): Device;
-export function setDefaultDevice(device: Device);
+export function setDefaultDevice(device: DeviceOrType);
 
 // Stream.
 export class Stream {
   device: Device;
 }
 
-export function defaultStream(device: Device): Stream;
+export function defaultStream(device: DeviceOrType): Stream;
 export function setDefaultStream();
-export function newStream(device: Device): Stream;
+export function newStream(device: DeviceOrType): Stream;
 export function toStream(s: StreamOrDevice): Stream;
 export function stream(s: StreamOrDevice): Disposable;
 
@@ -57,7 +59,7 @@ export const generic: DtypeCategory
 
 // Array.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
-type ScalarOrArray = MultiDimensionalArray<boolean | number> | array;
+type ScalarOrArray = MultiDimensionalArray<boolean | number | array>;
 
 export function array(value: ScalarOrArray, dtype?: Dtype): array;
 
@@ -266,7 +268,8 @@ export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 
 // Transforms.
 // @ts-ignore
-export function eval(...args: array[]): void;
+export function eval(...args: ScalarOrArray[]): void;
+export function asyncEval(...args: ScalarOrArray[]): void;
 
 // Metal.
 export namespace metal {
