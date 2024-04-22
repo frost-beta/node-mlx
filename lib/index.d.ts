@@ -19,8 +19,10 @@ export class Stream {
 export function defaultStream(device: Device): Stream;
 export function setDefaultStream();
 export function newStream(device: Device): Stream;
+export function toStream(s: StreamOrDevice): Stream;
+export function stream(s: StreamOrDevice): Disposable;
 
-type StreamOrDevice = Stream | Device | DeviceType | undefined;
+export type StreamOrDevice = Stream | Device | DeviceType | undefined;
 
 // Dtype.
 export class Dtype {

@@ -23,5 +23,6 @@ void InitStream(napi_env env, napi_value exports) {
           "Stream", ki::Class<mx::Stream>(),
           "defaultStream", mx::default_stream,
           "setDefaultStream", mx::set_default_stream,
-          "newStream", mx::new_stream);
+          "newStream", mx::new_stream,
+          "toStream", mx::to_stream);
 }

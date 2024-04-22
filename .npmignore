@@ -1,7 +1,5 @@
 # Unused source files
-/src/
-.github
-tsconfig.json
+/.github/
 
 # Everything else should keep same with .gitignore
 *.swp
@@ -10,5 +8,6 @@ tsconfig.json
 yarn.lock
 package-lock.json
 npm-debug.log
+yarn-error.log
 /node_modules/
 /build/

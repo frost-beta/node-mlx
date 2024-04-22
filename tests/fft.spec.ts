@@ -4,6 +4,10 @@ import {assert} from 'chai';
 // TODO(zcbenz): The tests were written by ChatGPT, rewrite them after adding
 // support for complex numbers.
 describe('fft', () => {
+  let useCpu: Disposable;
+  before(() => useCpu = mx.stream(mx.cpu));
+  after(() => useCpu[Symbol.dispose]());
+
   it('fft', () => {
     const input = mx.array([0, 1, 2, 3]);
     const result = mx.fft.fft(input);
