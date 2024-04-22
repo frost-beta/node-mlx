@@ -57,10 +57,10 @@ export const generic: DtypeCategory
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 type ScalarOrArray = MultiDimensionalArray<boolean | number> | array;
 
-export function array(value: ScalarOrArray, dtype: Dtype? = 'float32'): array;
+export function array(value: ScalarOrArray, dtype?: Dtype): array;
 
 export class array {
-  constructor(value: ScalarOrArray, dtype: Dtype? = 'float32');
+  constructor(value: ScalarOrArray, dtype?: Dtype);
 
   length: number;
   astype(dtype: Dtype, s?: StreamOrDevice): array;
@@ -78,10 +78,10 @@ export class array {
   all(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   any(keepdims?: boolean, s?: StreamOrDevice): array;
   any(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-  argmax(keepdims?: bool, s?: StreamOrDevice): array;
-  argmax(axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
-  argmin(keepdims?: bool, s?: StreamOrDevice): array;
-  argmin(axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
+  argmax(keepdims?: boolean, s?: StreamOrDevice): array;
+  argmax(axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
+  argmin(keepdims?: boolean, s?: StreamOrDevice): array;
+  argmin(axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
   cos(s?: StreamOrDevice): array;
   cummax(s?: StreamOrDevice): array;
   cummin(s?: StreamOrDevice): array;
@@ -133,16 +133,16 @@ export function arcsin(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arcsinh(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arctan(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arctanh(array: ScalarOrArray, s?: StreamOrDevice): array;
-export function argmax(array: ScalarOrArray, keepdims?: bool, s?: StreamOrDevice): array;
-export function argmax(array: ScalarOrArray, axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
-export function argmin(array: ScalarOrArray, keepdims?: bool, s?: StreamOrDevice): array;
-export function argmin(array: ScalarOrArray, axis?: number, keepdims?: bool, s?: StreamOrDevice): array;
+export function argmax(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
+export function argmax(array: ScalarOrArray, axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
+export function argmin(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
+export function argmin(array: ScalarOrArray, axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
 export function argpartition(array: ScalarOrArray, kth: number, s?: StreamOrDevice): array;
 export function argsort(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arrayEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
-export function atleast1d(...arrays?: array[]): array;
-export function atleast2d(...arrays?: array[]): array;
-export function atleast3d(...arrays?: array[]): array;
+export function atleast1d(...arrays: array[]): array;
+export function atleast2d(...arrays: array[]): array;
+export function atleast3d(...arrays: array[]): array;
 export function broadcastTo(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
 export function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function clip(array: ScalarOrArray, aMin: number, aMax: number, s?: StreamOrDevice): array;
@@ -202,7 +202,7 @@ export function max(array: ScalarOrArray, axis?: number | number[], keepdims?: b
 export function maximum(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function mean(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function mean(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-export function meshgrid(...arrays?: array[]): array[];
+export function meshgrid(...arrays: array[]): array[];
 export function min(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function min(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function minimum(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
@@ -263,22 +263,23 @@ export function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevic
 export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 
 // Transforms.
+// @ts-ignore
 export function eval(...args: array[]): void;
 
 // Metal.
-namespace metal {
+export namespace metal {
   export function isAvailable(): boolean;
   export function getActiveMemory(): number;
   export function getPeakMemory(): number;
   export function getCacheMemory(): number;
-  export function setMemoryLimit(limit: number, relaxed?: boolean = true): number;
+  export function setMemoryLimit(limit: number, relaxed?: boolean): number;
   export function setCacheLimit(limit: number): number;
   export function startCapture(path: string): boolean;
   export function stopCapture(): void;
 }
 
 // Random.
-namespace random {
+export namespace random {
   export function bernoulli(p?: ScalarOrArray, shape?: number[], key?: array, s?: StreamOrDevice): array;
   export function categorical(logits: ScalarOrArray, axis?: number, shape?: number[], numSamples?: number, key?: array, s?: StreamOrDevice): array;
   export function gumbel(shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
@@ -293,7 +294,7 @@ namespace random {
 }
 
 // FFT.
-namespace fft {
+export namespace fft {
   export function fft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
   export function ifft(array: ScalarOrArray, n?: number, axis?: number, s?: StreamOrDevice): array;
   export function fft2(array: ScalarOrArray, n?: number[], axes?: number[], s?: StreamOrDevice): array;
@@ -309,7 +310,7 @@ namespace fft {
 }
 
 // Linear algebra.
-namespace linalg {
+export namespace linalg {
   export function norm(array: ScalarOrArray, norm?: number | string, axes?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   export function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
   export function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
