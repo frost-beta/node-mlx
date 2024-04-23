@@ -128,6 +128,13 @@ describe('array', () => {
       assert.equal(x.item(), false);
       assert.isTrue(typeof x.item() === 'boolean');
 
+      x = mx.array(mx.complex(1, 1));
+      assert.equal(x.ndim, 0);
+      assert.deepEqual(x.shape, []);
+      assert.equal(x.dtype, mx.complex64);
+      assert.deepEqual(x.item(), {re: 1, im: 1});
+      assert.isTrue(typeof x.item() === 'object');
+
       x = mx.array([true, false, true]);
       assert.equal(x.dtype, mx.bool_);
       assert.equal(x.ndim, 1);
@@ -149,6 +156,11 @@ describe('array', () => {
       assert.equal(x.dtype, mx.float32);
       assert.equal(x.ndim, 1);
       assert.deepEqual(x.shape, [3]);
+
+      x = mx.array([mx.complex(0, 1), mx.complex(1)]);
+      assert.equal(x.dtype, mx.complex64);
+      assert.equal(x.ndim, 1);
+      assert.deepEqual(x.shape, [2]);
 
       x = mx.array([1, 2, 3], mx.int32);
       assert.equal(x.dtype, mx.int32);
@@ -196,6 +208,9 @@ describe('array', () => {
 
       x = mx.array([[1.0, 2.0], [0.0, 3.9]], mx.int32);
       assertArrayAllTrue(mx.arrayEqual(x, mx.array([[1, 2], [0, 3]])));
+
+      x = mx.array([mx.complex(1, 0), mx.complex(0, 2)], mx.complex64);
+      assert.deepEqual(x.tolist(), [{re: 1, im: 0}, {re: 0, im: 2}]);
     });
 
     it('arrayToList', () => {

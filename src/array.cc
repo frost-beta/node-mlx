@@ -1,9 +1,17 @@
 #include "src/array.h"
+#include "src/complex.h"
 #include "src/ops.h"
 
 namespace ki {
 
 namespace {
+
+// The possible type of the elements of JS Array.
+enum InputType {
+  kBoolean,
+  kNumber,
+  kComplex,
+};
 
 // Convert dtype to string.
 const char* DtypeToString(mx::Dtype* dtype) {
@@ -72,7 +80,7 @@ bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
 bool ValidateInputArray(napi_env env,
                         napi_value value,
                         const std::vector<int>& shape,
-                        bool* is_number,
+                        std::optional<InputType>* input_type,
                         size_t dim = 0) {
   if (dim >= shape.size()) {
     napi_throw_type_error(env, nullptr,
@@ -80,6 +88,7 @@ bool ValidateInputArray(napi_env env,
     return false;
   }
 
+  // Input array should match the shape.
   uint32_t length;
   if (napi_get_array_length(env, value, &length) != napi_ok)
     return false;
@@ -91,23 +100,28 @@ bool ValidateInputArray(napi_env env,
   if (shape[dim] == 0)
     return true;
 
+  // Iterate the elements to determine the dtype.
   for (uint32_t i = 0; i < length; ++i) {
     napi_value el;
     if (napi_get_element(env, value, i, &el) != napi_ok)
       return false;
     if (IsArray(env, el)) {
-      if (ValidateInputArray(env, el, shape, is_number, dim + 1))
+      // Look into nested array.
+      if (ValidateInputArray(env, el, shape, input_type, dim + 1))
         continue;
       else
         return false;
     }
+    // Check the type of each element.
     napi_valuetype type;
     if (napi_typeof(env, el, &type) != napi_ok)
       return false;
     if (type == napi_boolean)
-      *is_number = false;
+      *input_type = std::max(input_type->value_or(kBoolean), kBoolean);
     else if (type == napi_number)
-      *is_number = true;
+      *input_type = std::max(input_type->value_or(kBoolean), kNumber);
+    else if (type == napi_object && IsComplexNumber(env, el))
+      *input_type = std::max(input_type->value_or(kBoolean), kComplex);
     else
       return false;
   }
@@ -158,23 +172,34 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
           return T();
         // FIXME(zcbenz): Currently we assume the input array only includes
         // primitive types, we should support mx.array embedded in JS array.
-        bool is_number = true;
-        if (!ValidateInputArray(env, value, shape, &is_number))
+        std::optional<InputType> largest_type;
+        if (!ValidateInputArray(env, value, shape, &largest_type))
           return T();
-        if (is_number) {
+        InputType element_type = largest_type.value_or(kNumber);
+        if (element_type == kNumber) {
           std::vector<float> result;
           if (!FlattenArray(env, value, &result))
             return T();
           return CreateInstance<T>(result.begin(),
                                    std::move(shape),
                                    dtype.value_or(mx::float32));
-        } else {
+        } else if (element_type == kBoolean) {
           std::vector<bool> result;
           if (!FlattenArray(env, value, &result))
             return T();
           return CreateInstance<T>(result.begin(),
                                    std::move(shape),
                                    dtype.value_or(mx::bool_));
+        } else if (element_type == kComplex) {
+          std::vector<std::complex<float>> result;
+          if (!FlattenArray(env, value, &result))
+            return T();
+          return CreateInstance<T>(
+              reinterpret_cast<mx::complex64_t*>(result.data()),
+              std::move(shape),
+              dtype.value_or(mx::complex64));
+        } else {
+          return T();
         }
       } else {
         // Test if it is an mx.array instance.
@@ -182,6 +207,11 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
         if (a) {
           return CreateInstance<T>(mx::astype(*a.value(),
                                    dtype.value_or(a.value()->dtype())));
+        }
+        // Test complex number.
+        auto c = FromNodeTo<std::complex<float>>(env, value);
+        if (c) {
+          return CreateInstance<T>(*c, dtype.value_or(mx::complex64));
         }
       }
       [[fallthrough]];
@@ -228,9 +258,8 @@ napi_value Item(mx::array* a, napi_env env) {
       return ToNodeValue(env, a->item<float>());
     case mx::bfloat16:
       return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
-    default:
-      // FIXME(zcbenz): Represent complex number in JS.
-      return Undefined(env);
+    case mx::complex64:
+      return ToNodeValue(env, a->item<std::complex<float>>());
   }
 }
 
@@ -288,9 +317,8 @@ napi_value ToList(mx::array* a, napi_env env) {
       return ArrayToNodeValue<float>(env, *a);
     case mx::bfloat16:
       return ArrayToNodeValue<mx::bfloat16_t, float>(env, *a);
-    default:
-      // FIXME(zcbenz): Represent complex number in JS.
-      return Undefined(env);
+    case mx::complex64:
+      return ArrayToNodeValue<std::complex<float>>(env, *a);
   }
 }
 

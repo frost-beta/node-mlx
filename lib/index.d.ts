@@ -57,9 +57,17 @@ export const integer: DtypeCategory
 export const number: DtypeCategory
 export const generic: DtypeCategory
 
+// Complex number.
+interface Complex {
+  re: number;
+  im?: number;
+}
+export function complex(real: number, imag?: number): Complex;
+
 // Array.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
-type ScalarOrArray = MultiDimensionalArray<boolean | number | array>;
+type Scalar = boolean | number | Complex;
+type ScalarOrArray = MultiDimensionalArray<Scalar | array>;
 
 export function array(value: ScalarOrArray, dtype?: Dtype): array;
 
@@ -69,8 +77,8 @@ export class array {
   length: number;
   astype(dtype: Dtype, s?: StreamOrDevice): array;
   at(index: number, s?: StreamOrDevice): array;
-  item(): boolean | number;
-  tolist(): MultiDimensionalArray<boolean | number>;
+  item(): Scalar;
+  tolist(): MultiDimensionalArray<Scalar>;
   dtype: Dtype;
   itemsize: number;
   nbytes?: number;
