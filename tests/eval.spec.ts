@@ -13,6 +13,18 @@ describe('eval', () => {
       assert.deepEqual(x.tolist(), [[1, 1], [1, 1]]);
   });
 
+  it('retainGraph', () => {
+    const fun = x => {
+      let y = mx.multiply(3, x);
+      mx.eval(y);
+      return mx.multiply(2, y);
+    };
+
+    const dfunDx = mx.grad(fun);
+    const y = dfunDx(mx.array(1.0));
+    assert.equal(y.item(), 6.0);
+  });
+
   it('evalMixed', () => {
     const one = mx.array(1);
     let x = mx.add(mx.add(one, 1), 1);
@@ -46,6 +58,18 @@ describe('eval', () => {
     let y = mx.add(x, 1);
     mx.asyncEval(y);
     assert.equal(x.item(), 3);
+  });
+
+  it('asyncEvalInTrace', () => {
+    const fun = (x) => {
+      let y = mx.add(x, 1.0);
+      mx.asyncEval(y);
+      return mx.exp(y);
+    };
+
+    assert.throws(() => {
+      mx.grad(fun)(mx.array(1.0));
+    }, Error);
   });
 
   it('asyncEvalIntoEval', () => {

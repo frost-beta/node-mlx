@@ -16,19 +16,28 @@ bool ReadArgsToArrays(ki::Arguments* args, std::vector<mx::array>* results) {
 }
 
 // Execute JS function with primals.
-napi_value ExecuteWithPrimals(napi_env env,
-                              napi_value js_func,
-                              const std::vector<mx::array>& primals) {
+std::optional<std::vector<mx::array>> ExecuteWithPrimals(
+    napi_env env,
+    napi_value js_func,
+    const std::vector<mx::array>& primals) {
   // Convert primals to JS values.
   std::vector<napi_value> args;
   for (const mx::array& primal : primals)
     args.push_back(ki::ToNodeValue(env, primal));
   // Call the JS function with primals.
-  napi_value result = nullptr;
-  napi_make_callback(env, nullptr, js_func, js_func,
-                     args.size(), args.empty() ? nullptr : &args.front(),
-                     &result);
-  return result;
+  napi_value result;
+  if (napi_make_callback(env, nullptr, js_func, js_func,
+                         args.size(), args.empty() ? nullptr : &args.front(),
+                         &result) != napi_ok) {
+    return std::nullopt;
+  }
+  // Convert result to vector.
+  if (auto a = ki::FromNodeTo<mx::array*>(env, result); a)
+    return std::vector<mx::array>{*a.value()};
+  if (auto v = ki::FromNodeTo<std::vector<mx::array>>(env, result); v)
+    return std::move(*v);
+  ki::ThrowError(env, "function does not return mx.array or Array of mx.array");
+  return std::nullopt;
 }
 
 // A template converter for ops that accept infinite |array|s.
@@ -61,15 +70,8 @@ JVPOpWrapper(
                 std::vector<mx::array> primals,
                 std::vector<mx::array> tangents) {
     auto vfunc = [env, js_func](const std::vector<mx::array>& primals) {
-      // Call the JS function with primals.
-      napi_value result = ExecuteWithPrimals(env, js_func, primals);
-      // Convert result to vector.
-      if (auto a = ki::FromNodeTo<mx::array*>(env, result); a)
-        return std::vector<mx::array>{*a.value()};
-      if (auto v = ki::FromNodeTo<std::vector<mx::array>>(env, result); v)
-        return std::move(*v);
-      throw new std::runtime_error("function does not return mx.array or "
-                                   "an Array of mx.array");
+      return ExecuteWithPrimals(env, js_func, primals)
+          .value_or(std::vector<mx::array>());
     };
     return func(vfunc, primals, tangents);
   };
@@ -91,17 +93,9 @@ ValueAndGrad(napi_env env,
   bool multi_gradients = gradient_indices.size() > 1;
   // Call value_and_grad with the JS function.
   auto func = mx::value_and_grad(
-      [env, js_func = std::move(js_func)](
-          const std::vector<mx::array>& primals) {
-        // Call the JS function with primals.
-        napi_value result = ExecuteWithPrimals(env, js_func.Value(), primals);
-        // Convert result to vector.
-        if (auto a = ki::FromNodeTo<mx::array*>(env, result); a)
-          return std::vector<mx::array>{*a.value()};
-        if (auto v = ki::FromNodeTo<std::vector<mx::array>>(env, result); v)
-          return std::move(*v);
-        throw new std::runtime_error("function does not return mx.array or "
-                                     "an Array of mx.array or scalar");
+      [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
+        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals)
+            .value_or(std::vector<mx::array>());
       }, std::move(gradient_indices));
   // Return a JS function that converts JS args into primals.
   return [env, func = std::move(func), multi_gradients](ki::Arguments* args) {
@@ -110,6 +104,8 @@ ValueAndGrad(napi_env env,
     if (!ReadArgsToArrays(args, &arrays))
       return ret;
     auto results = func(std::move(arrays));
+    if (ki::IsExceptionPending(env))
+      return ret;
     // Unflatten the results.
     if (results.first.size() > 1)
       ret.first = ki::ToNodeValue(env, results.first);
