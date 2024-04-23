@@ -1070,4 +1070,217 @@ describe('ops', () => {
       }
     });
   });
+
+  describe('binaryOps', () => {
+    const testOps = (tfOp, mlxOp, x1, x2, y1, y2, atol) => {
+      let rTf = tfOp(x1, x2);
+      let rMlx = mlxOp(y1, y2);
+      mx.eval(rMlx);
+      assertArrayAllTrue(mx.allclose(rMlx, rTf.arraySync(), atol));
+    };
+
+    const x1 = tf.maximum(tf.randomNormal([18, 28, 38]), 0.1);
+    const x2 = tf.maximum(tf.randomNormal([18, 28, 38]), 0.1);
+    const y1 = mx.array(x1.arraySync());
+    const y2 = mx.array(x2.arraySync());
+
+    const ops = {
+      'add': 'add',
+      'subtract': 'sub',
+      'multiply': 'mul',
+      'divide': 'div',
+      'floorDivide': 'floorDiv',
+      'maximum': 'maximum',
+      'minimum': 'minimum',
+      'power': 'pow'
+    };
+
+    for (let [npOp, tfOp] of Object.entries(ops)) {
+      it(npOp, () => {
+        const x1_ = x1.toFloat();
+        const x2_ = x2.toFloat();
+        const y1_ = mx.array(x1_.arraySync());
+        const y2_ = mx.array(x2_.arraySync());
+
+        testOps(tf[tfOp], mx[npOp], x1_, x2_, y1_, y2_, 1e-6);
+      });
+    }
+  });
+
+  describe('irregularBinaryOps', () => {
+    const dims = [2, 3, 4, 5];
+    const size = 3;
+    const trialMul = 2;
+
+    for (let d of dims) {
+      it(`${d}Dim`, () => {
+        let anp = tf.randomUniform([Math.pow(size, d)], -20, 20, 'int32')
+                                .reshape(Array(d).fill(size));
+        let bnp = tf.randomUniform([Math.pow(size, d)], -20, 20, 'int32')
+                                .reshape(Array(d).fill(size));
+        for (let i = 0; i < trialMul * d; i++) {
+          const amlx = mx.array(anp.arraySync());
+          const bmlx = mx.array(bnp.arraySync());
+          const aT = Array.from(tf.util.createShuffledIndices(d));
+          const bT = Array.from(tf.util.createShuffledIndices(d));
+          let outnp = tf.add(anp.transpose(aT), bnp.transpose(bT));
+          let outmlx = mx.add(mx.transpose(amlx, aT), mx.transpose(bmlx, bT));
+
+          assert.deepEqual(outnp.arraySync(), outmlx.tolist());
+        }
+      });
+    }
+
+    for (let d of dims) {
+      it(`${d}DimBroadcast`, () => {
+        let anp = tf.randomUniform([Math.pow(size, d)], -20, 20, 'int32')
+                                .reshape(Array(d).fill(size));
+        for (let nBsx = 0; nBsx < d; nBsx++) {
+          let bnp = tf.randomUniform([Math.pow(size, nBsx)], -20, 20, 'int32')
+                                  .reshape(Array(nBsx).fill(size));
+          for (let i = 0; i < trialMul * d; i++) {
+            const amlx = mx.array(anp.arraySync());
+            const bmlx = mx.array(bnp.arraySync());
+            const bShape = Array(d - nBsx).fill(1).concat(Array(nBsx).fill(size));
+            tf.util.shuffle(bShape);
+
+            let outnp = tf.add(anp, bnp.reshape(bShape));
+            let outmlx = mx.add(amlx, mx.reshape(bmlx, bShape));
+            assert.deepEqual(outnp.arraySync(), outmlx.tolist());
+          }
+        }
+      });
+    }
+  });
+
+  it('concatenate', () => {
+    const aTf = tf.randomNormal([32, 32, 32]);
+    const bTf = tf.randomNormal([32, 32, 32]);
+    const aMlx = mx.array(aTf.arraySync());
+    const bMlx = mx.array(bTf.arraySync());
+
+    const axes = [0, 1, 2];
+    const permutations = [
+      [0, 1, 2],
+      [0, 2, 1],
+      [1, 0, 2],
+      [1, 2, 0],
+      [2, 0, 1],
+      [2, 1, 0],
+    ];
+
+    for (let axis of axes) {
+      for (let p of permutations) {
+        const cTf = tf.concat([aTf, tf.transpose(bTf, p)], axis);
+        const cMlx = mx.concatenate([aMlx, mx.transpose(bMlx, p)], axis);
+        assert.equal(cTf.shape.toString(), cMlx.shape.toString());
+        assertArrayAllTrue(mx.isclose(cMlx, cTf.arraySync()));
+      }
+    }
+
+    assert.throws(() => {
+      const a = mx.array([[1, 2], [1, 2], [1, 2]]);
+      const b = mx.array([1, 2]);
+      mx.concatenate([a, b], 0);
+    }, Error);
+  });
+
+  describe('meshgrid', () => {
+    it('singleInput', () => {
+      const x = mx.array([1, 2, 3], mx.int32);
+      const y = tf.tensor([1, 2, 3], null, 'int32');
+
+      const aMlx = mx.meshgrid(x);
+      const aNp = tf.meshgrid(y);
+      assert.deepEqual(aMlx[0].tolist(), aNp[0].arraySync());
+    });
+
+    it('differentLengths', () => {
+      let x = mx.array([1, 2], mx.int32);
+      let y = mx.array([1, 2, 3], mx.int32);
+      let z = tf.tensor([1, 2], null, 'int32');
+      let w = tf.tensor([1, 2, 3], null, 'int32');
+      let [aMlx, bMlx] = mx.meshgrid(x, y);
+      let [aNp, bNp] = tf.meshgrid(z, w);
+      assert.deepEqual(aMlx.tolist(), aNp.arraySync());
+      assert.deepEqual(bMlx.tolist(), bNp.arraySync());
+    });
+
+    it('emptyInput', () => {
+      let x = mx.array([], mx.int32);
+      let y = tf.tensor([], null, 'int32');
+      let aMlx = mx.meshgrid(x);
+      let aNp = tf.meshgrid(y);
+      assert.deepEqual(aMlx[0].tolist(), aNp[0].arraySync());
+    });
+
+    it('float32Input', () => {
+      let x = mx.array([1.1, 2.2, 3.3], mx.float32);
+      let y = tf.tensor([1.1, 2.2, 3.3], null, 'float32');
+      let aMlx = mx.meshgrid(x, x);
+      let aNp = tf.meshgrid(y, y);
+      assert.deepEqual(aMlx[0].tolist(), aNp[0].arraySync());
+      assert.deepEqual(aMlx[1].tolist(), aNp[1].arraySync());
+    });
+  });
+
+  it('pad', () => {
+    const padWidthAndValues = [
+      [[1, 1], [1, 1]], 0,
+      [[1, 1], [1, 1]], 5,
+      [[3, 0], [0, 2]], 0,
+      [[3, 0], [0, 2]], -7,
+      [[0, 0], [0, 0]], 0,
+    ];
+
+    for (let i = 0; i < padWidthAndValues.length; i += 2) {
+      const pw = padWidthAndValues[i] as [number, number][];
+      const v = padWidthAndValues[i + 1] as number;
+
+      const aNpy = tf.randomNormal([16, 16]);
+      const aMlx = mx.array(aNpy.arraySync());
+
+      const bNpy = tf.pad(aNpy, pw, v);
+      const bMlx = mx.pad(aMlx, pw, v);
+
+      assert.deepEqual(bNpy.shape, bMlx.shape);
+      assertArrayAllTrue(mx.isclose(bNpy.arraySync(), bMlx));
+    }
+
+    const a = mx.zeros([1, 1, 1]);
+    assert.deepEqual(mx.pad(a, 1).shape, [3, 3, 3]);
+    assert.deepEqual(mx.pad(a, [1]).shape, [3, 3, 3]);
+    assert.deepEqual(mx.pad(a, [1, 2]).shape, [4, 4, 4]);
+    assert.deepEqual(mx.pad(a, [[1, 2]]).shape, [4, 4, 4]);
+    assert.deepEqual(mx.pad(a, [[1, 2], [2, 1], [2, 2]]).shape, [4, 4, 5]);
+
+    const aFwd = mx.array(tf.randomUniform([16, 16]).arraySync());
+    const aBwd = mx.ones([22, 22]);
+    const f = x => mx.pad(x, [[4, 2], [2, 4]]);
+
+    const [_, df] = mx.vjp(f, [aFwd], [aBwd]);
+    assert.deepEqual(df[0].shape, [16, 16]);
+  });
+
+  it('where', () => {
+    const rMlx1 = mx.where(true, mx.array([[1, 2], [3, 4]]), 1);
+    const rTf1 = tf.where(tf.tensor(true), tf.tensor([[1, 2], [3, 4]]), tf.tensor(1));
+    assert.deepEqual(rMlx1.tolist(), rTf1.arraySync());
+
+    const rMlx2 = mx.where(true, 1, mx.array([[1, 2], [3, 4]]));
+    const rTf2 = tf.where(tf.tensor(true), tf.tensor(1), tf.tensor([[1, 2], [3, 4]]));
+    assert.deepEqual(rMlx2.tolist(), rTf2.arraySync());
+
+    const rMlx3 = mx.where(
+      mx.array([[true, false], [false, true]]),
+      mx.array([[1, 2], [3, 4]]),
+      mx.array([5, 6])
+    );
+    const rTf3 = tf.where(
+      tf.tensor([[true, false], [false, true]]),
+      tf.tensor([[1, 2], [3, 4]]),
+      tf.tensor([5, 6])
+    );
+    assert.deepEqual(rMlx3.tolist(), rTf3.arraySync());
+  });
 });

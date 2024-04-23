@@ -144,6 +144,7 @@ export function argmin(array: ScalarOrArray, axis?: number, keepdims?: boolean, 
 export function argpartition(array: ScalarOrArray, kth: number, s?: StreamOrDevice): array;
 export function argsort(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function arrayEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
+export function asStrided(array: ScalarOrArray, shape?: number[], strides?: number[], offset?: number, s?: StreamOrDevice): array;
 export function atleast1d(...arrays: array[]): array;
 export function atleast2d(...arrays: array[]): array;
 export function atleast3d(...arrays: array[]): array;
@@ -217,7 +218,7 @@ export function ones(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice
 export function onesLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function outer(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function partition(array: ScalarOrArray, kth: number | number[], axis?: number, s?: StreamOrDevice): array;
-export function pad(array: ScalarOrArray, padWidth: number[][], mode?: string, constantValues?: any, s?: StreamOrDevice): array;
+export function pad(array: ScalarOrArray, padWidth: number | [number] | [number, number] | [number, number][], constantValue?: ScalarOrArray, s?: StreamOrDevice): array;
 export function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function quantize(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -262,7 +263,7 @@ export function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: Stream
 export function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
 export function triu(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
 export function variance(array: ScalarOrArray, indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
-export function where(condition: ScalarOrArray, x: array | null, y: array | null, s?: StreamOrDevice): array;
+export function where(condition: ScalarOrArray, x: ScalarOrArray, y: ScalarOrArray, s?: StreamOrDevice): array;
 export function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
 export function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 

@@ -1,19 +1,7 @@
 #include "src/array.h"
+#include "src/ops.h"
 
 namespace {
-
-// Read args into a vector of arrays.
-bool ReadArgsToArrays(ki::Arguments* args, std::vector<mx::array>* results) {
-  for (size_t i = 0; i < args->Length(); ++i) {
-    std::optional<mx::array> a = args->GetNext<mx::array>();
-    if (!a) {
-      args->ThrowError("array");
-      return false;
-    }
-    results->push_back(std::move(*a));
-  }
-  return true;
-}
 
 // Execute JS function with primals.
 std::optional<std::vector<mx::array>> ExecuteWithPrimals(
@@ -46,7 +34,7 @@ std::function<void(ki::Arguments* args)>
 EvalOpWrapper(void(*func)(std::vector<mx::array>)) {
   return [func](ki::Arguments* args) {
     std::vector<mx::array> arrays;
-    if (ReadArgsToArrays(args, &arrays))
+    if (ReadArgsToArrays(args, &arrays) == args->Length())
       func(std::move(arrays));
   };
 }
@@ -101,7 +89,7 @@ ValueAndGrad(napi_env env,
   return [env, func = std::move(func), multi_gradients](ki::Arguments* args) {
     std::pair<napi_value, napi_value> ret;
     std::vector<mx::array> arrays;
-    if (!ReadArgsToArrays(args, &arrays))
+    if (ReadArgsToArrays(args, &arrays) < args->Length())
       return ret;
     auto results = func(std::move(arrays));
     if (ki::IsExceptionPending(env))

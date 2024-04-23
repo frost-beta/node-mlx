@@ -297,13 +297,24 @@ mx::array Stack(std::vector<mx::array> arrays,
     return mx::stack(std::move(arrays), s);
 }
 
+std::vector<mx::array> Meshgrid(ki::Arguments* args) {
+  std::vector<mx::array> arrays;
+  ReadArgsToArrays(args, &arrays);
+  return mx::meshgrid(
+      std::move(arrays),
+      args->TryGetNext<bool>().value_or(false),
+      args->TryGetNext<std::string>().value_or("xy"),
+      args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate()));
+}
+
 mx::array Pad(const mx::array& a,
               std::variant<int,
                            std::tuple<int>,
                            std::pair<int, int>,
                            std::vector<std::pair<int, int>>> width,
-              const mx::array& constant,
+              std::optional<mx::array> optional_constant,
               mx::StreamOrDevice s) {
+  mx::array constant = std::move(optional_constant.value_or(mx::array(0)));
   if (auto i = std::get_if<int>(&width); i)
     return mx::pad(a, *i, constant, s);
   if (auto ti = std::get_if<std::tuple<int>>(&width); ti)
@@ -614,7 +625,7 @@ void InitOps(napi_env env, napi_value exports) {
           "softmax", &ops::Softmax,
           "concatenate", &ops::Concatenate,
           "stack", &ops::Stack,
-          "meshgrid", &mx::meshgrid,
+          "meshgrid", &ops::Meshgrid,
           "repeat", KthOpWrapper(&mx::repeat, &mx::repeat),
           "clip", &mx::clip,
           "pad", &ops::Pad,
