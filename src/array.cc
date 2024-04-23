@@ -5,6 +5,38 @@ namespace ki {
 
 namespace {
 
+// Convert dtype to string.
+const char* DtypeToString(mx::Dtype* dtype) {
+  switch (*dtype) {
+    case mx::bool_:
+      return "bool";
+    case mx::uint8:
+      return "uint8";
+    case mx::uint16:
+      return "uint16";
+    case mx::uint32:
+      return "uint32";
+    case mx::uint64:
+      return "uint64";
+    case mx::int8:
+      return "int8";
+    case mx::int16:
+      return "int16";
+    case mx::int32:
+      return "int32";
+    case mx::int64:
+      return "int64";
+    case mx::float16:
+      return "float16";
+    case mx::float32:
+      return "float32";
+    case mx::bfloat16:
+      return "bfloat16";
+    case mx::complex64:
+      return "complex64";
+  }
+}
+
 // Create on heap if T is pointer, otherwise create on stack.
 template<typename T, typename... Args>
 inline T CreateInstance(Args&&... args) {
@@ -281,6 +313,8 @@ void Type<mx::Dtype>::Define(napi_env env,
                              napi_value prototype) {
   DefineProperties(env, prototype,
                    Property("size", Getter(&mx::Dtype::size)));
+  Set(env, prototype,
+      "toString", MemberFunction(&DtypeToString));
 }
 
 // static

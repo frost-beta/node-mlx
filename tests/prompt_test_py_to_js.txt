@@ -10,6 +10,7 @@ Convert to camelCase for snake_case names, for example array_equal => arrayEqual
 Do not convert mx.array_equal to mx.equal, convert it mx.arrayEqual instead.
 For names like tolist/isnan, do not change caps, for example isnan => isnan, allclose => allclose.
 For comparions like `a == b`, use global op `mx.equal(a, b)` instead.
+For matrix multiplication, use op `mx.matmul` instead.
 Remove "Test" prefix from test names, e.g. TestEquality => equality.
 Use () => instead of function() for defining functions.
 Use const when possible, but use let if the same name is reused in the same scope.
@@ -18,7 +19,7 @@ Convert python tuples to TypeScript Arrays.
 For calls of len function, convert to the length property.
 Use `assertArrayAllFalse` and `assertArrayAllTrue` helpers for assersion the results of ops like mx.equal.
 Use `assert.deepEqual` to compare JavaScript arrays, for example assert.deepEqual(x.tolist(), [1.0, 1.0]);.
-Use `assert.equal` to compare other things like dtype.
+Use `assert.equal` to compare other things like dtype. The dtypes can be accessed via properties like mx.float32.
 For arithmetic operations like a + b, use ops instead, for example a + b to mx.add(a, b) , a % b to mx.remainder(a, b), a * b to mx.multiply(a, b).
 The TypeScript APIs does not take object arguments, so convert code like mx.array(2, dtype=dt) to mx.array(2, dt).
 

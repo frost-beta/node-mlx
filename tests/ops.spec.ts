@@ -818,4 +818,182 @@ describe('ops', () => {
     assert.deepEqual(mx.any(a, 0).tolist(), [true, false]);
     assert.deepEqual(mx.any(a, 1).tolist(), [true, false]);
   });
+
+  it('stopGradient', () => {
+    const func = x => mx.sum(mx.add(mx.multiply(2, x), mx.stopGradient(mx.multiply(3, x))));
+
+    const x = mx.array([0.0, 0.1, -3]);
+    const expected = [2, 2, 2];
+
+    assert.deepEqual(mx.grad(func)(x).tolist(), expected);
+  });
+
+
+  it('take', () => {
+    // Shape: 4 x 3 x 2
+    const l = [
+      [[1, 3], [-2, -2], [-3, -2]],
+      [[2, 4], [-3, 2], [-4, -2]],
+      [[2, 3], [2, 4], [2, 1]],
+      [[1, -5], [3, -1], [2, 3]],
+    ];
+
+    const a = mx.array(l);
+
+    let indices = [0, -1];
+    let flattenTake = mx.take(a, mx.array(indices, mx.int32)).tolist();
+    assert.deepEqual(flattenTake, [1, 3]);
+
+    indices = [-1, 2, 0];
+    let axisTake = mx.take(a, mx.array(indices, mx.int32), 0).tolist();
+    assert.deepEqual(axisTake, [
+      [[1, -5], [3, -1], [2, 3]],
+      [[2, 3], [2, 4], [2, 1]],
+      [[1, 3], [-2, -2], [-3, -2]],
+    ]);
+  });
+
+  it('takeAlongAxis', () => {
+    let aMlx = mx.array(mx.arange(8).reshape([2, 2, 2]));
+    let idxMlx = mx.array([1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0], mx.int32);
+
+    [null, 0, 1, 2].forEach(ax => {
+      let shape;
+      if (ax === null) {
+        shape = [-1];
+      } else {
+        shape = [2, 2, 2];
+        shape[ax] = 3;
+      }
+      let outMlx = mx.takeAlongAxis(aMlx, mx.reshape(idxMlx, shape), ax);
+      let expected;
+      if (ax === null) {
+        expected = mx.array([1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0]).reshape([-1]);
+      } else if (ax === 0) {
+        expected = mx.array([[[2, 3], [0, 1]], [[4, 5], [0, 1]], [[4, 5], [4, 5]]]);
+      } else if (ax === 1) {
+        expected = mx.array([[[2, 1], [0, 3], [2, 1]], [[4, 5], [4, 7], [6, 5]]]);
+      } else if (ax === 2) {
+        expected = mx.array([[[1, 0, 0], [3, 3, 2]], [[4, 4, 4], [7, 7, 6]]]);
+      }
+      assertArrayAllTrue(mx.equal(expected, outMlx));
+    });
+  });
+
+  it('split', () => {
+    let a = mx.array([1, 2, 3]);
+    let splits = mx.split(a, 3);
+    splits.forEach((x, e) => {
+      assert.equal(x.item(), e + 1);
+    });
+
+    a = mx.array([[1, 2], [3, 4], [5, 6]]);
+    const [x, y, z] = mx.split(a, 3, 0);
+    assert.deepEqual(x.tolist(), [[1, 2]]);
+    assert.deepEqual(y.tolist(), [[3, 4]]);
+    assert.deepEqual(z.tolist(), [[5, 6]]);
+
+    assert.throws(() => {
+      mx.split(a, 3, 2);
+    }, Error);
+
+    a = mx.arange(8);
+    const [x1, y1, z1] = mx.split(a, [1, 5]);
+    assert.deepEqual(x1.tolist(), [0]);
+    assert.deepEqual(y1.tolist(), [1, 2, 3, 4]);
+    assert.deepEqual(z1.tolist(), [5, 6, 7]);
+  });
+
+  it('arangeOverloadDispatch', () => {
+
+    assert.throws(() => mx.arange(Number.NaN, 1, 5));
+    assert.throws(() => mx.arange(0, Number.NaN, 5));
+    assert.throws(() => mx.arange(0, 2, Number.NaN));
+    assert.throws(() => mx.arange(0, Number.POSITIVE_INFINITY, Number.POSITIVE_INFINITY));
+    assert.throws(() => mx.arange(Number.POSITIVE_INFINITY, 1, Number.POSITIVE_INFINITY));
+    assert.throws(() => mx.arange(Number.POSITIVE_INFINITY, 1, 5));
+    assert.throws(() => {
+      const intMax = 2147483647;
+      mx.arange(0, intMax + 1, 1);
+    });
+
+    let a = mx.arange(5);
+    let expected = [0, 1, 2, 3, 4];
+    assert.deepEqual(a.tolist(), expected);
+
+    a = mx.arange(1, 5);
+    expected = [1, 2, 3, 4];
+    assert.deepEqual(a.tolist(), expected);
+
+    a = mx.arange(3);
+    expected = [0, 1, 2];
+    assert.deepEqual(a.tolist(), expected);
+  });
+
+  it('arangeInferredDtype', () => {
+    let a = mx.arange(5);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(5.0);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1, 3.0);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1, 3, 1, mx.float32);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1, 5, 1);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1.0, 5, 1);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1, 5.0, 1);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1, 5, 1.0);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(1.0, 3.0, 0.2, mx.int32);
+    assert.equal(a.dtype, mx.int32);
+  });
+
+  it('arangeCornerCasesCast', () => {
+    let a = mx.arange(0, 3, 0.2, mx.int32);
+    let expected = Array(15).fill(0);
+    assert.deepEqual(a.tolist(), expected);
+    assert.equal(a.dtype, mx.int32);
+
+    a = mx.arange(-1, -4, -0.9, mx.int32);
+    expected = Array(4).fill(-1);
+    assert.deepEqual(a.tolist(), expected);
+    assert.equal(a.dtype, mx.int32);
+
+    a = mx.arange(-1, -20, -1.2, mx.int32);
+    expected = [-1, -2, -3, -4, -5, -6, -7, -8, -9, -10, -11, -12, -13, -14, -15, -16];
+    assert.deepEqual(a.tolist(), expected);
+    assert.equal(a.dtype, mx.int32);
+
+    a = mx.arange(0, 10, 100);
+    expected = [0];
+    assert.deepEqual(a.tolist(), expected);
+    assert.equal(a.dtype, mx.float32);
+
+    a = mx.arange(10, 0, 1);
+    expected = [];
+    assert.deepEqual(a.tolist(), expected);
+
+    a = mx.arange(10, 0, Number.POSITIVE_INFINITY);
+    expected = [];
+    assert.deepEqual(a.tolist(), expected);
+
+    a = mx.arange(0, 10, Number.POSITIVE_INFINITY);
+    expected = [0];
+    assert.deepEqual(a.tolist(), expected);
+
+    a = mx.arange(0, -10, Number.NEGATIVE_INFINITY);
+    expected = [0];
+    assert.deepEqual(a.tolist(), expected);
+  });
 });

@@ -110,8 +110,9 @@ mx::array Linspace(float start,
 
 mx::array Take(const mx::array& a,
                const mx::array& indices,
-               std::optional<int> axis,
-               mx::StreamOrDevice s) {
+               ki::Arguments* args) {
+  auto axis = args->TryGetNext<int>();
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
   if (axis)
     return mx::take(a, indices, *axis, s);
   else
@@ -120,8 +121,9 @@ mx::array Take(const mx::array& a,
 
 mx::array TakeAlongAxis(const mx::array& a,
                         const mx::array& indices,
-                        std::optional<int> axis,
-                        mx::StreamOrDevice s) {
+                        ki::Arguments* args) {
+  auto axis = args->TryGetNext<int>();
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
   if (axis)
     return mx::take_along_axis(a, indices, *axis, s);
   else
