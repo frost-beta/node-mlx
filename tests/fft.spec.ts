@@ -1,8 +1,7 @@
 import mx from '..';
 import {assert} from 'chai';
 
-// TODO(zcbenz): The tests were written by ChatGPT, rewrite them after adding
-// support for complex numbers.
+// TODO(zcbenz): The tests were written by ChatGPT, rewrite them.
 describe('fft', () => {
   let useCpu: Disposable;
   before(() => useCpu = mx.stream(mx.cpu));

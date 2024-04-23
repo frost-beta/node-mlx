@@ -2,16 +2,40 @@
 #include "src/complex.h"
 #include "src/ops.h"
 
+// Implementation of the iterator.
+class ArrayIterator {
+ public:
+  explicit ArrayIterator(mx::array x) : x_(std::move(x)) {
+    // For small array using split for fast access.
+    if (x_.shape(0) > 0 && x_.shape(0) < 10) {
+      splits_ = mx::split(x_, x_.shape(0));
+    }
+  }
+
+  napi_value Next(napi_env env) {
+    napi_value result = ki::CreateObject(env);
+    if (index_ >= x_.shape(0)) {
+      // Returning {done: true} for out of range.
+      ki::Set(env, result, "done", true);
+    } else if (index_ >= 0 && index_ < splits_.size()) {
+      // Use split results when available.
+      ki::Set(env, result, "value", mx::squeeze(splits_[index_++], 0));
+    } else {
+      // Fallback to the C++ iterator, which uses slice.
+      ki::Set(env, result, "value", *(x_.begin() + index_++));
+    }
+    return result;
+  }
+
+ private:
+  mx::array x_;
+  std::vector<mx::array> splits_;
+  size_t index_ = 0;
+};
+
 namespace ki {
 
 namespace {
-
-// The possible type of the elements of JS Array.
-enum InputType {
-  kBoolean,
-  kNumber,
-  kComplex,
-};
 
 // Convert dtype to string.
 const char* DtypeToString(mx::Dtype* dtype) {
@@ -74,6 +98,13 @@ bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
   }
   return true;
 }
+
+// The possible type of the elements of JS Array.
+enum InputType {
+  kBoolean,
+  kNumber,
+  kComplex,
+};
 
 // Validate whether the shape of input array is valid, and get information about
 // the input.
@@ -164,7 +195,7 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
       return CreateInstance<T>(FromNodeTo<bool>(env, value).value(),
                                dtype.value_or(mx::bool_));
     case napi_object: {
-      if (ki::IsArray(env, value)) {
+      if (IsArray(env, value)) {
         // When JS array is passed, first get its shape, then validate it and
         // decide a proper dtype for it.
         std::vector<int> shape;
@@ -500,6 +531,23 @@ std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
   return AllowPassByValue<mx::array>::FromNode(env, value);
 }
 
+template<>
+struct Type<ArrayIterator> {
+  static constexpr const char* name = "ArrayIterator";
+  static inline ArrayIterator* Constructor(mx::array* a) {
+    return new ArrayIterator(*a);
+  }
+  static inline void Destructor(ArrayIterator* ptr) {
+    delete ptr;
+  }
+  static void Define(napi_env env,
+                     napi_value constructor,
+                     napi_value prototype) {
+    Set(env, prototype,
+        "next", &ArrayIterator::Next);
+  }
+};
+
 }  // namespace ki
 
 void InitArray(napi_env env, napi_value exports) {
@@ -532,5 +580,6 @@ void InitArray(napi_env env, napi_value exports) {
           "generic", mx::generic);
 
   ki::Set(env, exports,
-          "array", ki::Class<mx::array>());
+          "array", ki::Class<mx::array>(),
+          "_ArrayIterator", ki::Class<ArrayIterator>());
 }

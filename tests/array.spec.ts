@@ -310,5 +310,19 @@ describe('array', () => {
       const c = mx.array(b).astype(mx.float32);
       assert.equal(c.dtype, mx.float32);
     });
+
+    it('arrayIteration', () => {
+      let a = mx.array([0, 1, 2]);
+      let i = 0;
+      for (const el of a) {
+        assert.equal(el.item(), i++);
+      }
+
+      a = mx.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]);
+      let [x, y, z] = a;
+      assert.deepEqual(x.tolist(), [1.0, 2.0]);
+      assert.deepEqual(y.tolist(), [3.0, 4.0]);
+      assert.deepEqual(z.tolist(), [5.0, 6.0]);
+    });
   });
 });

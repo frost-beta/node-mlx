@@ -85,6 +85,8 @@ export class array {
   ndim: number;
   shape: number[];
   size: number;
+  T: array;
+
   abs(s?: StreamOrDevice): array;
   all(keepdims?: boolean, s?: StreamOrDevice): array;
   all(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
@@ -125,8 +127,9 @@ export class array {
   swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
   sum(s?: StreamOrDevice): array;
   transpose(s?: StreamOrDevice): array;
-  T: array;
   variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
+
+  [Symbol.iterator](): IterableIterator<array>;
 }
 
 // Ops.
