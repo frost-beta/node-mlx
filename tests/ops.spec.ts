@@ -1,4 +1,5 @@
 import mx from '..';
+import tf from '@tensorflow/tfjs';
 import {assertArrayAllTrue, assertArrayAllFalse} from './utils';
 import {assert} from 'chai';
 
@@ -905,7 +906,6 @@ describe('ops', () => {
   });
 
   it('arangeOverloadDispatch', () => {
-
     assert.throws(() => mx.arange(Number.NaN, 1, 5));
     assert.throws(() => mx.arange(0, Number.NaN, 5));
     assert.throws(() => mx.arange(0, 2, Number.NaN));
@@ -995,5 +995,79 @@ describe('ops', () => {
     a = mx.arange(0, -10, Number.NEGATIVE_INFINITY);
     expected = [0];
     assert.deepEqual(a.tolist(), expected);
+  });
+
+  describe('unaryOps', () => {
+    const testOps = (tfOp, mlxOp, x, y, atol) => {
+      const rTf = tfOp(x);
+      const rMlx = mlxOp(y);
+      mx.eval(rMlx);
+
+      assertArrayAllTrue(mx.isclose(rMlx, rTf.arraySync(), atol));
+    };
+
+    const x = tf.randomNormal([18, 28, 38]);
+    const ops = ['abs', 'exp', 'log', 'square', 'sqrt'];
+
+    for (let op of ops) {
+      it(op, () => {
+        const x_ = tf.cast(x, 'float32');
+        const y_ = mx.array(x_.arraySync());
+        testOps(tf[op], mx[op], x_, y_, 1e-6);
+      });
+    }
+  });
+
+  describe('trigOps', () => {
+    const testOps = (tfOp, mlxOp, x, y, atol) => {
+      const rTf = tfOp(x);
+      const rMlx = mlxOp(y);
+      mx.eval(rMlx);
+
+      assertArrayAllTrue(mx.isclose(rMlx, rTf.arraySync(), atol));
+    };
+
+    const x = tf.randomNormal([9, 12, 18]).arraySync();
+    const xi = tf.randomNormal([9, 12, 18]).arraySync();
+    const baseOps = ['sin', 'cos', 'tan'];
+    const hyperbolicOps = ['sinh', 'cosh', 'tanh'];
+    const allFwdOps = baseOps.concat(hyperbolicOps);
+
+    for (let op of allFwdOps) {
+      it(op, () => {
+        const tArr = tf.tensor(x);
+        const mArr = mx.array(x);
+        testOps(tf[op], mx[op], tArr, mArr, 1e-6);
+      });
+    }
+
+    describe('grad', () => {
+      for (let op of allFwdOps) {
+        it(op, () => {
+          const primalT = tf.tensor(xi);
+          const primalM = mx.array(primalT.arraySync());
+          const tArr = tf.tensor(x);
+          const mArr = mx.array(tArr.arraySync());
+
+          const tfVjp = tf.grad(tf[op]);
+          const mlxVjp = (cotan) => mx.vjp(mx[op], [primalM], [cotan])[1][0];
+          testOps(tfVjp, mlxVjp, tArr, mArr, 1e-5);
+
+          const tfOpFwd = tf[op];
+          let primalTInv = tfOpFwd(tf.tensor(xi));
+
+          if (op == 'cosh') {
+            primalTInv = tf.add(primalTInv, tf.fill(primalTInv.shape, 1e-3));
+          } else if (op == 'cos') {
+            primalTInv = tf.sub(primalTInv, tf.fill(primalTInv.shape, 1e-3));
+          }
+
+          const primalMInv = mx.array(primalTInv.arraySync());
+          const tfVjpInv = tf.grad(tf[op]);
+          const mlxVjpInv = (cotan) => mx.vjp(mx[op], [primalMInv], [cotan])[1][0];
+          testOps(tfVjpInv, mlxVjpInv, tf.tensor(x).arraySync(), mx.array(x), 1e-5);
+        });
+      }
+    });
   });
 });
