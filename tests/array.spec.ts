@@ -128,7 +128,7 @@ describe('array', () => {
       assert.equal(x.item(), false);
       assert.isTrue(typeof x.item() === 'boolean');
 
-      x = mx.array(mx.complex(1, 1));
+      x = mx.array(mx.Complex(1, 1));
       assert.equal(x.ndim, 0);
       assert.deepEqual(x.shape, []);
       assert.equal(x.dtype, mx.complex64);
@@ -157,7 +157,7 @@ describe('array', () => {
       assert.equal(x.ndim, 1);
       assert.deepEqual(x.shape, [3]);
 
-      x = mx.array([mx.complex(0, 1), mx.complex(1)]);
+      x = mx.array([mx.Complex(0, 1), mx.Complex(1)]);
       assert.equal(x.dtype, mx.complex64);
       assert.equal(x.ndim, 1);
       assert.deepEqual(x.shape, [2]);
@@ -209,7 +209,7 @@ describe('array', () => {
       x = mx.array([[1.0, 2.0], [0.0, 3.9]], mx.int32);
       assertArrayAllTrue(mx.arrayEqual(x, mx.array([[1, 2], [0, 3]])));
 
-      x = mx.array([mx.complex(1, 0), mx.complex(0, 2)], mx.complex64);
+      x = mx.array([mx.Complex(1, 0), mx.Complex(0, 2)], mx.complex64);
       assert.deepEqual(x.tolist(), [{re: 1, im: 0}, {re: 0, im: 2}]);
     });
 
@@ -323,6 +323,32 @@ describe('array', () => {
       assert.deepEqual(x.tolist(), [1.0, 2.0]);
       assert.deepEqual(y.tolist(), [3.0, 4.0]);
       assert.deepEqual(z.tolist(), [5.0, 6.0]);
+    });
+
+    it('arrayCopy', () => {
+      const dtypes = [
+        mx.int8,
+        mx.int16,
+        mx.int32,
+        mx.int64,
+        mx.uint8,
+        mx.uint16,
+        mx.uint32,
+        mx.uint64,
+        mx.float16,
+        mx.float32,
+        mx.bfloat16,
+        mx.complex64,
+      ];
+
+      for (const dtype of dtypes) {
+        const x = mx.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]], dtype);
+        let y = new mx.array(x);
+        assertArrayAllTrue(mx.equal(y, x));
+
+        y = mx.add(y, -1);
+        assertArrayAllTrue(mx.equal(y, mx.add(x, -1)));
+      }
     });
   });
 });

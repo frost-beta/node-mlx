@@ -62,7 +62,7 @@ interface Complex {
   re: number;
   im?: number;
 }
-export function complex(real: number, imag?: number): Complex;
+export function Complex(real: number, imag?: number): Complex;
 
 // Array.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
