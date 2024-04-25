@@ -2,6 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import Mocha from 'mocha';
 import yargs from 'yargs';
+import tf from '@tensorflow/tfjs';
+
+// Do not warn about using pure-js tensorflow.
+tf.ENV.set('IS_TEST', true);
 
 const argv = require('yargs')
   .string('g').alias('g', 'grep')
