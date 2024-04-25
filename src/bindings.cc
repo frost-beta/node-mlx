@@ -14,6 +14,7 @@ napi_value Init(napi_env env, napi_value exports) {
   InitFFT(env, exports);
   InitLinalg(env, exports);
   InitFast(env, exports);
+  InitIndexing(env, exports);
   return exports;
 }
 

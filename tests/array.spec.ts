@@ -349,4 +349,42 @@ describe('array', () => {
       assertArrayAllTrue(mx.equal(y, mx.add(x, -1)));
     }
   });
+
+  describe('indexing', () => {
+    it('ellipsis', () => {
+      const a = mx.array([1]).index('...');
+      assert.deepEqual(a.shape, [1]);
+      assert.equal(a.item(), 1);
+    });
+
+    const a = mx.arange(64, mx.int32);
+
+    it('slice', () => {
+      assert.deepEqual(a.index(mx.Slice(2, 50, 8)).tolist(),
+                       [2, 10, 18, 26, 34, 42]);
+    });
+
+    it('array', () => {
+      assert.deepEqual(a.index(mx.array([0, 1, 2, 7, 5], mx.uint32)).tolist(),
+                       [0, 1, 2, 7, 5]);
+    });
+
+    it('int', () => {
+      const sliced = a.index(5)
+      assert.equal(sliced.item(), 5);
+      assert.deepEqual(sliced.shape, []);
+    });
+
+    it('negative', () => {
+      const sliced = a.index(-1)
+      assert.equal(sliced.item(), 63);
+      assert.deepEqual(sliced.shape, []);
+    });
+
+    it('null', () => {
+      const sliced = a.index(null)
+      assert.deepEqual(sliced.shape, [1, 64]);
+      assertArrayAllTrue(mx.equal(a, sliced));
+    });
+  });
 });

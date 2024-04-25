@@ -18,7 +18,7 @@ std::optional<std::complex<float>> Type<std::complex<float>>::FromNode(
     napi_env env,
     napi_value value) {
   float real, imag;
-  if (!ReadOptions(env, value, "re", &real, "im", &imag))
+  if (!Get(env, value, "re", &real, "im", &imag))
     return std::nullopt;
   return std::complex<float>(real, imag);
 }

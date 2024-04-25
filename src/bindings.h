@@ -17,5 +17,6 @@ void InitRandom(napi_env env, napi_value exports);
 void InitFFT(napi_env env, napi_value exports);
 void InitLinalg(napi_env env, napi_value exports);
 void InitFast(napi_env env, napi_value exports);
+void InitIndexing(napi_env env, napi_value exports);
 
 #endif  // SRC_BINDINGS_H_

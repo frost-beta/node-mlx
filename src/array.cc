@@ -1,5 +1,6 @@
 #include "src/array.h"
 #include "src/complex.h"
+#include "src/indexing.h"
 #include "src/ops.h"
 
 // Implementation of the iterator.
@@ -516,7 +517,8 @@ void Type<mx::array>::Define(napi_env env,
       "cummin", MemberFunction(CumOpWrapper(&mx::cummin)),
       "round", MemberFunction(&ops::Round),
       "diagonal", MemberFunction(&ops::Diagonal),
-      "diag", MemberFunction(&ops::Diag));
+      "diag", MemberFunction(&ops::Diag),
+      "index", MemberFunction(&Index));
 }
 
 // static

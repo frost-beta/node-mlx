@@ -64,10 +64,19 @@ interface Complex {
 }
 export function Complex(real: number, imag?: number): Complex;
 
+// Index slice.
+interface Slice {
+  start: number | null;
+  stop: number | null;
+  step: number | null;
+}
+export function Slice(start?: number, stop?: number, step?: number): Slice;
+
 // Array.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 type Scalar = boolean | number | Complex;
 type ScalarOrArray = MultiDimensionalArray<Scalar | array>;
+type ArrayIndex = null | Slice | '...' | array | number;
 
 export function array(value: ScalarOrArray, dtype?: Dtype): array;
 
@@ -129,6 +138,7 @@ export class array {
   transpose(s?: StreamOrDevice): array;
   variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
+  index(index: ArrayIndex): array;
   [Symbol.iterator](): IterableIterator<array>;
 }
 
