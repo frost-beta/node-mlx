@@ -11,13 +11,14 @@ struct Slice {
 
 struct Ellipsis {};
 
-using ArrayIndex = std::variant<std::monostate,
-                                Ellipsis,
-                                Slice,
+using ArrayIndex = std::variant<std::monostate,  // null/newaxis
+                                Ellipsis,  // ...
+                                Slice,  // start:stop:step
                                 mx::array*,
                                 int>;
+using ArrayIndices = std::vector<ArrayIndex>;
 
-mx::array Index(mx::array* a, ArrayIndex index);
+mx::array Index(mx::array* a, ki::Arguments* args);
 
 namespace ki {
 

@@ -357,34 +357,116 @@ describe('array', () => {
       assert.equal(a.item(), 1);
     });
 
-    const a = mx.arange(64, mx.int32);
-
     it('slice', () => {
+      const a = mx.arange(64, mx.int32);
       assert.deepEqual(a.index(mx.Slice(2, 50, 8)).tolist(),
                        [2, 10, 18, 26, 34, 42]);
     });
 
+    const a = mx.arange(64, mx.int32).reshape([8, 8]);
+
     it('array', () => {
-      assert.deepEqual(a.index(mx.array([0, 1, 2, 7, 5], mx.uint32)).tolist(),
-                       [0, 1, 2, 7, 5]);
+      assert.deepEqual(a.index(mx.array([0, 1], mx.uint32)).tolist(),
+                       [[0, 1, 2, 3, 4, 5, 6, 7], [8, 9, 10, 11, 12, 13, 14, 15]]);
     });
 
     it('int', () => {
-      const sliced = a.index(5)
-      assert.equal(sliced.item(), 5);
-      assert.deepEqual(sliced.shape, []);
+      const sliced = a.index(5);
+      assert.deepEqual(sliced.tolist(), [40, 41, 42, 43, 44, 45, 46, 47]);
+      assert.deepEqual(sliced.shape, [8]);
     });
 
     it('negative', () => {
-      const sliced = a.index(-1)
-      assert.equal(sliced.item(), 63);
-      assert.deepEqual(sliced.shape, []);
+      const sliced = a.index(-1);
+      assert.deepEqual(sliced.tolist(), [56, 57, 58, 59, 60, 61, 62, 63]);
+      assert.deepEqual(sliced.shape, [8]);
     });
 
-    it('null', () => {
-      const sliced = a.index(null)
-      assert.deepEqual(sliced.shape, [1, 64]);
+    it('newaxis', () => {
+      const sliced = a.index(null);
+      assert.deepEqual(sliced.shape, [1, 8, 8]);
       assertArrayAllTrue(mx.equal(a, sliced));
+    });
+
+    it('invalidRange', () => {
+      const sliced = a.index(mx.Slice(8, 3));
+      assert.equal(sliced.size, 0);
+    });
+
+    it('clipPastEnd', () => {
+      const sliced = a.index(mx.Slice(7, 10));
+      assert.deepEqual(sliced.tolist(), [[56, 57, 58, 59, 60, 61, 62, 63]]);
+    });
+  });
+
+  describe('multiDimentionalIndexing', () => {
+    const a = mx.arange(64, mx.int32).reshape([8, 8]);
+
+    it('newaxis', () => {
+      const sliced = a.index(mx.Slice(), null);
+      assert.deepEqual(sliced.shape, [8, 1, 8]);
+      assertArrayAllTrue(mx.equal(a, sliced));
+    });
+
+    it('ints', () => {
+      const sliced = a.index(0, 0);
+      assert.equal(sliced.item(), 0);
+      assert.equal(sliced.ndim, 0);
+    });
+
+    it('slices', () => {
+      let sliced = a.index(mx.Slice(2,4), mx.Slice(5));
+      assert.deepEqual(sliced.shape, [2, 3]);
+      assert.deepEqual(sliced.tolist(), [[21, 22, 23], [29, 30, 31]]);
+
+      sliced = a.index(mx.Slice(), mx.Slice(0, 5));
+      assert.deepEqual(sliced.shape, [8, 5]);
+    });
+
+    it('strides', () => {
+      const sliced = a.index(mx.Slice(), mx.Slice(null, null, 2));
+      assert.deepEqual(sliced.shape, [8, 4]);
+    });
+
+    it('negative', () => {
+      const sliced = a.index(mx.Slice(-2), mx.Slice(null, -1));
+      assert.deepEqual(sliced.shape, [2, 7]);
+    });
+
+    it('intSlices', () => {
+      let sliced = a.index(0, mx.Slice(null, 5));
+      assert.deepEqual(sliced.shape, [5]);
+      assert.deepEqual(sliced.tolist(), [0, 1, 2, 3, 4]);
+
+      sliced = a.index(0, mx.Slice(null, -1));
+      assert.deepEqual(sliced.shape, [7]);
+      assert.deepEqual(sliced.tolist(), [0, 1, 2, 3, 4, 5, 6]);
+    });
+
+    const idx = mx.array([0, 1, 2, 7, 5], mx.uint32);
+
+    it('arrayInt', () => {
+      const sliced = a.index(idx, 0);
+      assert.deepEqual(sliced.shape, [5]);
+      assert.deepEqual(sliced.tolist(), [0, 8, 16, 56, 40]);
+    });
+
+    it('arraySlice', () => {
+      const sliced1 = a.index(idx, mx.Slice(null, 5));
+      assert.deepEqual(sliced1.shape, [5, 5]);
+      const sliced2 = a.index(mx.Slice(null, 5), idx);
+      assert.deepEqual(sliced2.shape, [5, 5]);
+      assert.notDeepEqual(sliced1.tolist(), sliced2.tolist());
+    });
+
+    it('arrays', () => {
+      const b = mx.arange(16).reshape([4, 4]);
+      assert.deepEqual(b.index(mx.array([0, 1, 2, 3], mx.int32),
+                               mx.array([0, 1, 2, 3], mx.int32)).tolist(),
+                       [0, 5, 10, 15]);
+      assert.deepEqual(b.index(mx.array([[0, 1]], mx.int32),
+                               mx.array([[0], [1], [3]], mx.int32)).tolist(),
+                       [[0, 4], [1, 5], [3, 7]]);
     });
   });
 });

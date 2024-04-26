@@ -299,7 +299,7 @@ mx::array Stack(std::vector<mx::array> arrays,
 
 std::vector<mx::array> Meshgrid(ki::Arguments* args) {
   std::vector<mx::array> arrays;
-  ReadArgsToArrays(args, &arrays);
+  ReadArgs(args, &arrays);
   return mx::meshgrid(
       std::move(arrays),
       args->TryGetNext<bool>().value_or(false),

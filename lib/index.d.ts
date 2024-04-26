@@ -138,7 +138,7 @@ export class array {
   transpose(s?: StreamOrDevice): array;
   variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
-  index(index: ArrayIndex): array;
+  index(...index: ArrayIndex[]): array;
   [Symbol.iterator](): IterableIterator<array>;
 }
 

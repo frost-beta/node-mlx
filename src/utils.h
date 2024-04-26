@@ -18,14 +18,25 @@ inline std::vector<int> ToIntVector(std::variant<int, std::vector<int>> shape) {
   return std::move(std::get<std::vector<int>>(shape));
 }
 
+// Read args into a vector of types.
+template<typename T>
+size_t ReadArgs(ki::Arguments* args, std::vector<T>* results) {
+  for (size_t i = 0; i < args->Length(); ++i) {
+    std::optional<T> a = args->GetNext<T>();
+    if (!a) {
+      args->ThrowError(ki::Type<T>::name);
+      return i;
+    }
+    results->push_back(std::move(*a));
+  }
+  return args->Length();
+}
+
 // Get axis arg from js value.
 std::vector<int> GetReduceAxes(IntOrVector value, int dims);
 
 // Convert a ScalarOrArray arg to array.
 mx::array ToArray(ScalarOrArray value,
                   std::optional<mx::Dtype> dtype = std::nullopt);
-
-// Read args into a vector of arrays.
-size_t ReadArgsToArrays(ki::Arguments* args, std::vector<mx::array>* results);
 
 #endif  // SRC_UTILS_H_

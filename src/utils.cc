@@ -26,15 +26,3 @@ mx::array ToArray(ScalarOrArray value, std::optional<mx::Dtype> dtype) {
   }
   throw std::invalid_argument("Invalid type passed to ToArray");
 }
-
-size_t ReadArgsToArrays(ki::Arguments* args, std::vector<mx::array>* results) {
-  for (size_t i = 0; i < args->Length(); ++i) {
-    std::optional<mx::array> a = args->GetNext<mx::array>();
-    if (!a) {
-      args->ThrowError("array");
-      return i;
-    }
-    results->push_back(std::move(*a));
-  }
-  return args->Length();
-}
