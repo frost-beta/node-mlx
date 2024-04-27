@@ -1283,4 +1283,201 @@ describe('ops', () => {
     );
     assert.deepEqual(rMlx3.tolist(), rTf3.arraySync());
   });
+
+  it('asStrided', () => {
+    const x = mx.random.normal([128]).astype(mx.float32);
+    const shapes = [[10, 10], [5, 5], [2, 20], [10]];
+    const strides = [[3, 3], [7, 1], [1, 5], [4]];
+    for (let i = 0; i < shapes.length; i++) {
+      const shape = shapes[i];
+      const stride = strides[i];
+      for (let offset of [0, 1, 3]) {
+        const y = mx.asStrided(x, shape, stride, offset);
+        assert.deepEqual(y.shape, shape);
+      }
+    }
+  });
+
+  it('squeezeExpand', () => {
+    let a = mx.zeros([2, 1, 2, 1]);
+    assert.deepEqual(mx.squeeze(a).shape, [2, 2]);
+    assert.deepEqual(mx.squeeze(a, 1).shape, [2, 2, 1]);
+    assert.deepEqual(mx.squeeze(a, [1, 3]).shape, [2, 2]);
+    assert.deepEqual(a.squeeze().shape, [2, 2]);
+    assert.deepEqual(a.squeeze(1).shape, [2, 2, 1]);
+    assert.deepEqual(a.squeeze([1, 3]).shape, [2, 2]);
+
+    a = mx.zeros([2, 2]);
+    assert.deepEqual(mx.squeeze(a).shape, [2, 2]);
+
+    assert.deepEqual(mx.expandDims(a, 0).shape, [1, 2, 2]);
+    assert.deepEqual(mx.expandDims(a, [0, 1]).shape, [1, 1, 2, 2]);
+    assert.deepEqual(mx.expandDims(a, [0, -1]).shape, [1, 2, 2, 1]);
+  });
+
+  it('sort', () => {
+    const x = mx.array([3, 1, 2]);
+    const sortedX = mx.sort(x);
+    assert.deepEqual(sortedX.tolist(), [1, 2, 3]);
+  });
+
+  it('largeBinary', () => {
+    const a = mx.ones([1000, 214748], mx.int8);
+    const b = mx.ones([214748], mx.int8);
+    assert.equal(mx.add(a, b).index(0, 0).item(), 2);
+  });
+
+  it('eye', () => {
+    const size = 5;
+    const eyeMatrix = mx.eye(size);
+
+    for (let i = 0; i < size; i++) {
+      for (let j = 0; j < size; j++) {
+        if (i === j) {
+          assert.equal(eyeMatrix.index(i, j).item(), 1);
+        } else {
+          assert.equal(eyeMatrix.index(i, j).item(), 0);
+        }
+      }
+    }
+  });
+
+  it('stack', () => {
+    let a = mx.ones([2]);
+    let tfA = tf.tensor([1, 1]);
+    let b = mx.ones([2]);
+    let tfB = tf.tensor([1, 1]);
+
+    let c = mx.stack([a, b]);
+    let tfC = tf.stack([tfA, tfB]);
+    assert.deepEqual(c.tolist(), tfC.arraySync());
+
+    c = mx.stack([a, b], 1);
+    tfC = tf.stack([tfA, tfB], 1);
+    assert.deepEqual(c.tolist(), tfC.arraySync());
+
+    a = mx.ones([1, 2]);
+    tfA = tf.tensor([[1, 1]]);
+    b = mx.ones([1, 2]);
+    tfB = tf.tensor([[1, 1]]);
+
+    c = mx.stack([a, b]);
+    tfC = tf.stack([tfA, tfB]);
+    assert.deepEqual(c.tolist(), tfC.arraySync());
+
+    c = mx.stack([a, b], 1);
+    tfC = tf.stack([tfA, tfB], 1);
+    assert.deepEqual(c.tolist(), tfC.arraySync());
+  });
+
+  it('flatten', () => {
+    const x = mx.zeros([2, 3, 4]);
+    assert.deepEqual(mx.flatten(x).shape, [2 * 3 * 4]);
+    assert.deepEqual(mx.flatten(x, 1).shape, [2, 3 * 4]);
+    assert.deepEqual(mx.flatten(x, null, 1).shape, [2 * 3, 4]);
+    assert.deepEqual(x.flatten().shape, [2 * 3 * 4]);
+    assert.deepEqual(x.flatten(1).shape, [2, 3 * 4]);
+    assert.deepEqual(x.flatten(null, 1).shape, [2 * 3, 4]);
+  });
+
+  it('clip', () => {
+    let a = tf.tensor([1, 4, 3, 8, 5]);
+    let expected = a.clipByValue(2, 6);
+    let clipped = mx.clip(mx.array(a.arraySync()), 2, 6);
+    assert.deepEqual(clipped.tolist(), expected.arraySync());
+
+    a = tf.tensor([-1, 1, 0, 5]);
+    expected = a.clipByValue(0, Infinity);
+    clipped = mx.clip(mx.array(a.arraySync()), 0, Infinity);
+    assert.deepEqual(clipped.tolist(), expected.arraySync());
+
+    a = tf.tensor([2, 3, 4, 5]);
+    expected = a.clipByValue(-Infinity, 4);
+    clipped = mx.clip(mx.array(a.arraySync()), -Infinity, 4);
+    assert.deepEqual(clipped.tolist(), expected.arraySync());
+
+    clipped = mx.clip(mx.array(a.arraySync()), [3, 1, 5, 5], 4);
+    assert.deepEqual(clipped.tolist(), [3, 3, 4, 4]);
+
+    clipped = mx.clip(mx.array(a.arraySync()), [3, 1, 5, 5], [5, -1, 2, 9]);
+    assert.deepEqual(clipped.tolist(), [3, -1, 2, 5]);
+  });
+
+  it('linspace', () => {
+    let a = mx.linspace(0, 1);
+    let expected = tf.linspace(0, 1, 50).arraySync();
+    assertArrayAllTrue(mx.isclose(a, expected));
+
+    let b = mx.linspace(0, 10, 5, mx.int64);
+    expected = tf.linspace(0, 10, 5).toInt().arraySync();
+    assertArrayAllTrue(mx.isclose(b, expected));
+
+    let c = mx.linspace(-2.7, -0.7, 7);
+    expected = tf.linspace(-2.7, -0.7, 7).arraySync();
+    assertArrayAllTrue(mx.isclose(c, expected));
+
+    let d = mx.linspace(0, 1, 10);
+    expected = tf.linspace(0, 1, 10).arraySync();
+    assertArrayAllTrue(mx.isclose(d, expected));
+
+    d = mx.linspace(1, 10, 1);
+    expected = tf.linspace(1, 10, 1).arraySync();
+    assertArrayAllTrue(mx.isclose(d, expected));
+  });
+
+  it('repeat', () => {
+    let array = mx.array([1, 2, 3]);
+
+    let repeatedArray = mx.repeat(array, 2);
+    assert.deepEqual(repeatedArray.tolist(), [1, 1, 2, 2, 3, 3]);
+
+    repeatedArray = mx.repeat(array, 3, 0);
+    assert.deepEqual(repeatedArray.tolist(), [1, 1, 1, 2, 2, 2, 3, 3, 3]);
+
+    array = mx.array([[1, 2], [3, 4]]);
+    repeatedArray = mx.repeat(array, 2, 1);
+    assert.deepEqual(repeatedArray.tolist(), [[1, 1, 2, 2], [3, 3, 4, 4]]);
+
+    repeatedArray = mx.repeat(array, 3, 0);
+    assert.deepEqual(repeatedArray.tolist(), [[1, 2], [1, 2], [1, 2], [3, 4], [3, 4], [3, 4]]);
+  });
+
+  it('emptyMatmuls', () => {
+    let a = mx.array([]);
+    let b = mx.array([]);
+    assert.equal(mx.inner(a, b).item(), 0.0);
+
+    a = mx.zeros([10, 0]);
+    b = mx.zeros([0, 10]);
+    const out = mx.matmul(a, b);
+    assertArrayAllTrue(mx.arrayEqual(out, mx.zeros([10, 10])));
+  });
+
+  it('diagonal', () => {
+    const x = mx.array([
+      [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]],
+      [[12, 13, 14, 15], [16, 17, 18, 19], [20, 21, 22, 23]],
+    ]);
+    const expected = [[0, 13], [4, 17], [8, 21]];
+    assert.deepEqual(mx.diagonal(x, 0, -1, 0).tolist(), expected);
+
+    const expected2 = [[1, 14], [5, 18], [9, 22]];
+    assert.deepEqual(mx.diagonal(x, -1, 2, 0).tolist(), expected2);
+  });
+
+  it('diag', () => {
+    let x = mx.array([1, 2, 3, 4]);
+    let expected = mx.array([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4]]);
+    let result = mx.diag(x);
+    assertArrayAllTrue(mx.arrayEqual(result, expected));
+
+    x = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+    expected = mx.array([1, 5, 9]);
+    result = mx.diag(x);
+    assertArrayAllTrue(mx.arrayEqual(result, expected));
+
+    expected = mx.array([2, 6]);
+    result = mx.diag(x, 1);
+    assertArrayAllTrue(mx.arrayEqual(result, expected));
+  });
 });

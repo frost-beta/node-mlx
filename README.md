@@ -38,6 +38,8 @@ Some features are not supported yet and will be implemented in future:
 
 * The function passed to `mx.grad` and `mx.valueAndGrad` must have all its
   parameters being `mx.array`.
+* When creating a `mx.array` from JavaScript Array, the Array must only include
+  primitive values.
 
 ### Complex numbers
 

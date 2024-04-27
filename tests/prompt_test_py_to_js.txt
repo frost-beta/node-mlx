@@ -18,12 +18,14 @@ Use true/false instead of True/False.
 Convert python tuples to TypeScript Arrays.
 For calls of len function, convert to the length property.
 Use `assertArrayAllFalse` and `assertArrayAllTrue` helpers for assersion the results of ops like mx.equal.
-Use `assert.deepEqual` to compare JavaScript arrays, for example assert.deepEqual(x.tolist(), [1.0, 1.0]);.
+Use `assert.deepEqual` to compare JavaScript arrays, for example assert.deepEqual(x.tolist(), [1.0, 1.0]) and assert.deepEqual(x.shape, [3, 4]).
 Use `assert.equal` to compare other things like dtype. The dtypes can be accessed via properties like mx.float32.
 For arithmetic operations like a + b, use ops instead, for example a + b to mx.add(a, b) , a % b to mx.remainder(a, b), a * b to mx.multiply(a, b).
 The TypeScript APIs does not take object arguments, so convert code like mx.array(2, dtype=dt) to mx.array(2, dt).
-The complex number in mx is represented as object {re: number, im: number}, and can be created with mx.Complex(re, im).
+The complex number in mx is represented as object {re: number, im: number}, and can be created with mx.complex(re, im).
+For getting item via indexing, use the "index" method, for example a[1, 2, 3] becomes a.index(1, 2, 3).
+For setting item vai idnexing, use the "indexPut_" method, for example `a[1] = b` becomes `a.indexPut_(1, b)`, `a[1, 2] = b` becomes `a.indexPut_([1, 2], b)`, `a[1:2] = b` becomes `a.indexPut_(mx.Slice(1, 2), b)`.
 
-For code that compares results between mx and np (numpy), replace the numpy code with tensorflow-js. For example, replace np.array to tf.tensor. When comparing results, convert to js Array first, for example assert.deepEqual(rTf.arraySync(), rMlx.tolist()). For ops, convert the tf tensor to JS array, and then call the op like `mx.isclose(rMlx, rTf.arraySync())`.
+For code that compares results between mx and np (numpy), replace the numpy code with tensorflow-js. For example, replace np.array to tf.tensor. When comparing results, convert to js Array first, for example assert.deepEqual(rTf.arraySync(), rMlx.tolist()). For ops, convert the tf tensor to JS array, and then call the op like `mx.isclose(rMlx, rTf.arraySync())`. Replaces "np" in names with "tf".
 
 Write code inside markdown codeblock.
