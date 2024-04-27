@@ -669,8 +669,78 @@ std::pair<bool, mx::array> SliceUpdate(
 
 }  // namespace
 
+ArrayAt::ArrayAt(mx::array x, std::variant<ArrayIndex, ArrayIndices> indices)
+    : x_(std::move(x)), indices_(std::move(indices)) {}
+
+mx::array ArrayAt::Add(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_add(x_, std::move(indices), std::move(updates),
+                           std::move(axes));
+  } else {
+    return mx::add(x_, std::move(updates));
+  }
+}
+
+mx::array ArrayAt::Subtract(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_add(x_, std::move(indices),
+                           mx::negative(std::move(updates)), std::move(axes));
+  } else {
+    return mx::subtract(x_, std::move(updates));
+  }
+}
+
+mx::array ArrayAt::Multiply(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_prod(x_, std::move(indices), std::move(updates),
+                            std::move(axes));
+  } else {
+    return mx::multiply(x_, std::move(updates));
+  }
+}
+
+mx::array ArrayAt::Divide(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_prod(x_, std::move(indices),
+                            mx::reciprocal(std::move(updates)),
+                            std::move(axes));
+  } else {
+    return mx::divide(x_, std::move(updates));
+  }
+}
+
+mx::array ArrayAt::Maximum(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_max(x_, std::move(indices), std::move(updates),
+                           std::move(axes));
+  } else {
+    return mx::maximum(x_, std::move(updates));
+  }
+}
+
+mx::array ArrayAt::Minimum(ScalarOrArray value) {
+  auto [indices, updates, axes] = ComputeScatterArgs(&x_, indices_,
+                                                     std::move(value));
+  if (indices.size() > 0) {
+    return mx::scatter_min(x_, std::move(indices), std::move(updates),
+                           std::move(axes));
+  } else {
+    return mx::minimum(x_, std::move(updates));
+  }
+}
+
 mx::array Index(const mx::array* a, ki::Arguments* args) {
-  if (args->Length() == 1) {
+  if (args->RemainingsLength() == 1) {
     auto index = args->GetNext<ArrayIndex>();
     if (!index) {
       args->ThrowError("Index");
@@ -679,7 +749,7 @@ mx::array Index(const mx::array* a, ki::Arguments* args) {
     return IndexOne(a, std::move(*index));
   }
   ArrayIndices indices;
-  if (ReadArgs(args, &indices) != args->Length()) {
+  if (!ReadArgs(args, &indices)) {
     args->ThrowError("Index");
     return *a;
   }

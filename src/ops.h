@@ -69,6 +69,8 @@ mx::array Flatten(const mx::array& a,
                   std::optional<int> start_axis,
                   std::optional<int> end_axis,
                   mx::StreamOrDevice s);
+mx::array Reshape(const mx::array& a,
+                  ki::Arguments* args);
 mx::array Squeeze(const mx::array& a,
                   IntOrVector axis,
                   mx::StreamOrDevice s);

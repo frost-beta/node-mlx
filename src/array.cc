@@ -262,6 +262,24 @@ int Length(mx::array* a, napi_env env) {
   return a->shape(0);
 }
 
+// Return the ArrayAt helper.
+ArrayAt* At(mx::array* a, ki::Arguments* args) {
+  if (args->RemainingsLength() == 1) {
+    auto index = args->GetNext<ArrayIndex>();
+    if (!index) {
+      args->ThrowError("Index");
+      return nullptr;
+    }
+    return new ArrayAt(*a, std::move(*index));
+  }
+  ArrayIndices indices;
+  if (!ReadArgs(args, &indices)) {
+    args->ThrowError("Index");
+    return nullptr;
+  }
+  return new ArrayAt(*a, std::move(indices));
+}
+
 // Convert the array to scalar.
 napi_value Item(mx::array* a, napi_env env) {
   a->eval();
@@ -478,11 +496,12 @@ void Type<mx::array>::Define(napi_env env,
                    Property("T", Getter(MemberFunction(t))));
   // Define array's methods.
   Set(env, prototype,
+      "at", MemberFunction(&At),
       "item", MemberFunction(&Item),
       "tolist", MemberFunction(&ToList),
       "astype", MemberFunction(&mx::astype),
       "flatten", MemberFunction(&ops::Flatten),
-      "reshape", MemberFunction(&mx::reshape),
+      "reshape", MemberFunction(&ops::Reshape),
       "squeeze", MemberFunction(&ops::Squeeze),
       "abs", MemberFunction(&mx::abs),
       "square", MemberFunction(&mx::square),
@@ -533,6 +552,32 @@ std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
     return a;
   return AllowPassByValue<mx::array>::FromNode(env, value);
 }
+
+template<>
+struct TypeBridge<ArrayAt> {
+  static inline ArrayAt* Wrap(ArrayAt* ptr) {
+    return ptr;
+  }
+  static inline void Finalize(ArrayAt* ptr) {
+    delete ptr;
+  }
+};
+
+template<>
+struct Type<ArrayAt> {
+  static constexpr const char* name = "ArrayAt";
+  static void Define(napi_env env,
+                     napi_value constructor,
+                     napi_value prototype) {
+    Set(env, prototype,
+        "add", &ArrayAt::Add,
+        "subtract", &ArrayAt::Subtract,
+        "multiply", &ArrayAt::Multiply,
+        "divide", &ArrayAt::Divide,
+        "maximum", &ArrayAt::Maximum,
+        "minimum", &ArrayAt::Minimum);
+  }
+};
 
 template<>
 struct Type<ArrayIterator> {

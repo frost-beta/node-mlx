@@ -633,6 +633,55 @@ describe('array', () => {
     });
   });
 
+  it('arrayAt', () => {
+    let a = mx.array(1);
+    a = a.at(null).add(1);
+    assert.equal(a.item(), 2);
+
+    a = mx.array([0, 1, 2]);
+    a = a.at(1).add(2);
+    assert.deepEqual(a.tolist(), [0, 3, 2]);
+
+    a = a.at(mx.array([0, 0, 0, 0], mx.int32)).add(1);
+    assert.deepEqual(a.tolist(), [4, 3, 2]);
+
+    a = mx.zeros([10, 10]);
+    a = a.at(0).add(mx.arange(10));
+    assert.deepEqual(a.index(0).tolist(), [...Array(10).keys()]);
+
+    a = mx.zeros([10, 10]);
+    const indexX = mx.array([0, 2, 3, 7], mx.int32);
+    const indexY = mx.array([3, 3, 1, 2], mx.int32);
+    const u = mx.random.uniform(0, 1, [4]);
+    a = a.at(indexX, indexY).add(u);
+    assertArrayAllTrue(mx.allclose(a.sum(), u.sum()));
+    assertArrayAllTrue(mx.equal(a.sum(), u.sum()));
+    assert.deepEqual(a.index(indexX, indexY).tolist(), u.tolist());
+
+    const index = [mx.array([0, 4], mx.int32), mx.Slice(), 0];
+    a = mx.random.uniform(0, 1, [10, 5, 2]);
+    a.indexPut_(index, 0);
+    let update = mx.ones([2, 5]);
+    a = a.at(...index).add(update);
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), update));
+    a = a.at(...index).subtract(update);
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.zerosLike(update)));
+    a = a.at(...index).add(mx.multiply(update, 2));
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.multiply(update, 2)));
+    a = a.at(...index).multiply(mx.multiply(update, 2));
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.multiply(update, 4)));
+    a = a.at(...index).divide(mx.multiply(update, 3));
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.multiply(update, 4 / 3)));
+
+    update = mx.arange(10).reshape(2, 5);
+    a.indexPut_(index, 5);
+    a = a.at(...index).maximum(update);
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.maximum(a.index(...index), update)));
+    a.indexPut_(index, 5);
+    a = a.at(...index).minimum(update);
+    assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.minimum(a.index(...index), update)));
+  });
+
   it('sliceNegativeStep', () => {
     let a = mx.arange(20);
 

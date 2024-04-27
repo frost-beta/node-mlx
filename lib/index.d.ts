@@ -72,12 +72,25 @@ interface Slice {
 }
 export function Slice(start?: number, stop?: number, step?: number): Slice;
 
-// Array.
+// Array helper types.
 type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
 type Scalar = boolean | number | Complex;
 type ScalarOrArray = MultiDimensionalArray<Scalar | array>;
 type ArrayIndex = null | Slice | '...' | array | number;
 
+// Helper class to apply updates at specific indices.
+declare class ArrayAt {
+  constructor(array: array, indices: ArrayIndex | ArrayIndex[]);
+
+  add(value: ScalarOrArray): array;
+  subtract(value: ScalarOrArray): array;
+  multiply(value: ScalarOrArray): array;
+  divide(value: ScalarOrArray): array;
+  maximum(value: ScalarOrArray): array;
+  minimum(value: ScalarOrArray): array;
+}
+
+// Array.
 export function array(value: ScalarOrArray, dtype?: Dtype): array;
 
 export class array {
@@ -85,7 +98,7 @@ export class array {
 
   length: number;
   astype(dtype: Dtype, s?: StreamOrDevice): array;
-  at(index: number, s?: StreamOrDevice): array;
+  at(...index: ArrayIndex[]): ArrayAt;
   item(): Scalar;
   tolist(): MultiDimensionalArray<Scalar>;
   dtype: Dtype;

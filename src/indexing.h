@@ -18,6 +18,22 @@ using ArrayIndex = std::variant<std::monostate,  // null/newaxis
                                 mx::array*>;
 using ArrayIndices = std::vector<ArrayIndex>;
 
+class ArrayAt {
+ public:
+  ArrayAt(mx::array x, std::variant<ArrayIndex, ArrayIndices> indices);
+
+  mx::array Add(ScalarOrArray value);
+  mx::array Subtract(ScalarOrArray value);
+  mx::array Multiply(ScalarOrArray value);
+  mx::array Divide(ScalarOrArray value);
+  mx::array Maximum(ScalarOrArray value);
+  mx::array Minimum(ScalarOrArray value);
+
+ private:
+  mx::array x_;
+  std::variant<ArrayIndex, ArrayIndices> indices_;
+};
+
 mx::array Index(const mx::array* a, ki::Arguments* args);
 void IndexPut(mx::array* a,
               std::variant<ArrayIndex, ArrayIndices> obj,

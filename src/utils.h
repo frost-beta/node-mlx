@@ -20,16 +20,16 @@ inline std::vector<int> ToIntVector(std::variant<int, std::vector<int>> shape) {
 
 // Read args into a vector of types.
 template<typename T>
-size_t ReadArgs(ki::Arguments* args, std::vector<T>* results) {
+bool ReadArgs(ki::Arguments* args, std::vector<T>* results) {
   for (size_t i = 0; i < args->Length(); ++i) {
     std::optional<T> a = args->GetNext<T>();
     if (!a) {
       args->ThrowError(ki::Type<T>::name);
-      return i;
+      return false;
     }
     results->push_back(std::move(*a));
   }
-  return args->Length();
+  return true;
 }
 
 // Get axis arg from js value.

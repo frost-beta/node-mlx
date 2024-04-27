@@ -56,6 +56,25 @@ mx::array Flatten(const mx::array& a,
   return mx::flatten(a, start_axis.value_or(0), end_axis.value_or(-1), s);
 }
 
+mx::array Reshape(const mx::array& a,
+                  ki::Arguments* args) {
+  std::vector<int> shape;
+  if (args->RemainingsLength() == 1) {
+    auto ret = args->GetNext<std::vector<int>>();
+    if (!ret) {
+      args->ThrowError("Shape");
+      return a;
+    }
+    shape = std::move(*ret);
+  } else {
+    if (!ReadArgs(args, &shape)) {
+      args->ThrowError("int");
+      return a;
+    }
+  }
+  return mx::reshape(a, std::move(shape));
+}
+
 mx::array Squeeze(const mx::array& a,
                   IntOrVector axis,
                   mx::StreamOrDevice s) {
@@ -524,7 +543,7 @@ bool IsSubDtype(std::variant<mx::Dtype, mx::Dtype::Category> dtype,
 
 void InitOps(napi_env env, napi_value exports) {
   ki::Set(env, exports,
-          "reshape", &mx::reshape,
+          "reshape", &ops::Reshape,
           "flatten", &ops::Flatten,
           "squeeze", &ops::Squeeze,
           "expandDims", &ops::ExpandDims,

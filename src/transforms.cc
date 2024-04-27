@@ -34,7 +34,7 @@ std::function<void(ki::Arguments* args)>
 EvalOpWrapper(void(*func)(std::vector<mx::array>)) {
   return [func](ki::Arguments* args) {
     std::vector<mx::array> arrays;
-    if (ReadArgs(args, &arrays) == args->Length())
+    if (ReadArgs(args, &arrays))
       func(std::move(arrays));
   };
 }
@@ -89,7 +89,7 @@ ValueAndGrad(napi_env env,
   return [env, func = std::move(func), multi_gradients](ki::Arguments* args) {
     std::pair<napi_value, napi_value> ret;
     std::vector<mx::array> arrays;
-    if (ReadArgs(args, &arrays) < args->Length())
+    if (!ReadArgs(args, &arrays))
       return ret;
     auto results = func(std::move(arrays));
     if (ki::IsExceptionPending(env))
