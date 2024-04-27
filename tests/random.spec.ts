@@ -5,12 +5,12 @@ import {assert} from 'chai';
 describe('random', () => {
   it('globalRng', () => {
     mx.random.seed(3n);
-    const a = mx.random.uniform();
-    const b = mx.random.uniform();
+    const a = mx.random.uniform(0, 1);
+    const b = mx.random.uniform(0, 1);
 
     mx.random.seed(3n);
-    const x = mx.random.uniform();
-    const y = mx.random.uniform();
+    const x = mx.random.uniform(0, 1);
+    const y = mx.random.uniform(0, 1);
 
     assert.equal(a.item(), x.item());
     assert.equal(y.item(), b.item());
@@ -45,8 +45,6 @@ describe('random', () => {
 
     a = mx.random.uniform(-0.1, 0.1, [1], mx.bfloat16);
     assert.equal(a.dtype, mx.bfloat16);
-
-    assert.equal(mx.random.uniform().dtype, mx.random.uniform().dtype);
   });
 
   it('normal', () => {

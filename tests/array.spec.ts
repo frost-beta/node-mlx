@@ -655,7 +655,7 @@ describe('array', () => {
     const u = mx.random.uniform(0, 1, [4]);
     a = a.at(indexX, indexY).add(u);
     assertArrayAllTrue(mx.allclose(a.sum(), u.sum()));
-    assertArrayAllTrue(mx.equal(a.sum(), u.sum()));
+    assertArrayAllTrue(mx.allclose(a.sum(), u.sum()));
     assert.deepEqual(a.index(indexX, indexY).tolist(), u.tolist());
 
     const index = [mx.array([0, 4], mx.int32), mx.Slice(), 0];

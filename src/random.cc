@@ -9,17 +9,15 @@ mx::array Split(const mx::array& a,
   return mx::random::split(a, num.value_or(2), s);
 }
 
-mx::array Uniform(std::optional<mx::array> low,
-                  std::optional<mx::array> high,
+mx::array Uniform(const mx::array& low,
+                  const mx::array& high,
                   std::optional<std::vector<int>> shape,
                   std::optional<mx::Dtype> dtype,
                   std::optional<mx::array> key,
                   mx::StreamOrDevice s) {
-  return mx::random::uniform(
-      std::move(low.value_or(mx::array(0))),
-      std::move(high.value_or(mx::array(1))),
-      std::move(shape.value_or(std::vector<int>())),
-      dtype.value_or(mx::float32), std::move(key), s);
+  return mx::random::uniform(low, high,
+                             std::move(shape.value_or(std::vector<int>())),
+                             dtype.value_or(mx::float32), std::move(key), s);
 }
 
 mx::array Normal(std::optional<std::vector<int>> shape,

@@ -132,9 +132,12 @@ export class array {
   log1p(s?: StreamOrDevice): array;
   log2(s?: StreamOrDevice): array;
   logsumexp(s?: StreamOrDevice): array;
-  max(s?: StreamOrDevice): array;
-  mean(s?: StreamOrDevice): array;
-  min(s?: StreamOrDevice): array;
+  max(keepdims?: boolean, s?: StreamOrDevice): array;
+  max(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+  mean(keepdims?: boolean, s?: StreamOrDevice): array;
+  mean(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+  min(keepdims?: boolean, s?: StreamOrDevice): array;
+  min(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   moveaxis(source: number, destination: number, s?: StreamOrDevice): array;
   prod(s?: StreamOrDevice): array;
   reciprocal(s?: StreamOrDevice): array;
@@ -341,7 +344,7 @@ export namespace random {
   export function seed(seed: BigInt): void;
   export function split(array: array, num?: number, s?: StreamOrDevice): array;
   export function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
-  export function uniform(low?: ScalarOrArray, high?: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
+  export function uniform(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
 }
 
 // FFT.
@@ -366,4 +369,12 @@ export namespace linalg {
   export function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
   export function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
   export function inv(array: ScalarOrArray, s?: StreamOrDevice): array;
+}
+
+// Fast operations.
+export namespace fast {
+  export function rmsNorm(array: ScalarOrArray, weights: ScalarOrArray, eps: number, s?: StreamOrDevice): array;
+  export function layerNorm(array: ScalarOrArray, weights: ScalarOrArray | null, bias: ScalarOrArray | null, eps: number, s?: StreamOrDevice): array;
+  export function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number, scale: number, offset: number, s?: StreamOrDevice): array;
+  export function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, s?: StreamOrDevice): array;
 }
