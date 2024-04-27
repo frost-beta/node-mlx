@@ -132,7 +132,9 @@ describe('random', () => {
     checkJointlyGaussian(data, mean, cov);
   });
 
-  it('randint', () => {
+  it('randint', function() {
+    this.timeout(10 * 1000);  // slow in QEMU
+
     let a = mx.random.randint(0, 1, []);
     assert.equal(a.shape.length, 0);
     assert.equal(a.dtype, mx.int32);

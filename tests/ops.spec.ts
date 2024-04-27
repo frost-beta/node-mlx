@@ -1153,7 +1153,9 @@ describe('ops', () => {
     }
   });
 
-  it('concatenate', () => {
+  it('concatenate', function() {
+    this.timeout(10 * 1000);  // slow in QEMU
+
     const aTf = tf.randomNormal([32, 32, 32]);
     const bTf = tf.randomNormal([32, 32, 32]);
     const aMlx = mx.array(aTf.arraySync());
