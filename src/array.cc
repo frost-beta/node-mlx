@@ -372,6 +372,21 @@ napi_value ToList(mx::array* a, napi_env env) {
   }
 }
 
+// Get the Symbol.iterator.
+napi_value SymbolIterator(napi_env env) {
+  napi_value result;
+  if (Get(env, ki::Global(env), "Symbol", &result) &&
+      Get(env, result, "iterator", &result)) {
+    return result;
+  }
+  return nullptr;
+}
+
+// Implement the [Symbol.iterator] method.
+ArrayIterator* CreateArrayIterator(mx::array* a) {
+  return new ArrayIterator(*a);
+}
+
 }  // namespace
 
 // Allow passing Dtype to JS directly, no memory management involved as they are
@@ -538,7 +553,8 @@ void Type<mx::array>::Define(napi_env env,
       "diagonal", MemberFunction(&ops::Diagonal),
       "diag", MemberFunction(&ops::Diag),
       "index", MemberFunction(&Index),
-      "indexPut_", MemberFunction(&IndexPut));
+      "indexPut_", MemberFunction(&IndexPut),
+      SymbolIterator(env), MemberFunction(&CreateArrayIterator));
 }
 
 // static
@@ -580,14 +596,18 @@ struct Type<ArrayAt> {
 };
 
 template<>
-struct Type<ArrayIterator> {
-  static constexpr const char* name = "ArrayIterator";
-  static inline ArrayIterator* Constructor(mx::array* a) {
-    return new ArrayIterator(*a);
+struct TypeBridge<ArrayIterator> {
+  static inline ArrayIterator* Wrap(ArrayIterator* ptr) {
+    return ptr;
   }
-  static inline void Destructor(ArrayIterator* ptr) {
+  static inline void Finalize(ArrayIterator* ptr) {
     delete ptr;
   }
+};
+
+template<>
+struct Type<ArrayIterator> {
+  static constexpr const char* name = "ArrayIterator";
   static void Define(napi_env env,
                      napi_value constructor,
                      napi_value prototype) {
@@ -628,6 +648,5 @@ void InitArray(napi_env env, napi_value exports) {
           "generic", mx::generic);
 
   ki::Set(env, exports,
-          "array", ki::Class<mx::array>(),
-          "_ArrayIterator", ki::Class<ArrayIterator>());
+          "array", ki::Class<mx::array>());
 }
