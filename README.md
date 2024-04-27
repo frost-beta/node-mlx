@@ -47,7 +47,7 @@ represent them:
 ```typescript
 interface Complex {
   re: number;
-  im?: number;
+  im: number;
 }
 ```
 

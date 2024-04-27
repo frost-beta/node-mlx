@@ -469,4 +469,198 @@ describe('array', () => {
                        [[0, 4], [1, 5], [3, 7]]);
     });
   });
+
+  describe('itemPut', () => {
+    it('simple', () => {
+      let a = mx.array(0);
+      a.indexPut_(null, 1);
+      assert.equal(a.item(), 1);
+
+      a = mx.array([1, 2, 3]);
+      a.indexPut_(0, 2);
+      assert.deepEqual(a.tolist(), [2, 2, 3]);
+
+      a.indexPut_(-1, 2);
+      assert.deepEqual(a.tolist(), [2, 2, 2]);
+
+      a.indexPut_(0, mx.array([[[1]]]));
+      assert.deepEqual(a.tolist(), [1, 2, 2]);
+
+      a.indexPut_(mx.Slice(), 0);
+      assert.deepEqual(a.tolist(), [0, 0, 0]);
+
+      a.indexPut_(null, 1);
+      assert.deepEqual(a.tolist(), [1, 1, 1]);
+
+      a.indexPut_(mx.Slice(0, 1), 2);
+      assert.deepEqual(a.tolist(), [2, 1, 1]);
+
+      a.indexPut_(mx.Slice(0, 2), 3);
+      assert.deepEqual(a.tolist(), [3, 3, 1]);
+
+      a.indexPut_(mx.Slice(0, 3), 4);
+      assert.deepEqual(a.tolist(), [4, 4, 4]);
+
+      a.indexPut_(mx.Slice(0, 1), mx.array(0));
+      assert.deepEqual(a.tolist(), [0, 4, 4]);
+
+      a.indexPut_(mx.Slice(0, 1), mx.array([1]));
+      assert.deepEqual(a.tolist(), [1, 4, 4]);
+
+      assert.throws(() => {
+        a.indexPut_(mx.Slice(0, 1), mx.array([2, 3]));
+      }, Error);
+
+      a.indexPut_(mx.Slice(0, 2), mx.array([2, 2]));
+      assert.deepEqual(a.tolist(), [2, 2, 4]);
+
+      a.indexPut_(mx.Slice(), mx.array([[[[1, 1, 1]]]]));
+      assert.deepEqual(a.tolist(), [1, 1, 1]);
+    });
+
+    it('arrayValue', () => {
+      let a = mx.zeros([3, 3]);
+      a.indexPut_(0, 1);
+      assert.deepEqual(a.tolist(), [[1, 1, 1], [0, 0, 0], [0, 0, 0]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(-1, 1);
+      assert.deepEqual(a.tolist(), [[0, 0, 0], [0, 0, 0], [1, 1, 1]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(mx.Slice(0, 2), 1);
+      assert.deepEqual(a.tolist(), [[1, 1, 1], [1, 1, 1], [0, 0, 0]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(mx.Slice(0, 2), [[0, 1, 2], [3, 4, 5]]);
+      assert.deepEqual(a.tolist(), [[0, 1, 2], [3, 4, 5], [0, 0, 0]]);
+
+      assert.throws(() => {
+        a = mx.array(0);
+        a.indexPut_(0, mx.array(1));
+      }, Error);
+    });
+
+    it('arrayIndex', () => {
+      let a = mx.zeros([3, 3]);
+      a.indexPut_(mx.array([0, 1, 2], mx.uint32), 1);
+      assert.deepEqual(a.tolist(), [[1, 1, 1], [1, 1, 1], [1, 1, 1]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(mx.array([0, 1, 2], mx.uint32), mx.array(3));
+      assert.deepEqual(a.tolist(), [[3, 3, 3], [3, 3, 3], [3, 3, 3]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(mx.array([0, 1, 2], mx.uint32), mx.array([3]));
+      assert.deepEqual(a.tolist(), [[3, 3, 3], [3, 3, 3], [3, 3, 3]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_(mx.array([0, 1], mx.uint32), mx.array([3]));
+      assert.deepEqual(a.tolist(), [[3, 3, 3], [3, 3, 3], [0, 0, 0]]);
+
+      a = mx.zeros([3, 2]);
+      a.indexPut_(mx.array([0, 1], mx.uint32), mx.array([[3, 3], [4, 4]]));
+      assert.deepEqual(a.tolist(), [[3, 3], [4, 4], [0, 0]]);
+
+      a = mx.zeros([3, 2]);
+      a.indexPut_(mx.array([0, 0, 1], mx.uint32), mx.array([[3, 3], [4, 4], [5, 5]]));
+      assert.deepEqual(a.tolist(), [[4, 4], [5, 5], [0, 0]]);
+    });
+
+    it('nullSlices', () => {
+      let a = mx.array(0);
+      a.indexPut_([null, null], 1);
+      assert.equal(a.item(), 1);
+
+      a.indexPut_([null, null], mx.array(2));
+      assert.equal(a.item(), 2);
+
+      a.indexPut_([null, null], mx.array([[[3]]]));
+      assert.equal(a.item(), 3);
+
+      a.indexPut_([], 4);
+      assert.equal(a.item(), 4);
+    });
+
+    it('multipleSlices', () => {
+      let a = mx.zeros([3, 3]);
+      a.indexPut_([mx.array([0, 2], mx.uint32), mx.Slice(1, 2)], 1);
+      assert.deepEqual(a.tolist(), [[0, 1, 0], [0, 0, 0], [0, 1, 0]]);
+
+      a = mx.zeros(5);
+      a.indexPut_([null, null, mx.array([2, 3], mx.uint32)], mx.arange(2));
+      assert.deepEqual(a.tolist(), [0, 0, 0, 1, 0]);
+
+      assert.throws(() => {
+        a = mx.array([4, 3, 4]);
+        a.indexPut_([mx.array([2, 3], mx.uint32), null, mx.array([2, 3], mx.uint32)], mx.arange(2));
+      }, Error);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_([mx.Slice(0, 2), mx.Slice(0, 2)], 1);
+      assert.deepEqual(a.tolist(), [[1, 1, 0], [1, 1, 0], [0, 0, 0]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_([mx.Slice(0, 2), mx.Slice(0, 2)], mx.arange(2));
+      assert.deepEqual(a.tolist(), [[0, 1, 0], [0, 1, 0], [0, 0, 0]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_([mx.Slice(0, 2), mx.Slice(0, 2)], mx.arange(2).reshape([2, 1]));
+      assert.deepEqual(a.tolist(), [[0, 0, 0], [1, 1, 0], [0, 0, 0]]);
+
+      a = mx.zeros([3, 3]);
+      a.indexPut_([mx.Slice(0, 2), mx.Slice(0, 2)], mx.arange(4).reshape([2, 2]));
+      assert.deepEqual(a.tolist(), [[0, 1, 0], [2, 3, 0], [0, 0, 0]]);
+
+      assert.throws(() => {
+        a = mx.zeros([2, 2, 2]);
+        a.indexPut_(['...', '...'], 1);
+      }, Error);
+
+      assert.throws(() => {
+        a = mx.zeros([2, 2, 2, 2, 2]);
+        a.indexPut_([0, '...', 0, '...', 0], 1);
+      }, Error);
+
+      assert.throws(() => {
+        a = mx.zeros([2, 2]);
+        a.indexPut_([0, 0, 0], 1);
+      }, Error);
+
+      a = mx.zeros([2, 2, 2, 2]);
+      a.indexPut_([null, '...', null], 1);
+      assert.deepEqual(a.tolist(), mx.ones([2, 2, 2, 2]).tolist());
+    });
+  });
+
+  it('sliceNegativeStep', () => {
+    let a = mx.arange(20);
+
+    let b = a.index(mx.Slice(null, null, -1));
+    assert.deepEqual(b.tolist(), mx.arange(19, -1, -1).tolist());
+
+    b = a.index(mx.Slice(-3, 3, -1));
+    assert.deepEqual(b.tolist(), mx.arange(17, 3, -1).tolist());
+
+    b = a.index(mx.Slice(25, -50, -1));
+    assert.deepEqual(b.tolist(), mx.arange(19, -1, -1).tolist());
+
+    b = a.index(mx.Slice(null, null, -3));
+    assert.deepEqual(b.tolist(), [...Array(7).keys()].map(i => 19 - 3 * i));
+
+    b = a.index(mx.Slice(-3, 3, -3));
+    assert.deepEqual(b.tolist(), [17, 14, 11, 8, 5]);
+
+    b = a.index(mx.Slice(25, -50, -3));
+    assert.deepEqual(b.tolist(), [19, 16, 13, 10, 7, 4, 1]);
+
+    b = a.index(mx.Slice(0, 20, -3));
+    assert.deepEqual(b.tolist(), []);
+
+    a = mx.arange(3 * 6 * 4).reshape([3, 6, 4]);
+
+    b = a.index('...', mx.Slice(null, null, -1));
+    assert.deepEqual(b.tolist(),
+                     [...Array(3)].map((_,i) => [...Array(6)].map((_,j) => [...Array(4)].map((_,k) => 4 * (6 * i + j) + 3 - k))));
+  });
 });

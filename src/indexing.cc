@@ -34,7 +34,7 @@ inline mx::array GetIntIndex(int index, int length) {
 }
 
 // Index an array with |slice|.
-mx::array IndexSlice(mx::array* a, const Slice& slice) {
+mx::array IndexSlice(const mx::array* a, const Slice& slice) {
   if (IsSliceNone(slice))
     return *a;
   std::vector<int> starts(a->ndim(), 0);
@@ -120,7 +120,10 @@ mx::array GatherNDimensional(mx::array a,
 // The implementation comes from mlx_expand_ellipsis.
 std::pair<size_t, std::vector<ArrayIndex>> ExpandEllipsis(
     const std::vector<int>& shape,
-    const std::vector<ArrayIndex>& entries) {
+    std::vector<ArrayIndex> entries) {
+  if (entries.size() == 0)
+    return {0, {}};
+
   std::vector<ArrayIndex> indices;
   std::vector<ArrayIndex> r_indices;
 
@@ -130,11 +133,11 @@ std::pair<size_t, std::vector<ArrayIndex>> ExpandEllipsis(
 
   size_t i = 0;
   for (; i < entries.size(); i++) {
-    const ArrayIndex& index = entries[i];
+    ArrayIndex& index = entries[i];
     if (!std::holds_alternative<Ellipsis>(index)) {
       if (!std::holds_alternative<std::monostate>(index))
         non_none_indices_before++;
-      indices.push_back(index);
+      indices.push_back(std::move(index));
     } else {
       has_ellipsis = true;
       break;
@@ -142,14 +145,14 @@ std::pair<size_t, std::vector<ArrayIndex>> ExpandEllipsis(
   }
 
   for (size_t j = entries.size() - 1; j > i; j--) {
-    const ArrayIndex& index = entries[j];
+    ArrayIndex& index = entries[j];
     if (std::holds_alternative<Ellipsis>(index)) {
       throw std::invalid_argument(
           "An index can only have a single ellipsis ('...')");
     }
-    r_indices.push_back(index);
     if (!std::holds_alternative<std::monostate>(index))
       non_none_indices_after++;
+    r_indices.push_back(std::move(index));
   }
 
   size_t non_none_indices = non_none_indices_before + non_none_indices_after;
@@ -163,17 +166,21 @@ std::pair<size_t, std::vector<ArrayIndex>> ExpandEllipsis(
     }
   }
 
-  indices.insert(indices.end(), r_indices.rbegin(), r_indices.rend());
+  indices.insert(indices.end(),
+                 std::make_move_iterator(r_indices.rbegin()),
+                 std::make_move_iterator(r_indices.rend()));
   return std::make_pair(non_none_indices, std::move(indices));
 }
 
+// Index an array with multiple indices.
 // The implementation comes from mlx_get_item_nd.
 mx::array IndexNDimensional(const mx::array* a,
                             std::vector<ArrayIndex> entries) {
   if (entries.size() == 0)
     return *a;
 
-  auto [non_none_indices, indices] = ExpandEllipsis(a->shape(), entries);
+  auto [non_none_indices, indices] = ExpandEllipsis(a->shape(),
+                                                    std::move(entries));
   if (non_none_indices > a->ndim()) {
     std::ostringstream msg;
     msg << "Too many indices for array with " << a->ndim() << "dimensions.";
@@ -321,7 +328,8 @@ mx::array IndexNDimensional(const mx::array* a,
 }
 
 // Index an array with only one index.
-mx::array IndexOne(mx::array* a, ArrayIndex index) {
+// Modified from mlx_get_item.
+mx::array IndexOne(const mx::array* a, ArrayIndex index) {
   if (std::holds_alternative<std::monostate>(index)) {
     std::vector<int> shape = { 1 };
     shape.insert(shape.end(), a->shape().begin(), a->shape().end());
@@ -348,9 +356,320 @@ mx::array IndexOne(mx::array* a, ArrayIndex index) {
   throw std::invalid_argument("Cannot index mlx array using the given type.");
 }
 
+// Return a new shape that removes begining dimensions with size 1.
+std::vector<int> GetUpShape(const mx::array& a) {
+  size_t s = 0;
+  while (s < a.ndim() && a.shape(s) == 1)
+    s++;
+  return std::vector<int>(a.shape().begin() + s, a.shape().end());
+}
+
+using ScatterResult = std::tuple<std::vector<mx::array>,
+                                 mx::array,
+                                 std::vector<int>>;
+
+// The implementation comes from mlx_scatter_args_int.
+ScatterResult ScatterArgsInt(const mx::array* a,
+                             int index,
+                             mx::array update) {
+  std::vector<int> up_shape = GetUpShape(update);
+  std::vector<int> shape = a->shape();
+  shape[0] = 1;
+  return {{GetIntIndex(index, a->shape(0))},
+          mx::broadcast_to(mx::reshape(std::move(update), std::move(up_shape)),
+                           std::move(shape)),
+          {0}};
+}
+
+// The implementation comes from mlx_scatter_args_array.
+ScatterResult ScatterArgsArray(const mx::array* a,
+                               mx::array indices,
+                               mx::array update) {
+  std::vector<int> up_shape = GetUpShape(update);
+  mx::array up = mx::reshape(std::move(update), std::move(up_shape));
+
+  up_shape = indices.shape();
+  up_shape.insert(up_shape.end(), a->shape().begin() + 1, a->shape().end());
+  up = mx::broadcast_to(std::move(up), up_shape);
+  up_shape.insert(up_shape.begin() + indices.ndim(), 1);
+  up = mx::reshape(std::move(up), std::move(up_shape));
+
+  return {{std::move(indices)}, std::move(up), {0}};
+}
+
+
+// The implementation comes from mlx_scatter_args_slice.
+ScatterResult ScatterArgsSlice(const mx::array* a,
+                               const Slice& slice,
+                               mx::array update) {
+  if (IsSliceNone(slice)) {
+    std::vector<int> up_shape = GetUpShape(update);
+    return {{},
+            mx::broadcast_to(mx::reshape(std::move(update),
+                                         std::move(up_shape)),
+                             a->shape()),
+            {}};
+  }
+
+  int start = 0;
+  int stop = a->shape(0);
+  int step = 1;
+  ReadSlice(slice, stop, &start, &stop, &step);
+
+  if (step == 1) {
+    std::vector<int> up_shape_broadcast = {1, stop - start};
+    up_shape_broadcast.insert(up_shape_broadcast.end(),
+                              a->shape().begin() + 1, a->shape().end());
+    return {{mx::array({start}, {1}, mx::uint32)},
+            mx::broadcast_to(std::move(update), std::move(up_shape_broadcast)),
+            {0}};
+  }
+
+  return ScatterArgsArray(a, mx::arange(start, stop, step, mx::uint32),
+                          std::move(update));
+}
+
+// The implementation comes from mlx_scatter_args_nd.
+ScatterResult ScatterArgsNDimentional(const mx::array* a,
+                                      std::vector<ArrayIndex> entries,
+                                      mx::array update) {
+  auto [non_none_indices, indices] = ExpandEllipsis(a->shape(),
+                                                    std::move(entries));
+  if (non_none_indices > a->ndim()) {
+    std::ostringstream msg;
+    msg << "Too many indices for array with " << a->ndim() << "dimensions.";
+    throw std::invalid_argument(msg.str());
+  }
+
+  std::vector<int> up_shape = GetUpShape(update);
+  mx::array up = mx::reshape(std::move(update), std::move(up_shape));
+
+  if (non_none_indices == 0) {
+    return {{}, mx::broadcast_to(std::move(up), a->shape()), {}};
+  }
+
+  size_t max_dim = 0;
+  bool arrays_first = false;
+  size_t num_none = 0;
+  size_t num_slices = 0;
+  size_t num_arrays = 0;
+  int num_strided_slices = 0;
+  size_t num_simple_slices_post = 0;
+  {
+    bool have_array = false;
+    bool have_non_array = false;
+    for (const ArrayIndex& index : indices) {
+      if (std::holds_alternative<std::monostate>(index)) {
+        have_non_array = have_array;
+        num_none++;
+      } else if (std::holds_alternative<Slice>(index)) {
+        have_non_array = have_array;
+        num_slices++;
+        if (std::get<Slice>(index).step.value_or(1) != 1) {
+          num_strided_slices++;
+          num_simple_slices_post = 0;
+        } else {
+          num_simple_slices_post++;
+        }
+      } else if (std::holds_alternative<mx::array*>(index)) {
+        have_array = true;
+        if (have_array && have_non_array)
+          arrays_first = true;
+        max_dim = std::max(std::get<mx::array*>(index)->ndim(), max_dim);
+        num_arrays++;
+        num_simple_slices_post = 0;
+      }
+    }
+  }
+
+  size_t index_ndim = max_dim + num_none + num_slices - num_simple_slices_post;
+  if (index_ndim == 0)
+    index_ndim = 1;
+
+  std::vector<mx::array> arr_indices;
+  size_t slice_num = 0;
+  size_t array_num = 0;
+
+  std::vector<int> update_shape(non_none_indices, 1);
+  std::vector<int> slice_shapes;
+
+  size_t axis = 0;
+  for (const ArrayIndex& index : indices) {
+    if (std::holds_alternative<Slice>(index)) {
+      int start, stop, step;
+      int axis_size = a->shape(axis);
+      ReadSlice(std::get<Slice>(index), axis_size, &start, &stop, &step);
+
+      start = start < 0 ? start + axis_size : start;
+      stop = stop < 0 ? stop + axis_size : stop;
+
+      std::vector<int> index_shape(index_ndim, 1);
+      if (array_num >= num_arrays && num_strided_slices == 0 && step == 1) {
+        slice_shapes.push_back(stop - start);
+        arr_indices.push_back(
+            mx::array({start}, std::move(index_shape), mx::uint32));
+        update_shape[axis] = slice_shapes.back();
+      } else {
+        mx::array idx = mx::arange(start, stop, step, mx::uint32);
+        size_t loc = slice_num + (arrays_first ? max_dim : 0);
+        index_shape[loc] = idx.size();
+        arr_indices.push_back(mx::reshape(std::move(idx),
+                                          std::move(index_shape)));
+        slice_num++;
+        num_strided_slices--;
+        update_shape[axis] = 1;
+      }
+      axis++;
+    } else if (std::holds_alternative<int>(index)) {
+      arr_indices.push_back(GetIntIndex(std::get<int>(index),
+                                        a->shape(axis++)));
+      update_shape[axis - 1] = 1;
+    } else if (std::holds_alternative<std::monostate>(index)) {
+      slice_num++;
+    } else if (std::holds_alternative<mx::array*>(index)) {
+      mx::array* idx = std::get<mx::array*>(index);
+      std::vector<int> index_shape(index_ndim, 1);
+      size_t start = (arrays_first ? 0 : 1) * slice_num + max_dim - idx->ndim();
+      for (size_t j = 0; j < idx->ndim(); j++) {
+        index_shape[start + j] = idx->shape(j);
+      }
+      arr_indices.push_back(mx::reshape(*idx, std::move(index_shape)));
+      if (!arrays_first && ++array_num == num_arrays) {
+        slice_num += max_dim;
+      }
+      update_shape[axis] = 1;
+      axis++;
+    } else {
+      throw std::invalid_argument(
+          "Cannot index mlx array using the given type yet");
+    }
+  }
+
+  arr_indices = mx::broadcast_arrays(std::move(arr_indices));
+
+  std::vector<int> up_shape_broadcast = arr_indices[0].shape();
+  up_shape_broadcast.insert(up_shape_broadcast.end(),
+                            slice_shapes.begin(), slice_shapes.end());
+  up_shape_broadcast.insert(up_shape_broadcast.end(),
+                            a->shape().begin() + non_none_indices,
+                            a->shape().end());
+  up = mx::broadcast_to(std::move(up), std::move(up_shape_broadcast));
+
+  std::vector<int> up_reshape = arr_indices[0].shape();
+  up_reshape.insert(up_reshape.end(), update_shape.begin(), update_shape.end());
+  up_reshape.insert(up_reshape.end(),
+                    a->shape().begin() + non_none_indices, a->shape().end());
+  up = mx::reshape(std::move(up), std::move(up_reshape));
+
+  std::vector<int> axes(arr_indices.size(), 0);
+  std::iota(axes.begin(), axes.end(), 0);
+  return {std::move(arr_indices), std::move(up), std::move(axes)};
+}
+
+// The implementation comes from mlx_compute_scatter_args.
+ScatterResult ComputeScatterArgs(const mx::array* a,
+                                 std::variant<ArrayIndex, ArrayIndices> indices,
+                                 ScalarOrArray vals) {
+  mx::array value = ToArray(std::move(vals), a->dtype());
+  if (std::holds_alternative<ArrayIndices>(indices)) {
+    return ScatterArgsNDimentional(
+        a, std::move(std::get<ArrayIndices>(indices)), std::move(value));
+  }
+  ArrayIndex index = std::move(std::get<ArrayIndex>(indices));
+  if (std::holds_alternative<std::monostate>(index)) {
+    return {{}, mx::broadcast_to(std::move(value), a->shape()), {}};
+  }
+  if (a->ndim() == 0) {
+    throw std::invalid_argument("too many indices for array: "
+                                "array is 0-dimensional");
+  }
+  if (std::holds_alternative<int>(index)) {
+    return ScatterArgsInt(a, std::get<int>(index), std::move(value));
+  }
+  if (std::holds_alternative<mx::array*>(index)) {
+    return ScatterArgsArray(a, std::move(*std::get<mx::array*>(index)),
+                            std::move(value));
+  }
+  if (std::holds_alternative<Slice>(index)) {
+    return ScatterArgsSlice(a, std::get<Slice>(index), std::move(value));
+  }
+  throw std::invalid_argument("Cannot index mlx array using the given type.");
+}
+
+// The implementation comes from mlx_slice_update.
+std::pair<bool, mx::array> SliceUpdate(
+    mx::array* a,
+    std::variant<ArrayIndex, ArrayIndices> obj,
+    ScalarOrArray vals) {
+  bool is_slice = std::holds_alternative<ArrayIndex>(obj) &&
+                  std::holds_alternative<Slice>(std::get<ArrayIndex>(obj));
+  if (a->ndim() == 0 ||
+      (!is_slice && !std::holds_alternative<ArrayIndices>(obj))) {
+    return std::make_pair(false, *a);
+  }
+
+  mx::array up = ToArray(std::move(vals), a->dtype());
+  std::vector<int> up_shape = GetUpShape(up);
+  up = mx::reshape(std::move(up), up_shape.empty() ? std::vector<int>{1}
+                                                   : std::move(up_shape));
+
+  std::vector<int> starts(a->ndim(), 0);
+  std::vector<int> stops(a->shape());
+  std::vector<int> steps(a->ndim(), 1);
+  if (is_slice) {
+    ReadSlice(std::get<Slice>(std::get<ArrayIndex>(obj)), a->shape(0),
+              &starts[0], &stops[0], &steps[0]);
+    return {true,
+            mx::slice_update(*a, std::move(up), std::move(starts),
+                             std::move(stops), std::move(steps))};
+  }
+
+  ArrayIndices entries = std::move(std::get<ArrayIndices>(obj));
+  for (const ArrayIndex& index : entries) {
+    if (std::holds_alternative<mx::array*>(index))
+      return std::make_pair(false, *a);
+  }
+
+  auto [non_none_indices, indices] = ExpandEllipsis(a->shape(),
+                                                    std::move(entries));
+  if (non_none_indices > a->ndim()) {
+    std::ostringstream msg;
+    msg << "Too many indices for array with " << a->ndim() << "dimensions.";
+    throw std::invalid_argument(msg.str());
+  }
+  if (non_none_indices == 0) {
+    return std::make_pair(true, mx::broadcast_to(std::move(up), a->shape()));
+  }
+
+  std::vector<int> upd_expand_dims;
+  size_t axis = 0;
+  for (const ArrayIndex& index : indices) {
+    if (std::holds_alternative<Slice>(index)) {
+      ReadSlice(std::get<Slice>(index), a->shape(axis),
+                &starts[axis], &stops[axis], &steps[axis]);
+      axis++;
+    } else if (std::holds_alternative<int>(index)) {
+      int start = std::get<int>(index);
+      if (start < 0)
+        start += a->shape(axis);
+      starts[axis] = start;
+      stops[axis] = start + 1;
+      if (a->ndim() - axis < up.ndim()) {
+        upd_expand_dims.push_back(axis - a->ndim());
+      }
+      axis++;
+    }
+  }
+
+  up = mx::expand_dims(std::move(up), std::move(upd_expand_dims));
+  return {true,
+          mx::slice_update(*a, std::move(up), std::move(starts),
+                           std::move(stops), std::move(steps))};
+}
+
 }  // namespace
 
-mx::array Index(mx::array* a, ki::Arguments* args) {
+mx::array Index(const mx::array* a, ki::Arguments* args) {
   if (args->Length() == 1) {
     auto index = args->GetNext<ArrayIndex>();
     if (!index) {
@@ -365,6 +684,25 @@ mx::array Index(mx::array* a, ki::Arguments* args) {
     return *a;
   }
   return IndexNDimensional(a, std::move(indices));
+}
+
+void IndexPut(mx::array* a,
+              std::variant<ArrayIndex, ArrayIndices> obj,
+              ScalarOrArray vals) {
+  auto [success, out] = SliceUpdate(a, obj, vals);
+  if (success) {
+    a->overwrite_descriptor(std::move(out));
+    return;
+  }
+
+  auto [indices, updates, axes] = ComputeScatterArgs(a, std::move(obj),
+                                                     std::move(vals));
+  if (indices.size() > 0) {
+    a->overwrite_descriptor(mx::scatter(*a, std::move(indices),
+                                        std::move(updates), std::move(axes)));
+  } else {
+    a->overwrite_descriptor(std::move(updates));
+  }
 }
 
 namespace ki {

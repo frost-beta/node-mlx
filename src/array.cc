@@ -518,7 +518,8 @@ void Type<mx::array>::Define(napi_env env,
       "round", MemberFunction(&ops::Round),
       "diagonal", MemberFunction(&ops::Diagonal),
       "diag", MemberFunction(&ops::Diag),
-      "index", MemberFunction(&Index));
+      "index", MemberFunction(&Index),
+      "indexPut_", MemberFunction(&IndexPut));
 }
 
 // static

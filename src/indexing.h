@@ -14,11 +14,14 @@ struct Ellipsis {};
 using ArrayIndex = std::variant<std::monostate,  // null/newaxis
                                 Ellipsis,  // ...
                                 Slice,  // start:stop:step
-                                mx::array*,
-                                int>;
+                                int,
+                                mx::array*>;
 using ArrayIndices = std::vector<ArrayIndex>;
 
-mx::array Index(mx::array* a, ki::Arguments* args);
+mx::array Index(const mx::array* a, ki::Arguments* args);
+void IndexPut(mx::array* a,
+              std::variant<ArrayIndex, ArrayIndices> obj,
+              ScalarOrArray vals);
 
 namespace ki {
 

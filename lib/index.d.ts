@@ -139,6 +139,7 @@ export class array {
   variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
   index(...index: ArrayIndex[]): array;
+  indexPut_(index: ArrayIndex | ArrayIndex[], value: ScalarOrArray): array;
   [Symbol.iterator](): IterableIterator<array>;
 }
 
