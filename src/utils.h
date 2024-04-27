@@ -32,6 +32,23 @@ bool ReadArgs(ki::Arguments* args, std::vector<T>* results) {
   return true;
 }
 
+// Convert the type to string.
+template<typename T>
+std::string ToString(const T* value) {
+  std::ostringstream ss;
+  ss << *value;
+  return ss.str();
+}
+
+// Define the toString method for type's prototype.
+template<typename T>
+void DefineToString(napi_env env, napi_value prototype) {
+  auto symbol = ki::SymbolFor("nodejs.util.inspect.custom");
+  ki::Set(env, prototype,
+          "toString", ki::MemberFunction(&ToString<T>),
+          symbol, ki::MemberFunction(&ToString<T>));
+}
+
 // Get axis arg from js value.
 std::vector<int> GetReduceAxes(IntOrVector value, int dims);
 

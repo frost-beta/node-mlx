@@ -37,6 +37,7 @@ void Type<mx::Device>::Define(napi_env env,
                               napi_value prototype) {
   DefineProperties(env, prototype,
                    Property("type", Getter(&mx::Device::type)));
+  DefineToString<mx::Device>(env, prototype);
 }
 
 // static

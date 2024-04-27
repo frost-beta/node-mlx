@@ -14,6 +14,7 @@ void Type<mx::Stream>::Define(napi_env env,
                               napi_value prototype) {
   DefineProperties(env, prototype,
                    Property("device", Getter(&mx::Stream::device)));
+  DefineToString<mx::Stream>(env, prototype);
 }
 
 }  // namespace ki
