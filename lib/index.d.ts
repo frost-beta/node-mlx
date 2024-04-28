@@ -380,3 +380,20 @@ export namespace fast {
   export function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number, scale: number, offset: number, s?: StreamOrDevice): array;
   export function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, s?: StreamOrDevice): array;
 }
+
+// Constants.
+export const Inf: number;
+export const Infinity: number;
+export const inf: number;
+export const infty: number;
+export const NAN: number;
+export const NaN: number;
+export const nan: number;
+export const NINF: number;
+export const NZERO: number;
+export const PINF: number;
+export const PZERO: number;
+export const e: number;
+export const eulerGamma: number;
+export const pi: number;
+export const newaxis: null;
