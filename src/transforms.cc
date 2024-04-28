@@ -1,6 +1,9 @@
 #include "src/array.h"
 #include "src/ops.h"
 
+// Needed for detail::compile.
+#include "mlx/transforms_impl.h"
+
 namespace {
 
 // Unflatten the function call result.
@@ -138,6 +141,32 @@ VMap(napi_env env,
   };
 }
 
+std::function<napi_value(ki::Arguments*)>
+Compile(napi_env env,
+        napi_value value,
+        std::optional<bool> shapeless) {
+  // Reference the JS function as napi_value only lives at current tick.
+  ki::Persistent js_func(env, value);
+  std::uintptr_t func_id = reinterpret_cast<std::uintptr_t>(js_func.Id());
+  // Call compile with the JS function.
+  auto func = mx::detail::compile(
+      [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
+        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals);
+      },
+      func_id,
+      shapeless.value_or(false));
+  // Return a JS function that converts JS args into primals.
+  return [env, func = std::move(func)](ki::Arguments* args) -> napi_value {
+    std::vector<mx::array> arrays;
+    if (!ReadArgs(args, &arrays))
+      return nullptr;
+    auto results = func(std::move(arrays));
+    if (ki::IsExceptionPending(env))
+      return nullptr;
+    return UnflattenResults(env, results);
+  };
+}
+
 }  // namespace transforms_ops
 
 void InitTransforms(napi_env env, napi_value exports) {
@@ -148,5 +177,8 @@ void InitTransforms(napi_env env, napi_value exports) {
           "vjp", JVPOpWrapper(&mx::vjp),
           "valueAndGrad", &transforms_ops::ValueAndGrad,
           "grad", &transforms_ops::Grad,
-          "vmap", &transforms_ops::VMap);
+          "vmap", &transforms_ops::VMap,
+          "compile", &transforms_ops::Compile,
+          "disableCompile", &mx::disable_compile,
+          "enableCompile", &mx::enable_compile);
 }

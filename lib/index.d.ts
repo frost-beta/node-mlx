@@ -319,12 +319,14 @@ type ValueAndGradFunctionScalar = (...args: array[]) => [array, array]
 type ValueAndGradFunctionGeneric = (...args: array[]) => [array[], array[]]
 export function valueAndGrad(func: (...args: array[]) => array, argnums?: number | number[]): ValueAndGradFunctionScalar;
 export function valueAndGrad(func: (...args: array[]) => array[], argnums?: number | number[]): ValueAndGradFunctionGeneric;
-type GradFunctionScalar = (...args: array[]) => array
-type GradFunctionGeneric = (...args: array[]) => array[]
-export function grad(func: (...args: array[]) => array, argnums?: number | number[]): GradFunctionScalar;
-export function grad(func: (...args: array[]) => array[], argnums?: number | number[]): GradFunctionGeneric;
-export function vmap(func: (...args: array[]) => array, inAxes?: number | number[], outAxis?: number): GradFunctionScalar;
-export function vmap(func: (...args: array[]) => array[], inAxes?: number | number[], outAxes?: number[]): GradFunctionGeneric;
+type ComputeFunctionScalar = (...args: array[]) => array
+type ComputeFunctionGeneric = (...args: array[]) => array[]
+export function grad(func: ComputeFunctionScalar, argnums?: number | number[]): ComputeFunctionScalar;
+export function grad(func: ComputeFunctionGeneric, argnums?: number | number[]): ComputeFunctionGeneric;
+export function vmap(func: ComputeFunctionScalar, inAxes?: number | number[], outAxis?: number): ComputeFunctionScalar;
+export function vmap(func: ComputeFunctionGeneric, inAxes?: number | number[], outAxes?: number[]): ComputeFunctionGeneric;
+export function compile(func: ComputeFunctionScalar, shapeless?: boolean): ComputeFunctionScalar;
+export function compile(func: ComputeFunctionGeneric, shapeless?: boolean): ComputeFunctionGeneric;
 
 // Metal.
 export namespace metal {
