@@ -36,6 +36,8 @@ describe('vmap', () => {
       mx.sin,
       mx.sqrt,
       mx.square,
+      mx.degrees,
+      mx.radians,
     ];
 
     for (const op of ops) {

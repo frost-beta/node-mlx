@@ -18,6 +18,7 @@ void InitMetal(napi_env env, napi_value exports) {
           "getPeakMemory", &mx::metal::get_peak_memory,
           "getCacheMemory", &mx::metal::get_cache_memory,
           "setMemoryLimit", &metal_ops::SetMemoryLimit,
+          "clearCache", &mx::metal::clear_cache,
           "setCacheLimit", &mx::metal::set_cache_limit,
           "startCapture", &mx::metal::start_capture,
           "stopCapture", &mx::metal::stop_capture);

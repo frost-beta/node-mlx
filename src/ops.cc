@@ -599,6 +599,8 @@ void InitOps(napi_env env, napi_value exports) {
           "arcsinh", &mx::arcsinh,
           "arccosh", &mx::arccosh,
           "arctanh", &mx::arctanh,
+          "degrees", &mx::degrees,
+          "radians", &mx::radians,
           "log", &mx::log,
           "log2", &mx::log2,
           "log10", &mx::log10,
@@ -651,6 +653,7 @@ void InitOps(napi_env env, napi_value exports) {
           "argpartition", KthOpWrapper(&mx::argpartition, &mx::argpartition),
           "topk", KthOpWrapper(&mx::topk, &mx::topk),
           "broadcastTo", &mx::broadcast_to,
+          "blockMaskedMM", &mx::block_masked_mm,
           "softmax", &ops::Softmax,
           "concatenate", &ops::Concatenate,
           "stack", &ops::Stack,
@@ -682,5 +685,10 @@ void InitOps(napi_env env, napi_value exports) {
           "atleast1d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_1d),
           "atleast2d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_2d),
           "atleast3d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_3d),
-          "issubdtype", &ops::IsSubDtype);
+          "issubdtype", &ops::IsSubDtype,
+          "bitwiseAnd", &mx::bitwise_and,
+          "bitwiseOr", &mx::bitwise_or,
+          "bitwiseXor", &mx::bitwise_xor,
+          "leftShift", &mx::left_shift,
+          "rightShift", &mx::right_shift);
 }

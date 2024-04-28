@@ -1482,4 +1482,17 @@ describe('ops', () => {
     result = mx.diag(x, 1);
     assertArrayAllTrue(mx.arrayEqual(result, expected));
   });
+
+  it('bitwiseOps', () => {
+    let a = mx.random.uniform(0, 256, [10]).astype(mx.int32);
+    let b = mx.random.uniform(0, 256, [10]).astype(mx.int32);
+    // This is the only supported bitwise op in tensorflow.
+    for (let op of ['bitwiseAnd']) {
+      const aTf = tf.tensor(a.tolist() as number[]).cast('int32');
+      const bTf = tf.tensor(b.tolist() as number[]).cast('int32');
+      const outMlx = mx[op](a, b);
+      const outTf = tf[op](aTf, bTf);
+      assert.deepEqual(outMlx.tolist(), outTf.arraySync());
+    }
+  });
 });
