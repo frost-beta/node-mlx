@@ -245,10 +245,7 @@ describe('vmap', () => {
     const a = mx.random.uniform(0, 1, [3, 4, 2]);
     const cpuSvd = x => mx.linalg.svd(x, mx.cpu);
 
-    // FIXME(zcbenz): Since tree flatten is not supported yet, the results of
-    // svd is treated as returning 3 arrays instead of one Array. Specify out
-    // axes explicitly to make test work.
-    let [Us, Ss, Vts] = mx.vmap(cpuSvd, 0, [0, 0, 0])(a);
+    let [Us, Ss, Vts] = mx.vmap(cpuSvd, 0)(a);
     assert.deepEqual(Us.shape, [a.shape[0], a.shape[1], a.shape[1]]);
     assert.deepEqual(Ss.shape, [a.shape[0], a.shape[2]]);
     assert.deepEqual(Vts.shape, [a.shape[0], a.shape[2], a.shape[2]]);
@@ -263,7 +260,7 @@ describe('vmap', () => {
                       M, 1e-5, 1e-7));
     }
 
-    [Us, Ss, Vts] = mx.vmap(cpuSvd, 1, [0, 0, 0])(a);
+    [Us, Ss, Vts] = mx.vmap(cpuSvd, 1)(a);
     assert.deepEqual(Us.shape, [a.shape[1], a.shape[0], a.shape[0]]);
     assert.deepEqual(Ss.shape, [a.shape[1], a.shape[2]]);
     assert.deepEqual(Vts.shape, [a.shape[1], a.shape[2], a.shape[2]]);

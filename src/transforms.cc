@@ -3,8 +3,17 @@
 
 namespace {
 
+// Unflatten the function call result.
+inline napi_value UnflattenResults(napi_env env,
+                                   const std::vector<mx::array>& results) {
+  if (results.size() > 1)
+    return ki::ToNodeValue(env, results);
+  else
+    return ki::ToNodeValue(env, results[0]);
+}
+
 // Execute JS function with primals.
-std::optional<std::vector<mx::array>> ExecuteWithPrimals(
+std::vector<mx::array> ExecuteWithPrimals(
     napi_env env,
     napi_value js_func,
     const std::vector<mx::array>& primals) {
@@ -17,7 +26,7 @@ std::optional<std::vector<mx::array>> ExecuteWithPrimals(
   if (napi_make_callback(env, nullptr, js_func, js_func,
                          args.size(), args.empty() ? nullptr : &args.front(),
                          &result) != napi_ok) {
-    return std::nullopt;
+    return {};
   }
   // Convert result to vector.
   if (auto a = ki::FromNodeTo<mx::array*>(env, result); a)
@@ -25,7 +34,7 @@ std::optional<std::vector<mx::array>> ExecuteWithPrimals(
   if (auto v = ki::FromNodeTo<std::vector<mx::array>>(env, result); v)
     return std::move(*v);
   ki::ThrowError(env, "function does not return mx.array or Array of mx.array");
-  return std::nullopt;
+  return {};
 }
 
 // A template converter for ops that accept infinite |array|s.
@@ -58,8 +67,7 @@ JVPOpWrapper(
                 std::vector<mx::array> primals,
                 std::vector<mx::array> tangents) {
     auto vfunc = [env, js_func](const std::vector<mx::array>& primals) {
-      return ExecuteWithPrimals(env, js_func, primals)
-          .value_or(std::vector<mx::array>());
+      return ExecuteWithPrimals(env, js_func, primals);
     };
     return func(vfunc, primals, tangents);
   };
@@ -75,34 +83,22 @@ ValueAndGrad(napi_env env,
              std::optional<std::variant<int, std::vector<int>>> argnums) {
   // Reference the JS function as napi_value only lives at current tick.
   ki::Persistent js_func(env, value);
-  // Get the indices of gradients.
-  std::vector<int> indices = ToIntVector(std::move(argnums.value_or(0)));
-  bool multi_gradients = indices.size() > 1;
   // Call value_and_grad with the JS function.
   auto func = mx::value_and_grad(
       [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
-        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals)
-            .value_or(std::vector<mx::array>());
-      }, std::move(indices));
+        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals);
+      }, ToIntVector(std::move(argnums.value_or(0))));
   // Return a JS function that converts JS args into primals.
-  return [env, func = std::move(func), multi_gradients](ki::Arguments* args) {
-    std::pair<napi_value, napi_value> ret;
+  return [env, func = std::move(func)](ki::Arguments* args)
+        -> std::pair<napi_value, napi_value> {
     std::vector<mx::array> arrays;
     if (!ReadArgs(args, &arrays))
-      return ret;
+      return {nullptr, nullptr};
     auto results = func(std::move(arrays));
     if (ki::IsExceptionPending(env))
-      return ret;
-    // Unflatten the results.
-    if (results.first.size() > 1)
-      ret.first = ki::ToNodeValue(env, results.first);
-    else
-      ret.first = ki::ToNodeValue(env, results.first[0]);
-    if (multi_gradients)
-      ret.second = ki::ToNodeValue(env, results.second);
-    else
-      ret.second = ki::ToNodeValue(env, results.second[0]);
-    return ret;
+      return {nullptr, nullptr};
+    return {UnflattenResults(env, results.first),
+            UnflattenResults(env, results.second)};
   };
 }
 
@@ -123,34 +119,22 @@ VMap(napi_env env,
      std::optional<std::variant<int, std::vector<int>>> out_axes) {
   // Reference the JS function as napi_value only lives at current tick.
   ki::Persistent js_func(env, value);
-  // Whether the function has multiple outputs.
-  bool multi_outs = false;
-  if (out_axes) {
-    auto v = std::get_if<std::vector<int>>(&out_axes.value());
-    multi_outs = v && v->size() > 1;
-  }
   // Call vmap with the JS function.
   auto func = mx::vmap(
       [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
-        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals)
-            .value_or(std::vector<mx::array>());
+        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals);
       },
       ToIntVector(std::move(in_axes.value_or(std::vector<int>()))),
       ToIntVector(std::move(out_axes.value_or(std::vector<int>()))));
   // Return a JS function that converts JS args into primals.
-  return [env, func = std::move(func), multi_outs](ki::Arguments* args)
-      -> napi_value {
+  return [env, func = std::move(func)](ki::Arguments* args) -> napi_value {
     std::vector<mx::array> arrays;
     if (!ReadArgs(args, &arrays))
       return nullptr;
     auto results = func(std::move(arrays));
     if (ki::IsExceptionPending(env))
       return nullptr;
-    // Unflatten the results.
-    if (multi_outs)
-      return ki::ToNodeValue(env, results);
-    else
-      return ki::ToNodeValue(env, results[0]);
+    return UnflattenResults(env, results);
   };
 }
 
