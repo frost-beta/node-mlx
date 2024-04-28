@@ -76,15 +76,14 @@ ValueAndGrad(napi_env env,
   // Reference the JS function as napi_value only lives at current tick.
   ki::Persistent js_func(env, value);
   // Get the indices of gradients.
-  std::vector<int> gradient_indices = ToIntVector(
-      std::move(argnums.value_or(std::vector<int>{0})));
-  bool multi_gradients = gradient_indices.size() > 1;
+  std::vector<int> indices = ToIntVector(std::move(argnums.value_or(0)));
+  bool multi_gradients = indices.size() > 1;
   // Call value_and_grad with the JS function.
   auto func = mx::value_and_grad(
       [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
         return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals)
             .value_or(std::vector<mx::array>());
-      }, std::move(gradient_indices));
+      }, std::move(indices));
   // Return a JS function that converts JS args into primals.
   return [env, func = std::move(func), multi_gradients](ki::Arguments* args) {
     std::pair<napi_value, napi_value> ret;
@@ -117,6 +116,44 @@ Grad(napi_env env,
   };
 }
 
+std::function<napi_value(ki::Arguments*)>
+VMap(napi_env env,
+     napi_value value,
+     std::optional<std::variant<int, std::vector<int>>> in_axes,
+     std::optional<std::variant<int, std::vector<int>>> out_axes) {
+  // Reference the JS function as napi_value only lives at current tick.
+  ki::Persistent js_func(env, value);
+  // Whether the function has multiple outputs.
+  bool multi_outs = false;
+  if (out_axes) {
+    auto v = std::get_if<std::vector<int>>(&out_axes.value());
+    multi_outs = v && v->size() > 1;
+  }
+  // Call vmap with the JS function.
+  auto func = mx::vmap(
+      [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
+        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals)
+            .value_or(std::vector<mx::array>());
+      },
+      ToIntVector(std::move(in_axes.value_or(std::vector<int>()))),
+      ToIntVector(std::move(out_axes.value_or(std::vector<int>()))));
+  // Return a JS function that converts JS args into primals.
+  return [env, func = std::move(func), multi_outs](ki::Arguments* args)
+      -> napi_value {
+    std::vector<mx::array> arrays;
+    if (!ReadArgs(args, &arrays))
+      return nullptr;
+    auto results = func(std::move(arrays));
+    if (ki::IsExceptionPending(env))
+      return nullptr;
+    // Unflatten the results.
+    if (multi_outs)
+      return ki::ToNodeValue(env, results);
+    else
+      return ki::ToNodeValue(env, results[0]);
+  };
+}
+
 }  // namespace transforms_ops
 
 void InitTransforms(napi_env env, napi_value exports) {
@@ -126,5 +163,6 @@ void InitTransforms(napi_env env, napi_value exports) {
           "jvp", JVPOpWrapper(&mx::jvp),
           "vjp", JVPOpWrapper(&mx::vjp),
           "valueAndGrad", &transforms_ops::ValueAndGrad,
-          "grad", &transforms_ops::Grad);
+          "grad", &transforms_ops::Grad,
+          "vmap", &transforms_ops::VMap);
 }

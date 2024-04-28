@@ -336,7 +336,7 @@ describe('fast', () => {
   // TODO(zcbenz): Port the test_layer_norm_grad_params test.
 
   it('fastTransforms', () => {
-    const x = mx.random.uniform(0, 1, [2, 2, 8]);
+    let x = mx.random.uniform(0, 1, [2, 2, 8]);
 
     const defaults: [number, boolean, number, number, number] = [8, false, 10000.0, 1.0, 0];
     const [dims, traditional, base, scale, offset] = defaults;
@@ -357,7 +357,10 @@ describe('fast', () => {
     );
     assertArrayAllTrue(mx.allclose(vjpOut[0], vjpFastOut[0]));
 
-    // TODO(zcbenz): Port the vmap test.
+    x = mx.random.uniform(0, 1, [2, 2, 2, 8]);
+    const vmapOut = mx.vmap(x => ropeOrig(x, ...defaults))(x);
+    const vmapFastOut = mx.vmap(x => mx.fast.rope(x, dims, traditional, base, scale, offset))(x);
+    assertArrayAllTrue(mx.allclose(vmapOut, vmapFastOut));
   });
 });
 

@@ -36,8 +36,8 @@ There are a few exceptions due to limitations of JavaScript:
 
 Some features are not supported yet and will be implemented in future:
 
-* The function passed to `mx.grad` and `mx.valueAndGrad` must have all its
-  parameters being `mx.array`.
+* The function passed to `mx.grad`/`mx.valueAndGrad`/`mx.vmap` must have all its
+  parameters taking `mx.array`.
 * When creating a `mx.array` from JavaScript Array, the Array must only include
   primitive values.
 

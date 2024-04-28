@@ -508,6 +508,16 @@ mx::array Tile(const mx::array& a,
     return mx::tile(a, std::get<std::vector<int>>(reps), s);
 }
 
+mx::array AddMM(mx::array a,
+                mx::array b,
+                mx::array c,
+                std::optional<float> alpha,
+                std::optional<float> beta,
+                mx::StreamOrDevice s) {
+  return mx::addmm(std::move(a), std::move(b), std::move(c),
+                   alpha.value_or(1), beta.value_or(1), s);
+}
+
 mx::array Diagonal(const mx::array& a,
                    std::optional<int> offset,
                    std::optional<int> axis1,
@@ -666,7 +676,7 @@ void InitOps(napi_env env, napi_value exports) {
           "inner", &mx::inner,
           "outer", &mx::outer,
           "tile", &ops::Tile,
-          "addmm", &mx::addmm,
+          "addmm", &ops::AddMM,
           "diagonal", &ops::Diagonal,
           "diag", &ops::Diag,
           "atleast1d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_1d),

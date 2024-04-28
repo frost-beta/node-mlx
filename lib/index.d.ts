@@ -151,7 +151,8 @@ export class array {
   square(s?: StreamOrDevice): array;
   squeeze(axis?: number | number[], s?: StreamOrDevice): array;
   swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
-  sum(s?: StreamOrDevice): array;
+  sum(keepdims?: boolean, s?: StreamOrDevice): array;
+  sum(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   transpose(s?: StreamOrDevice): array;
   variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
@@ -163,6 +164,7 @@ export class array {
 // Ops.
 export function abs(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function add(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
+export function addmm(a: ScalarOrArray, b: ScalarOrArray, c: ScalarOrArray, alpha?: number, beta?: number,  s?: StreamOrDevice): array;
 export function all(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function all(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function allclose(array1: ScalarOrArray, array2: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): boolean;
@@ -182,7 +184,7 @@ export function argmin(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDev
 export function argmin(array: ScalarOrArray, axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
 export function argpartition(array: ScalarOrArray, kth: number, axis?: number, s?: StreamOrDevice): array;
 export function argsort(array: ScalarOrArray, s?: StreamOrDevice): array;
-export function arrayEqual(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
+export function arrayEqual(array1: ScalarOrArray, array2: ScalarOrArray, equalNan?: boolean, s?: StreamOrDevice): array;
 export function asStrided(array: ScalarOrArray, shape?: number[], strides?: number[], offset?: number, s?: StreamOrDevice): array;
 export function atleast1d(...arrays: array[]): array;
 export function atleast2d(...arrays: array[]): array;
@@ -321,6 +323,8 @@ type GradFunctionScalar = (...args: array[]) => array
 type GradFunctionGeneric = (...args: array[]) => array[]
 export function grad(func: (...args: array[]) => array, argnums?: number | number[]): GradFunctionScalar;
 export function grad(func: (...args: array[]) => array[], argnums?: number | number[]): GradFunctionGeneric;
+export function vmap(func: (...args: array[]) => array, inAxes?: number | number[], outAxis?: number): GradFunctionScalar;
+export function vmap(func: (...args: array[]) => array[], inAxes?: number | number[], outAxes?: number[]): GradFunctionGeneric;
 
 // Metal.
 export namespace metal {
