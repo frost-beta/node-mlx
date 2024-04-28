@@ -154,4 +154,166 @@ describe('autograd', () => {
     mx.eval(state);
     assertArrayAllTrue(mx.allclose(state, mx.ones([2])));
   });
+
+  it('scatterVjp', () => {
+    const fun1 = (x, idx) => {
+      x.indexPut_(idx.astype(mx.int32), 2.0);
+      return x.sum();
+    };
+
+    let dfdx = mx.grad(fun1)(mx.array([1.0, 2.0, 3.0]), mx.array([1]));
+
+    assertArrayAllTrue(mx.arrayEqual(dfdx, mx.array([1.0, 0.0, 1.0])));
+    assert.equal(dfdx.dtype, mx.float32);
+
+    let y = mx.array([0.0, 1.0, 2.0]);
+
+    const fun2 = (x, idx) => {
+      y.indexPut_(idx.astype(mx.int32), x);
+      return y.sum();
+    };
+
+    dfdx = mx.grad(fun2)(mx.array([2.0]), mx.array([1]));
+
+    assertArrayAllTrue(mx.arrayEqual(dfdx, mx.array([1.0])));
+    assert.equal(dfdx.dtype, mx.float32);
+  });
+
+  it('scatterMaxVjp', () => {
+    const fun = (src, updates) => {
+      let x = src.at(1).maximum(updates);
+      return x;
+    };
+
+    let cotan = mx.array([4.0, 5.0, 6.0]);
+    let [_, vjps] = mx.vjp(fun, [mx.array([1.0, 2.0, 3.0]), mx.array([[3.0]])], [cotan]);
+    mx.eval(...vjps);
+
+    assertArrayAllTrue(mx.allclose(vjps[0], mx.array([4.0, 0.0, 6.0])));
+    assertArrayAllTrue(mx.allclose(vjps[1], mx.array([5.0])));
+
+    cotan = mx.array([[4.0], [5.0], [6.0]]);
+    [_, vjps] = mx.vjp(fun, [mx.array([[1.0], [2.0], [3.0]]), mx.array([[[2.0]]])], [cotan]);
+    mx.eval(...vjps);
+
+    assertArrayAllTrue(mx.allclose(vjps[0], mx.array([[4.0], [5.0], [6.0]])));
+    assertArrayAllTrue(mx.allclose(vjps[1], mx.array([[[5.0]]])));
+  });
+
+  it('scatterMinVjp', () => {
+    const fun = (src, updates) => {
+      let x = src.at(1).minimum(updates);
+      return x;
+    };
+
+    let cotan = mx.array([4.0, 5.0, 6.0]);
+    let [, vjps] = mx.vjp(fun, [mx.array([1.0, 2.0, 3.0]), mx.array([[3.0]])], [cotan]);
+    mx.eval(...vjps);
+
+    assertArrayAllTrue(mx.allclose(vjps[0], mx.array([4.0, 5.0, 6.0])));
+    assertArrayAllTrue(mx.allclose(vjps[1], mx.array([0.0])));
+
+    cotan = mx.array([[4.0], [5.0], [6.0]]);
+    [, vjps] = mx.vjp(
+      fun, [mx.array([[1.0], [2.0], [3.0]]), mx.array([[[2.0]]])], [cotan]
+    );
+    mx.eval(...vjps);
+
+    assertArrayAllTrue(mx.allclose(vjps[0], mx.array([[4.0], [5.0], [6.0]])));
+    assertArrayAllTrue(mx.allclose(vjps[1], mx.array([[[5.0]]])));
+  });
+
+  it('splitAgainstSlice', () => {
+    const fSplit = x => {
+      const [a, , b] = x.split(3, -1);
+      return mx.multiply(a, b).sum();
+    };
+
+    const fSlice = x => {
+      const step = x.shape[x.shape.length - 1] / 3;
+      const a = x.index('...', mx.Slice(null, step));
+      const b = x.index('...', mx.Slice(-step));
+      return mx.multiply(a, b).sum();
+    };
+
+    const x = mx.random.uniform(0, 1, [100, 300]);
+    mx.eval(x);
+
+    const df1 = mx.grad(fSplit);
+    const df2 = mx.grad(fSlice);
+
+    assertArrayAllTrue(mx.allclose(df1(x), df2(x)));
+  });
+
+  it('vjpTypes', () => {
+    const fun1 = x => x;
+
+    [mx.float16, mx.bfloat16, mx.float32].forEach(t => {
+      const out = mx.grad(fun1)(mx.array(1.0, t));
+      assert.equal(out.dtype, t);
+    });
+
+    const fun2 = x => x.sum();
+
+    [mx.float16, mx.bfloat16, mx.float32].forEach(t => {
+      const out = mx.grad(fun2)(mx.array(1.0, t));
+      assert.equal(out.dtype, t);
+    });
+
+    const fun3 = (x, y) => mx.sum(mx.add(x, y));
+
+    [mx.float16, mx.bfloat16, mx.float32].forEach(t => {
+      const out = mx.grad(fun3)(mx.array(1.0, t), mx.array(1.0, t));
+      assert.equal(out.dtype, t);
+    });
+  });
+
+  it('powerGrad', () => {
+    let x = mx.array(0.0);
+    let g = mx.grad(x => mx.power(x, 2))(x);
+    assert.equal(g.index().item(), 0.0);
+
+    x = mx.array(0.0);
+    g = mx.grad(x => mx.power(x, 1.5))(x);
+    assert.equal(g.index().item(), 0.0);
+
+    x = mx.array(2.0);
+    g = mx.grad(x => mx.power(x, 2))(x);
+    assert.equal(g.index().item(), 4.0);
+  });
+
+  it('evalInGrad', () => {
+    const arr = mx.array([1.0]);
+    const cotan = mx.array([1.0, 1.0]);
+    let y = mx.array([2.0, 2.0]);
+
+    const func1 = x => {
+      x = mx.add(x, y);
+      const cond = mx.less(x, 1);
+      cond.tolist();
+      return mx.power(x, 2);
+    };
+
+    let [, vjps] = mx.vjp(func1, [arr], [cotan]);
+    assert.equal(vjps[0].index().item(), 12.0);
+
+    const func2 = x => {
+      x = mx.add(x, mx.array([1.0, 1.0]));
+      mx.eval(x);
+      return mx.power(x, 2);
+    };
+
+    [, vjps] = mx.vjp(func2, [arr], [cotan]);
+    assert.equal(vjps[0].index().item(), 8.0);
+  });
+
+  it('subtractPowerGrad', () => {
+    const fun = (x, y) => {
+      const res = mx.subtract(x, y);
+      return mx.power(res, x);
+    };
+
+    const grad = mx.grad(fun)(mx.array(1.0), mx.array(1.0));
+    assert.equal(grad.index().item(), 1.0);
+  });
 });

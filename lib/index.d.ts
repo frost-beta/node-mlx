@@ -126,6 +126,7 @@ export class array {
   diag(k?: number, s?: StreamOrDevice): array;
   diagonal(offset?: number, axis1?: number, axis2?: number, s?: StreamOrDevice): array;
   exp(s?: StreamOrDevice): array;
+  power(exponent: ScalarOrArray, s?: StreamOrDevice): array;
   flatten(startAxis?: number, endAxis?: number, s?: StreamOrDevice): array;
   log(s?: StreamOrDevice): array;
   log10(s?: StreamOrDevice): array;
@@ -257,6 +258,7 @@ export function onesLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 export function outer(array1: ScalarOrArray, array2: ScalarOrArray, s?: StreamOrDevice): array;
 export function partition(array: ScalarOrArray, kth: number, axis?: number, s?: StreamOrDevice): array;
 export function pad(array: ScalarOrArray, padWidth: number | [number] | [number, number] | [number, number][], constantValue?: ScalarOrArray, s?: StreamOrDevice): array;
+export function power(array: ScalarOrArray, exponent: ScalarOrArray, s?: StreamOrDevice): array;
 export function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
 export function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
 export function quantize(array: ScalarOrArray, s?: StreamOrDevice): array;
