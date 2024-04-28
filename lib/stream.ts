@@ -1,8 +1,8 @@
-import {StreamOrDevice} from '..';
+import mlx from '..';
 
 // Implementation of the StreamContext in JS.
-export function stream(s: StreamOrDevice): Disposable {
-  const mx = require('..');  // work around circular import
+export function stream(s: mlx.core.StreamOrDevice): Disposable {
+  const mx = require('..').core;  // work around circular import
   const old = mx.defaultStream(mx.defaultDevice());
   const target = mx.toStream(s);
   mx.setDefaultDevice(target.device);

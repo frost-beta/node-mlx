@@ -1,4 +1,4 @@
-import mx from '..';
+import {core as mx} from '..';
 import {assert} from 'chai';
 
 describe('metal', () => {

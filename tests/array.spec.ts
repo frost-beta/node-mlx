@@ -1,4 +1,4 @@
-import mx from '..';
+import {core as mx} from '..';
 import {assertArray, assertArrayAllTrue, assertArrayAllFalse} from './utils';
 import {assert} from 'chai';
 

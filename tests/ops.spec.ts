@@ -1,6 +1,6 @@
-import mx from '..';
-import tf from '@tensorflow/tfjs';
+import {core as mx} from '..';
 import {assertArrayAllTrue, assertArrayAllFalse} from './utils';
+import tf from '@tensorflow/tfjs';
 import {assert} from 'chai';
 
 describe('ops', () => {

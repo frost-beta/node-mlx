@@ -5,7 +5,7 @@
 ## Usage
 
 ```typescript
-import mx from '@frost-beta/mlx';
+import {core as mx} from '@frost-beta/mlx';
 
 const a = mx.arange(64).reshape([8, 8]);
 console.log(a.shape);

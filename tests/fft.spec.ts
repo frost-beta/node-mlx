@@ -1,4 +1,4 @@
-import mx from '..';
+import {core as mx} from '..';
 import {assert} from 'chai';
 
 // TODO(zcbenz): The tests were written by ChatGPT, rewrite them.
