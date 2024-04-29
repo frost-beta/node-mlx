@@ -164,7 +164,7 @@ describe('compile', function() {
 
     const simpleUnaryOuter = x => {
       x = mx.abs(x);
-      const simpleUnaryInner = mx.compile(z => mx.negative(mx.exp(z)));
+      const simpleUnaryInner = mx.compile((z: mx.array) => mx.negative(mx.exp(z)));
       return simpleUnaryInner(x);
     };
 
@@ -219,7 +219,7 @@ describe('compile', function() {
     let x = mx.array([2.0, -1.0, 0.5]);
     const dfdx = mx.grad(outer)(x);
 
-    const simpleUnary = mx.compile(x => mx.exp(mx.abs(x)));
+    const simpleUnary = mx.compile((x: mx.array) => mx.exp(mx.abs(x)));
 
     const outerCompiled = x => {
       let y = simpleUnary(x);
@@ -236,7 +236,7 @@ describe('compile', function() {
 
   it('shapelessCompile', () => {
     let y = 1;
-    const fun = mx.compile(x => mx.add(x, y), true);
+    const fun = mx.compile((x: mx.array) => mx.add(x, y), true);
 
     let x = mx.array([1, 2]);
     assertArrayAllTrue(mx.arrayEqual(fun(x), mx.array([2, 3])));
@@ -272,7 +272,7 @@ describe('compile', function() {
     this.timeout(10 * 1000);  // slow in QEMU
 
     let z = 1;
-    const fun = mx.compile((x, y) => {
+    const fun = mx.compile((x: mx.array, y: mx.array) => {
       return mx.add(mx.add(x, y.sum(0, true)), z);
     }, true);
 
@@ -300,7 +300,7 @@ describe('compile', function() {
   // flatten.
 
   it('compileInf', () => {
-    const fun = mx.compile(x => mx.isinf(mx.add(x, 2)));
+    const fun = mx.compile((x: mx.array) => mx.isinf(mx.add(x, 2)));
     const out = fun(mx.array([0.0]));
     assert.equal(out.item(), false);
   });
@@ -347,7 +347,7 @@ describe('compile', function() {
     let w2 = mx.zeros([4, 4]);
     let x = mx.zeros([4, 4]);
 
-    const step2 = (w1, w2, x) => {
+    const step2 = (w1: mx.array, w2: mx.array, x: mx.array) => {
       let [loss, gradient] = mx.valueAndGrad(fun2)(w1, w2, x);
       w1 = mx.add(w1, gradient);
       return [loss, w1];

@@ -321,8 +321,8 @@ describe('fast', () => {
 
   it('layerNormGradNoParams', () => {
     const eps = 1e-5;
-    const f1 = x => layerNorm(x, null, null, eps).sum();
-    const f2 = x => mx.fast.layerNorm(x, null, null, eps).sum();
+    const f1 = (x: mx.array) => layerNorm(x, null, null, eps).sum();
+    const f2 = (x: mx.array) => mx.fast.layerNorm(x, null, null, eps).sum();
     const x = mx.random.normal([2, 2, 8]);
     mx.eval(x);
 
@@ -333,7 +333,26 @@ describe('fast', () => {
     // assertArrayAllTrue(mx.allclose(gx1, gx2, 1e-6));
   });
 
-  // TODO(zcbenz): Port the test_layer_norm_grad_params test.
+  it('layerNormGradParams', () => {
+    const eps = 1e-5;
+    const f1 = (params, x) => mx.sum(layerNorm(x, params[0], params[1], eps));
+    const f2 = (params, x) => mx.sum(mx.fast.layerNorm(x, params[0], params[1], eps));
+
+    let w = mx.ones([8]);
+    let b = mx.zeros([8]);
+    let x = mx.random.normal([2, 2, 8]);
+    mx.eval(x, w, b);
+
+    const [gw1, gb1] = mx.grad(f1)([w, b], x);
+    const [gw2, gb2] = mx.grad(f2)([w, b], x);
+
+    assert.isBelow(mx.divide(mx.subtract(gw1, gw2).abs().max(),
+                             gw1.abs().mean()).item() as number,
+                   1e-5);
+    assert.isBelow(mx.divide(mx.subtract(gb1, gb2).abs().max(),
+                             gb1.abs().mean()).item() as number,
+                   1e-5);
+  });
 
   it('fastTransforms', () => {
     let x = mx.random.uniform(0, 1, [2, 2, 8]);
@@ -358,8 +377,8 @@ describe('fast', () => {
     assertArrayAllTrue(mx.allclose(vjpOut[0], vjpFastOut[0]));
 
     x = mx.random.uniform(0, 1, [2, 2, 2, 8]);
-    const vmapOut = mx.vmap(x => ropeOrig(x, ...defaults))(x);
-    const vmapFastOut = mx.vmap(x => mx.fast.rope(x, dims, traditional, base, scale, offset))(x);
+    const vmapOut = mx.vmap((x: mx.array) => ropeOrig(x, ...defaults))(x);
+    const vmapFastOut = mx.vmap((x: mx.array) => mx.fast.rope(x, dims, traditional, base, scale, offset))(x);
     assertArrayAllTrue(mx.allclose(vmapOut, vmapFastOut));
   });
 });
@@ -407,7 +426,7 @@ function rmsNorm(x, weight, eps) {
   return mx.multiply(x.astype(weight.dtype), weight);
 }
 
-function layerNorm(x, weight, bias, eps) {
+function layerNorm(x: mx.array, weight: mx.array, bias: mx.array, eps) {
   const ot = x.dtype;
   x = x.astype(mx.float32);
   const mean = x.mean(-1, true);

@@ -73,12 +73,42 @@ describe('autograd', () => {
     assert.equal(dfdx.item(), 3.0);
     dfdx = mx.grad(fun2, 1)(x, y);
     assert.equal(dfdx.item(), 2.0);
+
+    const fun3 = (x, y): mx.array => x;
+    [value, dfdx] = mx.valueAndGrad(fun3)(mx.array(2.0), 'hello');
+    assert.equal(value.item(), 2.0);
+    assert.equal(dfdx.item(), 1.0);
+
+    dfdx = mx.grad(fun3)(mx.array(2.0), 'hello');
+    assert.equal(dfdx.item(), 1.0);
+
+    const fun4 = x => 'hello';
+    assert.throws(() => {
+      mx.grad(fun4)(mx.array(2.0));
+    }, Error);
+
+    const fun5 = x => x;
+    assert.throws(() => {
+      mx.grad(fun5, 2)(mx.array(2.0));
+    }, Error);
+    assert.throws(() => {
+      mx.grad(fun5, -2)(mx.array(2.0));
+    }, Error);
+    assert.throws(() => {
+      mx.grad(fun5)('hello');
+    }, Error);
+
+    const fun6 = x => mx.sum(x, true);
+    assert.throws(() => {
+      mx.grad(fun6)(mx.ones([2, 2]));
+    }, Error);
   });
 
   it('gradTrees', () => {
     let fun = (x, y) => mx.multiply(x, y);
     let [value, dfdx] = mx.valueAndGrad(fun, [0, 1])(mx.array(0.5), mx.array(2.0));
     assert.equal(value.item(), 1.0);
+    assert.isTrue(dfdx instanceof Array);
     assert.equal(dfdx[0].item(), 2.0);
     assert.equal(dfdx[1].item(), 0.5);
 
@@ -86,6 +116,54 @@ describe('autograd', () => {
     [value, dfdx] = mx.valueAndGrad(fun, 1)(mx.array(0.5), mx.array(2.0));
     assert.equal(value.item(), 1.0);
     assert.equal(dfdx.item(), 0.5);
+
+    fun = p => mx.multiply(p['x'], p['y']);
+    [value, dfdx] = mx.valueAndGrad(fun)({ 'x': mx.array(0.5), 'y': mx.array(2.0) });
+    assert.equal(value.item(), 1.0);
+    assert.equal(dfdx['x'].item(), 2.0);
+    assert.equal(dfdx['y'].item(), 0.5);
+
+    fun = p => mx.multiply(p['x'], p['y']);
+    assert.throws(() => {
+      mx.valueAndGrad(fun)({x: 'string', y: mx.array(2.0)});
+    }, Error);
+    assert.throws(() => {
+      mx.valueAndGrad(fun, [0, 1])({x: mx.array(0.5), y: mx.array(2.0)});
+    }, Error);
+
+    fun = (p, b) => mx.multiply(mx.square(p[0]['foo'][2]), b);
+    [value, dfdx] = mx.valueAndGrad(fun)([{ 'foo': [[], [], mx.array(2.0)] }], mx.array(0.5));
+    assert.equal(value.item(), 2.0);
+    assert.equal(dfdx[0]['foo'][2].item(), 2.0);
+  });
+
+
+  it('auxiliaryValues', () => {
+    const fun = (x, y) => {
+      let l = mx.multiply(x, y).sum();
+      let extra = {
+        'loss': l,
+        'foo': mx.add(y.square(), x.square()),
+        'bar': [1, 2, 3, y, x]
+      };
+      return [l, extra];
+    };
+
+    const funValueGrad = mx.valueAndGrad(fun);
+    const funGrad = mx.grad(fun);
+
+    const [[loss, a], b] = funValueGrad(mx.ones([2, 2]), mx.ones([2, 2])) as any;
+
+    assert.equal(a['loss'].item(), 4);
+    assertArrayAllTrue(mx.arrayEqual(b, mx.ones([2, 2])));
+    assertArrayAllTrue(mx.arrayEqual(a['foo'], mx.multiply(2, mx.ones([2, 2]))));
+    assert.deepEqual(a['bar'].slice(0, 3), [1, 2, 3]);
+    assertArrayAllTrue(mx.arrayEqual(a['bar'][3], mx.ones([2, 2])));
+    assertArrayAllTrue(mx.arrayEqual(a['bar'][4], mx.ones([2, 2])));
+
+    assert.throws(() => {
+      funGrad(mx.ones([2, 2]), mx.ones([2, 2]));
+    }, Error);
   });
 
   it('captured', () => {
@@ -158,7 +236,7 @@ describe('autograd', () => {
   it('scatterVjp', () => {
     const fun1 = (x, idx) => {
       x.indexPut_(idx.astype(mx.int32), 2.0);
-      return x.sum();
+      return mx.sum(x);
     };
 
     let dfdx = mx.grad(fun1)(mx.array([1.0, 2.0, 3.0]), mx.array([1]));
@@ -246,14 +324,14 @@ describe('autograd', () => {
   });
 
   it('vjpTypes', () => {
-    const fun1 = x => x;
+    const fun1 = (x: mx.array) => x;
 
     [mx.float16, mx.bfloat16, mx.float32].forEach(t => {
       const out = mx.grad(fun1)(mx.array(1.0, t));
       assert.equal(out.dtype, t);
     });
 
-    const fun2 = x => x.sum();
+    const fun2 = (x: mx.array) => x.sum();
 
     [mx.float16, mx.bfloat16, mx.float32].forEach(t => {
       const out = mx.grad(fun2)(mx.array(1.0, t));
@@ -270,15 +348,15 @@ describe('autograd', () => {
 
   it('powerGrad', () => {
     let x = mx.array(0.0);
-    let g = mx.grad(x => mx.power(x, 2))(x);
+    let g = mx.grad((x: mx.array) => mx.power(x, 2))(x);
     assert.equal(g.index().item(), 0.0);
 
     x = mx.array(0.0);
-    g = mx.grad(x => mx.power(x, 1.5))(x);
+    g = mx.grad((x: mx.array) => mx.power(x, 1.5))(x);
     assert.equal(g.index().item(), 0.0);
 
     x = mx.array(2.0);
-    g = mx.grad(x => mx.power(x, 2))(x);
+    g = mx.grad((x: mx.array) => mx.power(x, 2))(x);
     assert.equal(g.index().item(), 4.0);
   });
 

@@ -20,6 +20,7 @@ For calls of len function, convert to the length property.
 Use `assertArrayAllFalse` and `assertArrayAllTrue` helpers for assersion the results of ops like mx.equal.
 Use `assert.deepEqual` to compare JavaScript arrays, for example assert.deepEqual(x.tolist(), [1.0, 1.0]) and assert.deepEqual(x.shape, [3, 4]).
 Use `assert.equal` to compare other things like dtype. The dtypes can be accessed via properties like mx.float32.
+Use `assert.throws` to test exceptions.
 For arithmetic operations like a + b, use ops instead, for example a + b to mx.add(a, b) , a % b to mx.remainder(a, b), a * b to mx.multiply(a, b).
 The TypeScript APIs does not take object arguments, so convert code like mx.array(2, dtype=dt) to mx.array(2, dt).
 The mx.random.uniform TypeScript API does not have defaults for low/high parameters, always call with mx.random.uniform(0, 1, shape) instead of mx.random.uniform(shape) if low/high is not explicitly specified in Python code.

@@ -320,23 +320,37 @@ export namespace core {
   function zerosLike(array: ScalarOrArray, s?: StreamOrDevice): array;
 
   // Transforms.
-  // @ts-ignore
-  function eval(...args: ScalarOrArray[]): void;
-  function asyncEval(...args: ScalarOrArray[]): void;
+  // @ts-ignore: eval is a special function in JS and this fails type check.
+  function eval(...args: unknown[]): void;
+  function asyncEval(...args: unknown[]): void;
   function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
   function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
-  type ValueAndGradFunctionScalar = (...args: array[]) => [array, array]
-  type ValueAndGradFunctionGeneric = (...args: array[]) => [array[], array[]]
-  function valueAndGrad(func: (...args: array[]) => array, argnums?: number | number[]): ValueAndGradFunctionScalar;
-  function valueAndGrad(func: (...args: array[]) => array[], argnums?: number | number[]): ValueAndGradFunctionGeneric;
-  type ComputeFunctionScalar = (...args: array[]) => array
-  type ComputeFunctionGeneric = (...args: array[]) => array[]
-  function grad(func: ComputeFunctionScalar, argnums?: number | number[]): ComputeFunctionScalar;
-  function grad(func: ComputeFunctionGeneric, argnums?: number | number[]): ComputeFunctionGeneric;
-  function vmap(func: ComputeFunctionScalar, inAxes?: number | number[], outAxis?: number): ComputeFunctionScalar;
-  function vmap(func: ComputeFunctionGeneric, inAxes?: number | number[], outAxes?: number[]): ComputeFunctionGeneric;
-  function compile(func: ComputeFunctionScalar, shapeless?: boolean): ComputeFunctionScalar;
-  function compile(func: ComputeFunctionGeneric, shapeless?: boolean): ComputeFunctionGeneric;
+  // The transform APIs take functions with arbitrary args and results.
+  type LossFunctionScalar = (...args: unknown[]) => unknown;
+  type LossFunctionGeneric = (...args: unknown[]) => unknown[];
+  type ValueAndGradFunctionScalar = (...args: unknown[]) => [unknown, unknown];
+  type ValueAndGradFunctionGeneric = (...args: unknown[]) => [unknown[], unknown[]];
+  // To ease the use of APIs, provide explicit array versions.
+  type LossFunctionSimpleScalar = (...args: unknown[]) => array;
+  type LossFunctionSimpleGeneric = (...args: unknown[]) => array[];
+  type ValueAndGradFunctionSimpleScalar = (...args: unknown[]) => [array, array];
+  type ValueAndGradFunctionSimpleGeneric = (...args: unknown[]) => [array[], array[]];
+  function valueAndGrad(func: LossFunctionSimpleScalar, argnums?: number | number[]): ValueAndGradFunctionSimpleScalar;
+  function valueAndGrad(func: LossFunctionSimpleGeneric, argnums?: number | number[]): ValueAndGradFunctionSimpleGeneric;
+  function valueAndGrad(func: LossFunctionScalar, argnums?: number | number[]): ValueAndGradFunctionScalar;
+  function valueAndGrad(func: LossFunctionGeneric, argnums?: number | number[]): ValueAndGradFunctionGeneric;
+  function grad(func: LossFunctionSimpleScalar, argnums?: number | number[]): LossFunctionSimpleScalar;
+  function grad(func: LossFunctionSimpleGeneric, argnums?: number | number[]): LossFunctionSimpleGeneric;
+  function grad(func: LossFunctionScalar, argnums?: number | number[]): LossFunctionScalar;
+  function grad(func: LossFunctionGeneric, argnums?: number | number[]): LossFunctionGeneric;
+  function vmap(func: LossFunctionSimpleScalar, inAxes?: number | number[], outAxis?: number): LossFunctionSimpleScalar;
+  function vmap(func: LossFunctionSimpleGeneric, inAxes?: number | number[], outAxes?: number[]): LossFunctionSimpleGeneric;
+  function vmap(func: LossFunctionScalar, inAxes?: number | number[], outAxis?: number): LossFunctionScalar;
+  function vmap(func: LossFunctionGeneric, inAxes?: number | number[], outAxes?: number[]): LossFunctionGeneric;
+  function compile(func: LossFunctionSimpleScalar, shapeless?: boolean): LossFunctionSimpleScalar;
+  function compile(func: LossFunctionSimpleGeneric, shapeless?: boolean): LossFunctionSimpleGeneric;
+  function compile(func: LossFunctionScalar, shapeless?: boolean): LossFunctionScalar;
+  function compile(func: LossFunctionGeneric, shapeless?: boolean): LossFunctionGeneric;
 
   // Metal.
   namespace metal {

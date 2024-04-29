@@ -29,7 +29,7 @@ describe('eval', () => {
     const one = mx.array(1);
     let x = mx.add(mx.add(one, 1), 1);
     let y = 0;
-    let z = 'hello' as unknown as number;  // pass typecheck to test native code
+    let z = 'hello' as unknown;  // pass typecheck to test native code
     mx.eval([x, y, z]);
     assert.equal(x.item(), 3);
   });
