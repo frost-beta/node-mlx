@@ -222,7 +222,7 @@ export namespace core {
   function exp(array: ScalarOrArray, s?: StreamOrDevice): array;
   function expm1(array: ScalarOrArray, s?: StreamOrDevice): array;
   function expandDims(array: ScalarOrArray, dims: number | number[], s?: StreamOrDevice): array;
-  function eye(N: number, M?: number, dtype?: Dtype, s?: StreamOrDevice): array;
+  function eye(n: number, m?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
   function flatten(array: ScalarOrArray, startAxis?: number, endAxis?: number, s?: StreamOrDevice): array;
   function floor(array: ScalarOrArray, s?: StreamOrDevice): array;
   function floorDivide(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
@@ -429,3 +429,6 @@ export namespace core {
   const pi: number;
   const newaxis: null;
 }
+
+// The nn module.
+export * as nn from './nn';
