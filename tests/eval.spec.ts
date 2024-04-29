@@ -5,7 +5,7 @@ import {assert} from 'chai';
 describe('eval', () => {
   it('eval', () => {
     const arrs: mx.array[] = [];
-    for(let i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i++) {
       arrs.push(mx.ones([2, 2]));
     }
     mx.eval(...arrs);
@@ -29,8 +29,8 @@ describe('eval', () => {
     const one = mx.array(1);
     let x = mx.add(mx.add(one, 1), 1);
     let y = 0;
-    let z = true;
-    mx.eval(x, y, z);
+    let z = 'hello' as unknown as number;  // pass typecheck to test native code
+    mx.eval([x, y, z]);
     assert.equal(x.item(), 3);
   });
 

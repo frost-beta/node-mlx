@@ -1,5 +1,6 @@
 #include "src/array.h"
 #include "src/ops.h"
+#include "src/trees.h"
 
 // Needed for detail::compile.
 #include "mlx/transforms_impl.h"
@@ -45,9 +46,7 @@ inline
 std::function<void(ki::Arguments* args)>
 EvalOpWrapper(void(*func)(std::vector<mx::array>)) {
   return [func](ki::Arguments* args) {
-    std::vector<mx::array> arrays;
-    if (ReadArgs(args, &arrays))
-      func(std::move(arrays));
+    func(TreeFlatten(args));
   };
 }
 
