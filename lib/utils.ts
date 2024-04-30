@@ -39,7 +39,7 @@ export function treeMap(fn: (...args: unknown[]) => unknown,
     return fn(tree, ...rest);
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMap(fn, child, rest?.map(r => r[i]), isLeaf));
-  } else if (typeof tree === 'object' && tree !== null) {
+  } else if (typeof tree === 'object' && isDict(tree)) {
     const newTree = {};
     for (const k in tree) {
       newTree[k] = treeMap(fn, tree[k], rest?.map(r => r[k]), isLeaf);
@@ -89,7 +89,7 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
     return fn(path, tree, ...rest);
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMapWithPath(fn, child, rest?.map(r => r[i]), isLeaf, path ? `${path}.${i}` : `${i}`));
-  } else if (typeof tree === 'object' && tree !== null) {
+  } else if (typeof tree === 'object' && isDict(tree)) {
     const newTree = {};
     for (const k in tree) {
       newTree[k] = treeMapWithPath(fn, tree[k], rest?.map(r => r[k]), isLeaf, path ? `${path}.${k}` : `${k}`);
@@ -141,7 +141,7 @@ export function treeFlatten(tree: unknown,
         flatTree = flatTree.concat(treeFlatten(tree[i], `${prefix}.${i}`, isLeaf));
       }
       return flatTree;
-    } else if (typeof tree === 'object' && tree !== null) {
+    } else if (typeof tree === 'object' && isDict(tree)) {
       for (let k in tree) {
         flatTree = flatTree.concat(treeFlatten(tree[k], `${prefix}.${k}`, isLeaf));
       }
@@ -197,4 +197,21 @@ export function treeUnflatten(tree: [string, unknown][]): unknown {
     }
     return newTree;
   }
+}
+
+// Internal helper to check if an object is a dictionary.
+// Note that we are requiring the caller to do the comparison:
+// typeof dict === 'object'
+// In this way TypeScript can recognize the value as object instead of unknown
+// in the caller's code.
+export function isDict(dict: object) {
+  if (dict === null)
+    return false;
+  // A plain object literal should have Object as its constructor.
+  if (dict.constructor === Object)
+    return true;
+  // In Python the Module inherits from dict, there is no such concept in JS so
+  // we directly check if dict is a Module instance.
+  const {Module} = require('./nn/layers/base');
+  return dict instanceof Module;
 }

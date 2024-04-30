@@ -13,7 +13,6 @@ describe('treeUtils', () => {
     const values = [1, 2, 'c'];
     const flatTree = mlx.utils.treeFlatten(tree);
 
-    console.log(flatTree);
     assert.deepEqual(flatTree.map(subTree => subTree[1]), values);
     assert.deepEqual(mlx.utils.treeUnflatten(flatTree), tree);
   });

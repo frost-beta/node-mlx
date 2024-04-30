@@ -293,9 +293,10 @@ mx::array ArgSort(const mx::array& a,
 
 mx::array Softmax(const mx::array& a,
                   IntOrVector axis,
-                  bool precise,
+                  std::optional<bool> precise,
                   mx::StreamOrDevice s) {
-  return mx::softmax(a, GetReduceAxes(std::move(axis), a.ndim()), precise, s);
+  return mx::softmax(a, GetReduceAxes(std::move(axis), a.ndim()),
+                     precise.value_or(false), s);
 }
 
 mx::array Concatenate(std::vector<mx::array> arrays,

@@ -134,7 +134,7 @@ export namespace core {
     log10(s?: StreamOrDevice): array;
     log1p(s?: StreamOrDevice): array;
     log2(s?: StreamOrDevice): array;
-    logsumexp(s?: StreamOrDevice): array;
+    logsumexp(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
     max(keepdims?: boolean, s?: StreamOrDevice): array;
     max(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
     mean(keepdims?: boolean, s?: StreamOrDevice): array;
@@ -144,7 +144,7 @@ export namespace core {
     moveaxis(source: number, destination: number, s?: StreamOrDevice): array;
     prod(s?: StreamOrDevice): array;
     reciprocal(s?: StreamOrDevice): array;
-    reshape(shape: number | number[], s?: StreamOrDevice): array;
+    reshape(...shape: (number | number[])[]): array;
     round(s?: StreamOrDevice): array;
     rsqrt(s?: StreamOrDevice): array;
     sin(s?: StreamOrDevice): array;
@@ -191,6 +191,7 @@ export namespace core {
   function atleast1d(...arrays: array[]): array;
   function atleast2d(...arrays: array[]): array;
   function atleast3d(...arrays: array[]): array;
+  function issubdtype(a: Dtype | DtypeCategory, b: Dtype | DtypeCategory): boolean;
   function bitwiseAnd(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseOr(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseXor(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
@@ -249,7 +250,7 @@ export namespace core {
   function logicalNot(array: ScalarOrArray, s?: StreamOrDevice): array;
   function logicalAnd(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function logicalOr(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
-  function logsumexp(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function logsumexp(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
   function matmul(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function max(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
   function max(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
@@ -277,7 +278,7 @@ export namespace core {
   function reciprocal(array: ScalarOrArray, s?: StreamOrDevice): array;
   function remainder(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function repeat(array: ScalarOrArray, repeats?: number, axis?: number, s?: StreamOrDevice): array;
-  function reshape(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
+  function reshape(array: ScalarOrArray, ...shape: (number | number[])[]): array;
   function rightShift(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function round(array: ScalarOrArray, s?: StreamOrDevice): array;
   function rsqrt(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -290,7 +291,7 @@ export namespace core {
   function sign(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sin(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sinh(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function softmax(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function softmax(array: ScalarOrArray, axis?: number | number[], precise?: boolean, s?: StreamOrDevice): array;
   function sort(array: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
   function split(array: ScalarOrArray, indicesOrSections?: number | number[], axis?: number, s?: StreamOrDevice): array[];
   function sqrt(array: ScalarOrArray, s?: StreamOrDevice): array;

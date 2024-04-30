@@ -31,6 +31,8 @@ There are a few exceptions due to limitations of JavaScript:
   `array.itemPut_` methods instead (the `_` suffix means inplace operation).
 * `delete array` does nothing, you must wait for garbage collection to get the
   array's memory freed.
+* The `Module` instances can not be used as functions, the `forward` method must
+  be used instead.
 
 ### Unimplemented features
 
