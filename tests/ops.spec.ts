@@ -1,7 +1,7 @@
 import {core as mx} from '..';
 import {assertArrayAllTrue, assertArrayAllFalse} from './utils';
-import tf from '@tensorflow/tfjs';
 import {assert} from 'chai';
+import tf from '@tensorflow/tfjs';
 
 describe('ops', () => {
   it('fullOnesZeros', () => {

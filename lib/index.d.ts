@@ -432,3 +432,6 @@ export namespace core {
 
 // The nn module.
 export * as nn from './nn';
+
+// The utils module.
+export * as utils from './utils';
