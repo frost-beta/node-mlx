@@ -1,5 +1,8 @@
 import {core as mx, utils} from '../../..';
 
+// A nested type that always has T as leaves.
+type Nested<T> = T | Nested<T>[] | {[key: string]: Nested<T>};
+
 /**
  * Base class for building neural networks with MLX.
  *
@@ -133,9 +136,9 @@ export abstract class Module {
   }
 
   // Human-readable console output.
-  // [Symbol.for('nodejs.util.inspect.custom')](): string {
-  //   return this.toString();
-  // }
+  [Symbol.for('nodejs.util.inspect.custom')](): string {
+    return this.toString();
+  }
 
   // Emulate the items() method of Python.
   items(): [string, unknown][] {
@@ -182,34 +185,34 @@ export abstract class Module {
    * Recursively return all the `mlx.core.array` members of this Module as a
    * dict of dicts and lists.
    */
-  parameters(): {[key: string]: unknown} {
-    return this.filterAndMap(Module.validParameterFilter);
+  parameters(): {[key: string]: Nested<mx.array>} {
+    return this.filterAndMap(Module.validParameterFilter) as {[key: string]: Nested<mx.array>};
   }
 
   /**
    * Recursively return all the non-frozen `mlx.core.array` members of this
    * Module as a dict of dicts and lists.
    */
-  trainableParameters(): {[key: string]: unknown} {
-    return this.filterAndMap(Module.trainableParameterFilter);
+  trainableParameters(): {[key: string]: Nested<mx.array>} {
+    return this.filterAndMap(Module.trainableParameterFilter) as {[key: string]: Nested<mx.array>};
   }
 
   /**
    * Return the direct descendants of this Module instance.
    */
-  children(): {[key: string]: unknown} {
+  children(): {[key: string]: Nested<Module>} {
     const isLeaf = (m: Module, k: string, v: unknown) => v instanceof Module;
-    return this.filterAndMap(Module.validChildFilter, undefined, isLeaf);
+    return this.filterAndMap(Module.validChildFilter, undefined, isLeaf) as {[key: string]: Nested<Module>};
   }
 
   /**
    * Return the submodules that do not contain other modules.
    */
-  leafModules(): {[key: string]: unknown} {
+  leafModules(): {[key: string]: Nested<Module>} {
     const isLeafModule = (m: this, k: string, v: unknown) => {
       return v instanceof Module && utils.treeFlatten(v.children()).length === 0;
     };
-    return this.filterAndMap(Module.validChildFilter, undefined, isLeafModule);
+    return this.filterAndMap(Module.validChildFilter, undefined, isLeafModule) as {[key: string]: Nested<Module>};
   }
 
   /**

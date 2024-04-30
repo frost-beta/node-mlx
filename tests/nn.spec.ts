@@ -14,7 +14,7 @@ describe('base', () => {
     const children = m.children();
     assert.isTrue(typeof children === 'object');
     assert.equal(Object.keys(children).length, 1);
-    const layers = children['layers'] as any;
+    const layers = children['layers'];
     assert.isTrue(Array.isArray(layers));
     assert.equal(layers.length, 4);
     assert.deepEqual(layers[3], {});
@@ -81,9 +81,26 @@ describe('base', () => {
     }
 
     const model = new DictModule();
-    const params = model.parameters() as any;
+    const params = model.parameters();
     assert.equal(utils.treeFlatten(params).length, 2);
-    assertArrayAllTrue(mx.arrayEqual(params.weights.w1, mx.zeros([2, 2])));
-    assertArrayAllTrue(mx.arrayEqual(params.weights.w2, mx.ones([2, 2])));
+    assertArrayAllTrue(mx.arrayEqual(params['weights']['w1'], mx.zeros([2, 2])));
+    assertArrayAllTrue(mx.arrayEqual(params['weights']['w2'], mx.ones([2, 2])));
+  });
+
+  it('moduleState', () => {
+    const m = new nn.Linear(10, 1);
+    m.state['hello'] = 'world';
+    assert.equal(m.state['hello'], 'world');
+  });
+
+  it('chaining', () => {
+    const m = new nn.Sequential(new nn.Linear(2, 2), new nn.ReLU(), new nn.Linear(2, 1));
+    const preFreezeNumParams = Object.keys(m.parameters()).length;
+    m.freeze().unfreeze();
+    assert.equal(Object.keys(m.parameters()).length, preFreezeNumParams);
+    const paramsDict = m.parameters();
+
+    assert.isFalse(m.update(paramsDict).eval().training);
+    assert.isTrue(m.train().training);
   });
 });
