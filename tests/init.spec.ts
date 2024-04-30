@@ -6,7 +6,7 @@ describe('init', () => {
   it('constant', () => {
     const value = 5.0;
     [mx.float32, mx.float16].forEach(dtype => {
-      const initializer = nn.constant(value, dtype);
+      const initializer = nn.init.constant(value, dtype);
       [[3], [3, 3], [3, 3, 3]].forEach(shape => {
         const result = initializer(mx.array(mx.zeros(shape)));
         assert.deepEqual(result.shape, shape);
@@ -19,7 +19,7 @@ describe('init', () => {
     const mean = 0.0;
     const std = 1.0;
     [mx.float32, mx.float16].forEach(dtype => {
-      const initializer = nn.normal(mean, std, dtype);
+      const initializer = nn.init.normal(mean, std, dtype);
       [[3], [3, 3], [3, 3, 3]].forEach(shape => {
         const result = initializer(mx.array(mx.zeros(shape)));
         assert.deepEqual(result.shape, shape);
@@ -32,7 +32,7 @@ describe('init', () => {
     const low = -1.0;
     const high = 1.0;
     [mx.float32, mx.float16].forEach(dtype => {
-      const initializer = nn.uniform(low, high, dtype);
+      const initializer = nn.init.uniform(low, high, dtype);
       [[3], [3, 3], [3, 3, 3]].forEach(shape => {
         const result = initializer(mx.array(mx.zeros(shape)));
         assert.deepEqual(result.shape, shape);
@@ -45,7 +45,7 @@ describe('init', () => {
 
   it('identity', () => {
     [mx.float32, mx.float16].forEach(dtype => {
-      const initializer = nn.identity(dtype);
+      const initializer = nn.init.identity(dtype);
       [[3], [3, 3], [3, 3, 3]].forEach(() => {
         let result = initializer(mx.zeros([3, 3]));
         assert(mx.arrayEqual(result, mx.eye(3)));
@@ -60,7 +60,7 @@ describe('init', () => {
   ['glorotNormal', 'glorotUniform', 'heNormal', 'heUniform'].forEach(name => {
     it(name, () => {
       [mx.float32, mx.float16].forEach(dtype => {
-        const initializer = nn[name](dtype);
+        const initializer = nn.init[name](dtype);
         [[3, 3], [3, 3, 3]].forEach(shape => {
           const result = initializer(mx.array(mx.zeros(shape)));
           assert.deepEqual(result.shape, shape);

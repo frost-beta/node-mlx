@@ -99,23 +99,6 @@ export function identity(dtype: mx.Dtype = mx.float32): (arr: mx.array) => mx.ar
   return initializer;
 }
 
-function calculateFanInFanOut(x: mx.array): [number, number] {
-  if (x.ndim < 2) {
-    throw new Error(`Glorot / He initialization requires at least 2 dimensional input but input with ${x.ndim} dimensions.`);
-  }
-  let fanIn = x.shape[x.shape.length - 1];
-  let fanOut = x.shape[0];
-  if (x.ndim > 2) {
-    let receptiveField = 1;
-    for (let d of x.shape.slice(1, x.shape.length - 1)) {
-      receptiveField *= d;
-    }
-    fanIn = fanIn * receptiveField;
-    fanOut = fanOut * receptiveField;
-  }
-  return [fanIn, fanOut];
-}
-
 /**
  * A Glorot normal initializer.
  *
@@ -299,4 +282,22 @@ export function heUniform(dtype: mx.Dtype = mx.float32): (a: mx.array, mode?: 'f
     return mx.random.uniform(-limit, limit, a.shape, dtype);
   };
   return initializer;
+}
+
+// Helpers.
+function calculateFanInFanOut(x: mx.array): [number, number] {
+  if (x.ndim < 2) {
+    throw new Error(`Glorot / He initialization requires at least 2 dimensional input but input with ${x.ndim} dimensions.`);
+  }
+  let fanIn = x.shape[x.shape.length - 1];
+  let fanOut = x.shape[0];
+  if (x.ndim > 2) {
+    let receptiveField = 1;
+    for (let d of x.shape.slice(1, x.shape.length - 1)) {
+      receptiveField *= d;
+    }
+    fanIn = fanIn * receptiveField;
+    fanOut = fanOut * receptiveField;
+  }
+  return [fanIn, fanOut];
 }
