@@ -64,7 +64,9 @@ let compiledLogSoftmax;
  */
 export function logSoftmax(x: mx.array, axis = -1): mx.array {
   if (!compiledLogSoftmax) {
-    compiledLogSoftmax = mx.compile((x: mx.array, axis: number) => {
+    // FIXME(zcbenz): axis is now being passed via closure, we should pass it by
+    // parameter once tree flatten is implemented in mx.compile.
+    compiledLogSoftmax = mx.compile((x: mx.array) => {
       return mx.subtract(x, mx.logsumexp(x, axis, true));
     }, true);
   }
@@ -113,9 +115,11 @@ let compiledSoftmax;
  *
  * Applies `mx.exp(x_i) / mx.sum(mx.exp(x_j))` element wise.
  */
-export function softmax(x: mx.array, axis=-1): mx.array {
+export function softmax(x: mx.array, axis = -1): mx.array {
   if (!compiledSoftmax) {
-    compiledSoftmax = mx.compile((x: mx.array, axis: number) => {
+    // FIXME(zcbenz): axis is now being passed via closure, we should pass it by
+    // parameter once tree flatten is implemented in mx.compile.
+    compiledSoftmax = mx.compile((x: mx.array) => {
       return mx.softmax(x, axis);
     }, true);
   }

@@ -549,6 +549,12 @@ describe('layers', () => {
                    1e-4);
   });
 
+  beforeEach(function() {
+    // FIXME(zcbenz): Compilation fails on QEMU in CI.
+    if (process.platform == 'linux' && process.arch == 'arm64')
+      this.skip();
+  });
+
   it('sequential', () => {
     const x = mx.ones([10, 2]);
     const m = new nn.Sequential(new nn.Linear(2, 10), new nn.ReLU(), new nn.Linear(10, 1));
@@ -647,5 +653,142 @@ describe('layers', () => {
     assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
     assert.deepEqual(y.shape, [3]);
     assert.equal(y.dtype, mx.float32);
+  });
+
+  it('relu6', () => {
+    const x = mx.array([1.0, -1.0, 0.0, 7.0, -7.0]);
+    const y = nn.relu6(x);
+    assertArrayAllTrue(mx.arrayEqual(y, mx.array([1.0, 0.0, 0.0, 6.0, 0.0])));
+    assert.deepEqual(y.shape, [5]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('softmax', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    const y = nn.softmax(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([0.6652, 0.0900, 0.2447]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('softplus', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    const y = nn.softplus(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([1.3133, 0.3133, 0.6931]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('softsign', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    const y = nn.softsign(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([0.5, -0.5, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('softshrink', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    let y = nn.softshrink(x);
+    const epsilon = 1e-4;
+    let expectedY = mx.array([0.5, -0.5, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+
+    y = nn.softshrink(x, 0.7);
+    expectedY = mx.array([0.3, -0.3, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('celu', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    let y = nn.celu(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([1.0, -0.6321, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+
+    y = new nn.CELU(1.1).forward(x);
+    const expectedYSecond = mx.array([1.0, -0.6568, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedYSecond)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('logSoftmax', () => {
+    const x = mx.array([1.0, 2.0, 3.0]);
+    const y = nn.logSoftmax(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([-2.4076, -1.4076, -0.4076]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('logSigmoid', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    const y = nn.logSigmoid(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([-0.3133, -1.3133, -0.6931]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('prelu', () => {
+    assertArrayAllTrue(mx.arrayEqual(new nn.PReLU().forward(mx.array([1.0, -1.0, 0.0, 0.5])),
+      mx.array([1.0, -0.25, 0.0, 0.5])));
+  });
+
+  it('mish', () => {
+    assertArrayAllTrue(mx.isclose(
+      new nn.Mish().forward(mx.array([1.0, -1.0, 0.0, 0.5])),
+      mx.array([0.8651, -0.3034, 0.0000, 0.3752]),
+      1e-3
+    ));
+  });
+
+  it('hardswish', () => {
+    const x = mx.array([-3.0, -1.5, 0.0, 1.5, 3.0]);
+    const y = nn.hardswish(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([0.0, -0.375, 0.0, 1.125, 3.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [5]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('glu', () => {
+    const x = mx.array([[[1.0, 2.0, 3.0, 4.0]]], mx.float32);
+    const y = mx.array([[[0.952574, 1.96403]]], mx.float32);
+    const out = nn.glu(x);
+    assertArrayAllTrue(mx.isclose(out, y));
+  });
+
+  it('rope', () => {
+    [[], [false], [undefined, 10000], [undefined, undefined, 0.25]].forEach((args: any) => {
+      const rope = new nn.RoPE(4, ...args);
+      const shape = [1, 3, 4];
+      const x = mx.random.uniform(0, 1, shape);
+      let y = rope.forward(x);
+      assert.deepEqual(y.shape, shape);
+      assert.equal(y.dtype, mx.float32);
+
+      y = rope.forward(x, 3);
+      assert.deepEqual(y.shape, shape);
+
+      y = rope.forward(x.astype(mx.float16));
+      assert.equal(y.dtype, mx.float16);
+    });
   });
 });
