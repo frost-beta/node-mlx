@@ -2,7 +2,7 @@
 
 :construction:
 
-This project is not affiliated to Apple, you can sponsorits development by
+This project is not affiliated with Apple, you can support the development by
 [sponsoring me](https://github.com/sponsors/zcbenz).
 
 ## Supported platforms
@@ -14,14 +14,14 @@ CPU support:
 - x64 Macs
 - x64/arm64 Linux
 
-(No Windows support but I'll try to make MLX work on it in future.)
+(No support for Windows yet, but I'll try to make MLX work on it in future)
 
 Note that currently MLX does not have plans to support GPUs other than Apple
 Silicon, and personally I don't think they ever will considering their team size
 and the API design.
 
 For doing machine learning on GPUs with Node.js, you can go with TensorFlow.js,
-or wait for someone porting PyTorch to Node.js (could be me, haha).
+or wait for someone porting PyTorch to Node.js (which should not be hard).
 
 ## Usage
 
@@ -30,6 +30,14 @@ import {core as mx, nn} from '@frost-beta/mlx';
 
 const a = mx.arange(64).reshape(8, 8);
 console.log(a.shape);
+
+const mod = new nn.Sequential(
+  new nn.Sequential(new nn.Linear(2, 10), nn.relu),
+  new nn.Sequential(new nn.Linear(10, 10), new nn.ReLU()),
+  new nn.Linear(10, 1),
+  mx.sigmoid,
+);
+const y = mod.forward(x);
 ```
 
 ## APIs
@@ -105,9 +113,47 @@ Here are some examples of translating Python indexing code to JavaScript:
 
 #### Getters
 
+| Python                               | JavaScript                                         |
+|--------------------------------------|----------------------------------------------------|
+| `array[None]`                        | `array.index(null)`                                |
+| `array[Ellipsis, ...]`               | `array.index('...', '...')`                        |
+| `array[1, 2]`                        | `array.index(1, 2)`                                |
+| `array[True, False]`                 | `array.index(true, false)`                         |
+| `array[1::2]`                        | `array.index(mx.Slice(1, None, 2))`                |
+| `array[mx.array([1, 2])]`            | `array.index(mx.array([1, 2], mx.int32))`          |
+| `array[..., 0, True, 1::2]`          | `array.index('...', 0, true, mx.Slice(1, null, 2)` |
+
 #### Setters
 
+| Python                               | JavaScript                                                   |
+|--------------------------------------|--------------------------------------------------------------|
+| `array[None] = 1`                    | `array.indexPut_(null, 1)`                                   |
+| `array[Ellipsis, ...] = 1`           | `array.indexPut_(['...', '...'], 1)`                         |
+| `array[1, 2] = 1`                    | `array.indexPut_([1, 2], 1)`                                 |
+| `array[True, False] = 1`             | `array.indexPut_([true, false], 1)`                          |
+| `array[1::2] = 1`                    | `array.indexPut_(mx.Slice(1, null, 2), 1)`                   |
+| `array[mx.array([1, 2])] = 1`        | `array.indexPut_(mx.array([1, 2], mx.int32), 1)`             |
+| `array[..., 0, True, 1::2] = 1`      | `array.indexPut_(['...', 0, true, mx.Slice(1, null, 2)], 1)` |
+
 #### Translating between Python/JavaScript index types
+
+| Python               | JavaScript                   |
+|----------------------|------------------------------|
+| `None`               | `null`                       |
+| `Ellipsis`           | `"..."`                      |
+| `...`                | `"..."`                      |
+| `123`                | `123`                        |
+| `True`               | `true`                       |
+| `False`              | `false`                      |
+| `:` or `::`          | `mx.Slice()`                 |
+| `1:` or `1::`        | `mx.Slice(1)`                |
+| `:3` or `:3:`        | `mx.Slice(null, 3)`          |
+| `::2`                | `mx.Slice(null, null, 2)`    |
+| `1:3`                | `mx.Slice(1, 3)`             |
+| `1::2`               | `mx.Slice(1, null, 2)`       |
+| `:3:2`               | `mx.Slice(null, 3, 2)`       |
+| `1:3:2`              | `mx.Slice(1, 3, 2)`          |
+| `mx.array([1, 2])`   | `mx.array([1, 2], mx.int32)` |
 
 ## Versioning
 

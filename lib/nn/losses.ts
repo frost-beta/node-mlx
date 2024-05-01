@@ -20,7 +20,7 @@ type Reduction = 'none' | 'mean' | 'sum';
  * @returns The computed cross entropy loss.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {core as mx, nn} from '@frost-beta/mlx';
  *
  * // Class indices as targets
@@ -111,7 +111,7 @@ export function crossEntropy(logits: mx.array,
  * @returns The computed binary cross entropy loss.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {core as mx, nn} from '@frost-beta/mlx';
  *
  * const logits = mx.array([0.105361, 0.223144, 1.20397, 0.916291]);
@@ -280,7 +280,7 @@ export function gaussianNllLoss(inputs: mx.array,
  *
  * Computes the following when `reduction == 'none'`:
  *
- * ```ts
+ * ```typescript
  * mx.multiply(mx.exp(targets), mx.subtract(targets, inputs)).sum(axis)
  * ```
  *

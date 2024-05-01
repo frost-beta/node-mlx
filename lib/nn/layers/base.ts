@@ -23,7 +23,7 @@ type Nested<T> = T | Nested<T>[] | {[key: string]: Nested<T>};
  * `freeze`.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {core as mx, nn} from '@frost-beta/mlx';
  * import {Module, Linear} from nn;
  *
@@ -374,7 +374,7 @@ export abstract class Module {
    * @example
    * For instance to only train the attention parameters from a Transformer:
    *
-   * ```ts
+   * ```typescript
    * const model = new Transformer();
    * model.freeze();
    * model.applyToModules((k: string, v: Module) => { if (k.endsWith('attention')) v.unfreeze() });
@@ -420,7 +420,7 @@ export abstract class Module {
    * @example
    * For instance to only train the biases of a Transformer one can do:
    *
-   * ```ts
+   * ```typescript
    * import {nn} from '@frost-beta/mlx';
    * const model = new nn.Transformer();
    * model.freeze();

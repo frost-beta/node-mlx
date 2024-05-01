@@ -791,4 +791,16 @@ describe('layers', () => {
       assert.equal(y.dtype, mx.float16);
     });
   });
+
+  it('alibi', () => {
+    const alibi = new nn.ALiBi();
+    const shape = [1, 8, 20, 20];
+    const x = mx.random.uniform(0, 1, shape);
+    let y = alibi.forward(x);
+    assert.deepEqual(y.shape, shape);
+    assert.equal(y.dtype, mx.float32);
+
+    y = alibi.forward(x.astype(mx.float16));
+    assert.equal(y.dtype, mx.float16);
+  });
 });

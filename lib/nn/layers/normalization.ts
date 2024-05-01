@@ -24,7 +24,7 @@ import {Module} from './base';
  * @param affine - Default: `false`.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {core as mx} from '@frost-beta/mlx';
  *
  * const x = mx.random.normal([8, 4, 4, 16]);
@@ -288,7 +288,7 @@ export class GroupNorm extends Module {
  * Default: `true`.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {core as mx, nn} from '@frost-beta/mlx';
  *
  * const x = mx.random.normal([5, 4]);

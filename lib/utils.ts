@@ -12,7 +12,7 @@
  *
  * Example:
  *
- * ```ts
+ * ```typescript
  * import {core as mx, nn, utils} from '@frost-beta/mlx';
  *
  * const model = nn.Linear(10, 10);
@@ -72,7 +72,7 @@ export function treeMap(fn: (...args: unknown[]) => unknown,
  * @returns An Object with the new values returned by `fn`.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {utils} from '@frost-beta/mlx';
  *
  * const tree = {model: [{w: 0, b: 1}, {w: 0, b: 1}]};
@@ -124,7 +124,7 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
  * @returns An array of objects with `key` and `value` properties.
  *
  * @example
- * ```ts
+ * ```typescript
  * import {utils} from '@frost-beta/mlx';
  *
  * console.log(utils.treeFlatten([[[0]]]));
@@ -163,7 +163,7 @@ export function treeFlatten(tree: unknown,
  * @returns An Object.
  *
  * @example
- * ```ts
+ * ```typescript
  * import { utils } from '@frost-beta/mlx';
  *
  * const d = utils.treeUnflatten([['hello.world', 42]]);

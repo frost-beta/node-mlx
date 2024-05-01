@@ -10,7 +10,7 @@ import {core as mx} from '../..';
  * input, filled with `value`.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = constant(0.5);
  * initFn(mx.zeros([2, 2]));
  * // array([[0.5, 0.5],
@@ -35,7 +35,7 @@ export function constant(value: number, dtype: mx.Dtype = mx.float32): (a: mx.ar
  * input, filled with samples from a normal distribution.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = normal();
  * initFn(mx.zeros([2, 2]));
  * // array([[-0.982273, -0.534422],
@@ -60,7 +60,7 @@ export function normal(mean: number = 0.0, std: number = 1.0, dtype: mx.Dtype = 
  * input, filled with samples from a uniform distribution.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = uniform(0, 1);
  * initFn(mx.zeros([2, 2]));
  * // array([[0.883935, 0.863726],
@@ -82,7 +82,7 @@ export function uniform(low: number = 0.0, high: number = 1.0, dtype: mx.Dtype =
  * @returns An initializer that returns an identity matrix with the same shape as the input.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = identity();
  * initFn(mx.zeros([2, 2]));
  * // array([[1, 0],
@@ -121,7 +121,7 @@ export function identity(dtype: mx.Dtype = mx.float32): (arr: mx.array) => mx.ar
  * input, filled with samples from the Glorot normal distribution.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = glorotNormal();
  * initFn(mx.zeros([2, 2]));
  * // array([[0.191107, 1.61278],
@@ -161,7 +161,7 @@ export function glorotNormal(dtype: mx.Dtype = mx.float32): (a: mx.array, gain?:
  * input, filled with samples from the Glorot uniform distribution.
  *
  * @example
- * ```ts
+ * ```typescript
  * const initFn = glorotUniform();
  * initFn(mx.zeros([2, 2]));
  * // array([[0.223404, -0.890597],
