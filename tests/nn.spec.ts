@@ -141,4 +141,322 @@ describe('layers', () => {
     const outputs = layer.forward(inputs1, inputs2);
     assert.deepEqual(outputs.shape, [10, 6]);
   });
+
+  it('groupNorm', () => {
+    let x = mx.arange(100, mx.float32)
+    x = x.reshape(1, 10, 10, 1);
+    x = mx.broadcastTo(x, [2, 10, 10, 4]);
+    x = mx.concatenate([x, mx.multiply(x, 0.5)], -1);
+
+    // Group norm in groups last mode.
+    let g = new nn.GroupNorm(2, 8);
+    let y = g.forward(x);
+    let means = y.reshape(2, -1, 2).mean(1);
+    let variances = y.reshape(2, -1, 2).variance(1);
+    assertArrayAllTrue(mx.allclose(means,
+                                   mx.zerosLike(means),
+                                   undefined, 1e-6));
+    assertArrayAllTrue(mx.allclose(variances,
+                                   mx.onesLike(variances),
+                                   undefined, 1e-6));
+
+    g.weight = mx.multiply(g.weight, 2);
+    g.bias = mx.add(g.bias, 3);
+    y = g.forward(x);
+    means = y.reshape(2, -1, 2).mean(1);
+    variances = y.reshape(2, -1, 2).variance(1);
+    assertArrayAllTrue(mx.allclose(means,
+                                   mx.multiply(mx.onesLike(means), 3),
+                                   undefined, 1e-6));
+    assertArrayAllTrue(mx.allclose(variances,
+                                   mx.multiply(mx.onesLike(variances), 4),
+                                   undefined, 1e-6));
+
+    // Group norm in groups first mode.
+    g = new nn.GroupNorm(2, 8, undefined, undefined, true);
+    y = g.forward(x);
+    means = y.reshape(2, -1, 2, 4).mean([1, -1]);
+    variances = y.reshape(2, -1, 2, 4).variance([1, -1]);
+    assertArrayAllTrue(mx.allclose(means,
+                                   mx.zerosLike(means),
+                                   undefined, 1e-6));
+    assertArrayAllTrue(mx.allclose(variances,
+                                   mx.onesLike(variances),
+                                   undefined, 1e-6));
+
+    g.weight = mx.multiply(g.weight, 2);
+    g.bias = mx.add(g.bias, 3);
+    y = g.forward(x);
+    means = y.reshape(2, -1, 2, 4).mean([1, -1]);
+    variances = y.reshape(2, -1, 2, 4).variance([1, -1]);
+    assertArrayAllTrue(mx.allclose(means,
+                                   mx.multiply(mx.onesLike(means), 3),
+                                   undefined, 1e-6));
+    assertArrayAllTrue(mx.allclose(variances,
+                                   mx.multiply(mx.onesLike(variances), 4),
+                                   undefined, 1e-6));
+  });
+
+  it('instanceNorm', () => {
+    // Test InstanceNorm1d.
+    let x = mx.array([
+      [
+        [-0.0119524, 1.1263, 2.02223],
+        [-0.500331, 0.517899, -1.21143],
+        [1.12958, -0.21413, -2.48738],
+        [1.39955, 0.891329, 1.63289]
+      ],
+      [
+        [0.241417, -0.619157, -0.77484],
+        [-1.42512, 0.970817, -1.31352],
+        [2.739, -1.2506, 1.56844],
+        [-1.23175, 0.32756, 1.13969]
+      ]
+    ]);
+    let inorm = new nn.InstanceNorm(3);
+    let y = inorm.forward(x);
+    const expectedY = mx.array([
+      [
+        [-0.657082, 1.07593, 1.0712],
+        [-1.27879, -0.123074, -0.632505],
+        [0.796101, -1.56572, -1.30476],
+        [1.13978, 0.612862, 0.866067]
+      ],
+      [
+        [0.0964426, -0.557906, -0.759885],
+        [-0.904772, 1.30444, -1.20013],
+        [1.59693, -1.29752, 1.15521],
+        [-0.7886, 0.550987, 0.804807]
+      ]
+    ]);
+    assert.deepEqual(x.shape, y.shape);
+    assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
+
+    // Test InstanceNorm2d.
+    x = mx.array([
+      [
+        [
+          [-0.458824, 0.483254, -0.58611],
+          [-0.447996, -0.176577, -0.622545],
+          [0.0486988, -0.0611224, 1.8845]
+        ],
+        [
+          [1.13049, 0.345315, -0.926389],
+          [0.301795, 0.99207, -0.184927],
+          [-2.23876, -0.758631, -1.12639]
+        ],
+        [
+          [0.0986325, -1.82973, -0.241765],
+          [-1.25257, 0.154442, -0.556204],
+          [-0.329399, -0.319107, 0.830584]
+        ]
+      ],
+      [
+        [
+          [1.04407, 0.073752, 0.407081],
+          [0.0800776, 1.2513, 1.20627],
+          [0.782321, -0.444367, 0.563132]
+        ],
+        [
+          [0.671423, -1.21689, -1.88979],
+          [-0.110299, -1.42248, 1.17838],
+          [0.159905, 0.516452, -0.539121]
+        ],
+        [
+          [0.810252, 1.50456, 1.08659],
+          [0.182597, 0.0576239, 0.973883],
+          [-0.0621687, 0.184253, 0.784216]
+        ]
+      ]
+    ]);
+    inorm = new nn.InstanceNorm(3);
+    y = inorm.forward(x);
+    const expectedY2 = mx.array([
+      [
+        [
+          [-0.120422, 0.801503, -0.463983],
+          [-0.108465, -0.0608611, -0.504602],
+          [0.440008, 0.090032, 2.29032]
+        ],
+        [
+          [1.63457, 0.621224, -0.843335],
+          [0.719488, 1.4665, -0.0167344],
+          [-2.08591, -0.821575, -1.0663]
+        ],
+        [
+          [0.495147, -2.22145, -0.0800989],
+          [-0.996913, 0.371763, -0.430643],
+          [0.022495, -0.24714, 1.11538]
+        ]
+      ],
+      [
+        [
+          [1.5975, 0.0190292, -0.0123306],
+          [-0.776381, 1.28291, 0.817237],
+          [0.952927, -0.537076, 0.149652]
+        ],
+        [
+          [0.679836, -1.36624, -2.39651],
+          [-1.24519, -1.5869, 0.788287],
+          [-0.579802, 0.494186, -0.994499]
+        ],
+        [
+          [1.02171, 1.55474, 0.693008],
+          [-0.523922, 0.00171862, 0.576016],
+          [-1.12667, 0.137632, 0.37914]
+        ]
+      ]
+    ]);
+    assert.deepEqual(x.shape, y.shape);
+    assertArrayAllTrue(mx.allclose(y, expectedY2, undefined, 1e-5));
+
+    // Test repr.
+    assert.equal(inorm.toString(), 'InstanceNorm(3, eps=1e-5, affine=false)');
+  });
+
+  it('batchNorm', () => {
+    mx.random.seed(42n);
+    let x = mx.random.normal([5, 4]);
+
+    // Batch norm.
+    let bn = new nn.BatchNorm(4, undefined, undefined, true);
+    assertArrayAllTrue(mx.equal(bn.runningMean, mx.zerosLike(bn.runningMean)));
+    assertArrayAllTrue(mx.equal(bn.runningVar, mx.onesLike(bn.runningVar)));
+    let y = bn.forward(x);
+    let expectedY = mx.array([
+      [-0.439520, 1.647328, -0.955515, 1.966031],
+      [-1.726690, -1.449826, -0.234026, -0.723364],
+      [0.938414, -0.349603, -0.354470, -0.175369],
+      [0.305006, 0.234914, -0.393017, -0.459385],
+      [0.922789, -0.082813, 1.937028, -0.607913],
+    ]);
+    let expectedMean = mx.array([0.008929, 0.005680, -0.016092, 0.027778]);
+    let expectedVar = mx.array([0.928435, 1.00455, 1.04117, 0.94258]);
+    assert.deepEqual(x.shape, y.shape);
+    assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningMean, expectedMean, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningVar, expectedVar, undefined, 1e-5));
+
+    // test eval mode.
+    bn.eval();
+    y = bn.forward(x);
+    expectedY = mx.array([
+      [-0.15984, 1.73159, -1.25456, 1.57891],
+      [-0.872193, -1.4281, -0.414439, -0.228678],
+      [0.602743, -0.30566, -0.554687, 0.139639],
+      [0.252199, 0.29066, -0.599572, -0.0512532],
+      [0.594096, -0.0334829, 2.11359, -0.151081],
+    ]);
+    assert.deepEqual(x.shape, y.shape);
+    assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
+
+    // test_no_affine.
+    bn = new nn.BatchNorm(4, undefined, undefined, false);
+    y = bn.forward(x);
+    expectedY = mx.array([
+      [-0.439520, 1.647328, -0.955515, 1.966031],
+      [-1.726690, -1.449826, -0.234026, -0.723364],
+      [0.938414, -0.349603, -0.354470, -0.175369],
+      [0.305006, 0.234914, -0.393017, -0.459385],
+      [0.922789, -0.082813, 1.937028, -0.607913],
+    ]);
+    assert.deepEqual(x.shape, y.shape);
+    assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
+
+    // test with 3D input.
+    mx.random.seed(42n);
+    const N = 2;
+    const L = 4;
+    const C = 5;
+    x = mx.random.normal([N, L, C]);
+
+    // Batch norm.
+    bn = new nn.BatchNorm(C, undefined, undefined, true);
+    assertArrayAllTrue(mx.equal(bn.runningMean, mx.zerosLike(bn.runningMean)));
+    assertArrayAllTrue(mx.equal(bn.runningVar, mx.onesLike(bn.runningVar)));
+    y = bn.forward(x);
+    assert.deepEqual(x.shape, y.shape);
+    expectedY = mx.array([
+      [
+        [-0.335754, 0.342054, 1.02653, 0.628588, -1.63899],
+        [1.92092, 0.432319, 0.343043, 1.95489, 1.0696],
+        [-0.853748, 1.3661, 0.868569, 0.0199196, -0.887284],
+        [0.459206, -0.684822, -0.706354, -0.271531, 0.566341],
+      ],
+      [
+        [-0.921179, 0.684951, -0.77466, -0.490372, -0.247032],
+        [1.10839, -2.13179, 0.628924, -1.62639, -0.539708],
+        [-0.348943, 0.412194, -2.03818, 0.524972, 1.64568],
+        [-1.02889, -0.421, 0.652127, -0.740079, 0.0313996],
+      ],
+    ]);
+    assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
+    expectedMean = mx.array([[[0.00207845, -5.3259e-05, 0.04755, -0.0697296, 0.0236228]]]);
+    expectedVar = mx.array([[[0.968415, 1.05322, 0.96913, 0.932305, 0.967224]]]);
+    assertArrayAllTrue(mx.allclose(bn.runningMean, expectedMean, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningVar, expectedVar, undefined, 1e-5));
+
+    x = mx.random.normal([N, L, C, L, C]);
+    assert.throws(() => { bn.forward(x) }, Error);
+
+    // Check that the running stats are in the param dictionary.
+    const bnParameters = bn.parameters();
+    assert.property(bnParameters, 'runningMean');
+    assert.property(bnParameters, 'runningVar');
+    assert.property(bnParameters, 'weight');
+    assert.property(bnParameters, 'bias');
+
+    let bnTrainable = bn.trainableParameters();
+    assert.notProperty(bnTrainable, 'runningMean');
+    assert.notProperty(bnTrainable, 'runningVar');
+    assert.property(bnTrainable, 'weight');
+    assert.property(bnTrainable, 'bias');
+
+    bn.unfreeze();
+    bnTrainable = bn.trainableParameters();
+    assert.notProperty(bnTrainable, 'runningMean');
+    assert.notProperty(bnTrainable, 'runningVar');
+    assert.property(bnTrainable, 'weight');
+    assert.property(bnTrainable, 'bias');
+  });
+
+  it('batchNormStats', () => {
+    const batchSize = 2;
+    const numFeatures = 4;
+    const h = 3;
+    const w = 3;
+    const momentum = 0.1;
+
+    let batchNorm = new nn.BatchNorm(numFeatures);
+
+    batchNorm.train();
+    let runningMean = batchNorm.runningMean;
+    let runningVar = batchNorm.runningVar;
+
+    let data = mx.random.normal([batchSize, numFeatures]);
+    let normalizedData = batchNorm.forward(data);
+    let means = data.mean(0);
+    let variances = data.variance(0);
+    runningMean = mx.add(mx.multiply(runningMean, (1 - momentum)), mx.multiply(means, momentum));
+    runningVar = mx.add(mx.multiply(runningVar, (1 - momentum)), mx.multiply(variances, momentum));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningMean, runningMean, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningVar, runningVar, 1e-5));
+
+    batchNorm = new nn.BatchNorm(numFeatures);
+    batchNorm.train();
+    runningMean = batchNorm.runningMean;
+    runningVar = batchNorm.runningVar;
+    data = mx.random.normal([batchSize, h, w, numFeatures]);
+
+    normalizedData = batchNorm.forward(data);
+    means = data.mean([0, 1, 2]);
+    variances = data.variance([0, 1, 2]);
+    runningMean = mx.add(mx.multiply(runningMean, (1 - momentum)), mx.multiply(means, momentum));
+    runningVar = mx.add(mx.multiply(runningVar, (1 - momentum)), mx.multiply(variances, momentum));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningMean, runningMean, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningVar, runningVar, 1e-5));
+
+    assert.deepEqual(batchNorm.runningMean.shape, runningMean.shape);
+    assert.deepEqual(batchNorm.runningVar.shape, runningVar.shape);
+  });
 });

@@ -215,12 +215,29 @@ mx::array Tri(int n,
 }
 
 mx::array Transpose(const mx::array& a,
-                    std::optional<std::vector<int>> axis,
-                    mx::StreamOrDevice s) {
-  if (axis)
-    return mx::transpose(a, GetReduceAxes(std::move(*axis), a.ndim()), s);
+                    ki::Arguments* args) {
+  std::vector<int> axes;
+  if (args->RemainingsLength() == 1) {
+    // Both a.transpose(1) and a.transpose([1]) should work.
+    if (auto v = args->GetNext<std::vector<int>>(); v) {
+      axes = std::move(*v);
+    } else if (auto i = args->GetNext<std::vector<int>>(); v) {
+      axes = {*i};
+    } else {
+      args->ThrowError("Axes");
+      return a;
+    }
+  } else {
+    // Make a.transpose(1, 2, 3) work.
+    if (!ReadArgs(args, &axes)) {
+      args->ThrowError("int");
+      return a;
+    }
+  }
+  if (axes.empty())
+    return mx::transpose(a);
   else
-    return mx::transpose(a, s);
+    return mx::transpose(a, std::move(axes));
 }
 
 mx::array Var(const mx::array& a,

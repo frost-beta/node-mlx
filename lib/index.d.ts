@@ -155,7 +155,7 @@ export namespace core {
     swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
     sum(keepdims?: boolean, s?: StreamOrDevice): array;
     sum(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-    transpose(s?: StreamOrDevice): array;
+    transpose(...axes: (number | number[])[]): array;
     variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
     index(...index: ArrayIndex[]): array;
@@ -311,7 +311,7 @@ export namespace core {
   function tensordot(a: ScalarOrArray, b: ScalarOrArray, axes?: number | [number | number[], number | number[]], s?: StreamOrDevice): array;
   function tile(array: ScalarOrArray, reps?: number[], s?: StreamOrDevice): array;
   function topk(array: ScalarOrArray, k: number, axis?: number, s?: StreamOrDevice): [array, array];
-  function transpose(array: ScalarOrArray, axes?: number[], s?: StreamOrDevice): array;
+  function transpose(array: ScalarOrArray, ...axes: (number | number[])[]): array;
   function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
   function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
   function triu(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;

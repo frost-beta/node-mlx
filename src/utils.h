@@ -21,7 +21,7 @@ inline std::vector<int> ToIntVector(std::variant<int, std::vector<int>> shape) {
 // Read args into a vector of types.
 template<typename T>
 bool ReadArgs(ki::Arguments* args, std::vector<T>* results) {
-  for (size_t i = 0; i < args->Length(); ++i) {
+  while (args->RemainingsLength() > 0) {
     std::optional<T> a = args->GetNext<T>();
     if (!a) {
       args->ThrowError(ki::Type<T>::name);

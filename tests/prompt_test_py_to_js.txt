@@ -2,9 +2,8 @@ Convert python test code to TypeScript using mocha and chai's assert APIs.
 
 Use 2 spaces indentation.
 Add ; after statements.
-Remove comments.
+Remove comments in tests.
 Do not include import or require statements.
-Do not put spaces before output's lines.
 Use ' instead of " for strings.
 Convert to camelCase for snake_case names, for example array_equal => arrayEqual, ones_like => onesLike, logical_not => logicalNot.
 Do not convert mx.array_equal to mx.equal, convert it mx.arrayEqual instead.
@@ -28,6 +27,7 @@ The complex number in mx is represented as object {re: number, im: number}, and 
 For getting item via indexing, use the "index" method, for example a[1, 2, 3] becomes a.index(1, 2, 3).
 For setting item vai idnexing, use the "indexPut_" method, for example `a[1] = b` becomes `a.indexPut_(1, b)`, `a[1, 2] = b` becomes `a.indexPut_([1, 2], b)`, `a[1:2] = b` becomes `a.indexPut_(mx.Slice(1, 2), b)`.
 For objects, make sure the converted code only uses string as keys. For example, {mx.float32: 1e-6, ...} should be converted to [{dtype: mx.float32, eps: 1e-6}].
+For dtypes, in TypeScript their types are "mx.Dtype", and they should be referenced as values of mx module, such as "mx.float32".
 
 For code that compares results between mx and np (numpy), replace the numpy code with tensorflow-js. For example, replace np.array to tf.tensor. When comparing results, convert to js Array first, for example assert.deepEqual(rTf.arraySync(), rMlx.tolist()). For ops, convert the tf tensor to JS array, and then call the op like `mx.isclose(rMlx, rTf.arraySync())`. Replaces "np" in names with "tf".
 

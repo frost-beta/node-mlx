@@ -58,13 +58,13 @@ export class QuantizedEmbedding extends Module {
     return instance;
   }
 
-  private groupSize: number;
-  private bits: number;
-  private numEmbeddings: number;
-  private dims: number;
-  private weight: mx.array;
-  private scales: mx.array;
-  private biases: mx.array;
+  groupSize: number;
+  bits: number;
+  numEmbeddings: number;
+  dims: number;
+  weight: mx.array;
+  scales: mx.array;
+  biases: mx.array;
 
   /**
    * Construct a new `QuantizedEmbedding` instance.
@@ -152,12 +152,12 @@ export class QuantizedLinear extends Module {
     return ql;
   }
 
-  private groupSize: number;
-  private bits: number;
-  private weight: mx.array;
-  private scales: mx.array;
-  private biases: mx.array;
-  private bias?: mx.array;
+  groupSize: number;
+  bits: number;
+  weight: mx.array;
+  scales: mx.array;
+  biases: mx.array;
+  bias?: mx.array;
 
   /**
    * Construct a new `QuantizedLinear` instance.
