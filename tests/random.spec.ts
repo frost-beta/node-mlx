@@ -4,11 +4,11 @@ import {assert} from 'chai';
 
 describe('random', () => {
   it('globalRng', () => {
-    mx.random.seed(3n);
+    mx.random.seed(3);
     const a = mx.random.uniform(0, 1);
     const b = mx.random.uniform(0, 1);
 
-    mx.random.seed(3n);
+    mx.random.seed(3);
     const x = mx.random.uniform(0, 1);
     const y = mx.random.uniform(0, 1);
 
@@ -17,16 +17,16 @@ describe('random', () => {
   });
 
   it('key', () => {
-    const k1 = mx.random.key(0n);
-    let k2 = mx.random.key(0n);
+    const k1 = mx.random.key(0);
+    let k2 = mx.random.key(0);
     assertArrayAllTrue(mx.arrayEqual(k1, k2));
 
-    k2 = mx.random.key(1n);
+    k2 = mx.random.key(1);
     assertArrayAllFalse(mx.arrayEqual(k1, k2));
   });
 
   it('uniform', () => {
-    let key = mx.random.key(0n);
+    let key = mx.random.key(0);
     let a = mx.random.uniform(0, 1, [], mx.float32, key);
     assert.equal(a.shape.length, 0);
     assert.equal(a.dtype, mx.float32);
@@ -48,7 +48,7 @@ describe('random', () => {
   });
 
   it('normal', () => {
-    let key = mx.random.key(0n);
+    let key = mx.random.key(0);
     let a = mx.random.normal([], mx.float32, 0, 1, key);
     assert.equal(a.shape.length, 0);
     assert.equal(a.dtype, mx.float32);
@@ -84,7 +84,7 @@ describe('random', () => {
   });
 
   it('multivariateNormal', () => {
-    let key = mx.random.key(0n);
+    let key = mx.random.key(0);
     let mean = mx.array([0, 0]);
     let cov = mx.array([[1, 0], [0, 1]]);
 
@@ -141,7 +141,7 @@ describe('random', () => {
     let low = mx.array(3);
     let high = mx.array(15);
 
-    const key = mx.random.key(0n);
+    const key = mx.random.key(0);
     a = mx.random.randint(low, high, shape, mx.int32, key);
     assert.deepEqual(a.shape, shape);
     assert.equal(a.dtype, mx.int32);

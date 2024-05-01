@@ -315,7 +315,7 @@ describe('layers', () => {
   });
 
   it('batchNorm', () => {
-    mx.random.seed(42n);
+    mx.random.seed(42);
     let x = mx.random.normal([5, 4]);
 
     // Batch norm.
@@ -364,7 +364,7 @@ describe('layers', () => {
     assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
 
     // test with 3D input.
-    mx.random.seed(42n);
+    mx.random.seed(42);
     const N = 2;
     const L = 4;
     const C = 5;
