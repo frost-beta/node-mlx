@@ -86,7 +86,10 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
                                 isLeaf?: (node: unknown) => boolean,
                                 path?: string): unknown {
   if (isLeaf && isLeaf(tree)) {
-    return fn(path, tree, ...rest);
+    if (rest)
+      return fn(path, tree, ...rest);
+    else
+      return fn(path, tree);
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMapWithPath(fn, child, rest?.map(r => r[i]), isLeaf, path ? `${path}.${i}` : `${i}`));
   } else if (typeof tree === 'object' && isDict(tree)) {

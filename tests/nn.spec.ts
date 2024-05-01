@@ -103,4 +103,42 @@ describe('base', () => {
     assert.isFalse(m.update(paramsDict).eval().training);
     assert.isTrue(m.train().training);
   });
+
+  it('quantize', () => {
+    let m = new nn.Sequential(new nn.Embedding(5, 256), new nn.ReLU(), new nn.Linear(256, 256));
+    nn.quantize(m);
+    assert.isTrue(m.layers[0] instanceof nn.QuantizedEmbedding);
+    assert.isTrue(m.layers[1] instanceof nn.ReLU);
+    assert.isTrue(m.layers[2] instanceof nn.QuantizedLinear);
+
+    m = new nn.Sequential(new nn.Embedding(5, 256), new nn.ReLU(), new nn.Linear(256, 256));
+    nn.quantize(m, undefined, undefined, (_, m: nn.Module) => m instanceof nn.Linear);
+    assert.isTrue(m.layers[0] instanceof nn.Embedding);
+    assert.isTrue(m.layers[1] instanceof nn.ReLU);
+    assert.isTrue(m.layers[2] instanceof nn.QuantizedLinear);
+  });
+});
+
+describe('layers', () => {
+  it('identity', () => {
+    const inputs = mx.zeros([10, 4]);
+    const layer = new nn.Identity();
+    const outputs = layer.forward(inputs);
+    assert.deepEqual(inputs.shape, outputs.shape);
+  });
+
+  it('linear', () => {
+    const inputs = mx.zeros([10, 4]);
+    const layer = new nn.Linear(4, 8);
+    const outputs = layer.forward(inputs);
+    assert.deepEqual(outputs.shape, [10, 8]);
+  });
+
+  it('bilinear', () => {
+    const inputs1 = mx.zeros([10, 2]);
+    const inputs2 = mx.zeros([10, 4]);
+    const layer = new nn.Bilinear(2, 4, 6);
+    const outputs = layer.forward(inputs1, inputs2);
+    assert.deepEqual(outputs.shape, [10, 6]);
+  });
 });

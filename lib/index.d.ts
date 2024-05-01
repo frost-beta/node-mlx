@@ -211,7 +211,7 @@ export namespace core {
   function cumprod(array: ScalarOrArray, s?: StreamOrDevice): array;
   function cumsum(array: ScalarOrArray, s?: StreamOrDevice): array;
   function degrees(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function dequantize(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function dequantize(w: array, scales: ScalarOrArray, biases: ScalarOrArray, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function diag(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
   function diagonal(array: ScalarOrArray, offset?: number, axis1?: number, axis2?: number, s?: StreamOrDevice): array;
   function divide(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
@@ -272,8 +272,8 @@ export namespace core {
   function power(array: ScalarOrArray, exponent: ScalarOrArray, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-  function quantize(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function quantizedMatmul(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+  function quantize(w: array, groupSize: number, bits: number, s?: StreamOrDevice): array;
+  function quantizedMatmul(w: array, x: array, scales: ScalarOrArray, biases: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function radians(array: ScalarOrArray, s?: StreamOrDevice): array;
   function reciprocal(array: ScalarOrArray, s?: StreamOrDevice): array;
   function remainder(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
