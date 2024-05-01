@@ -4,8 +4,17 @@ import Mocha from 'mocha';
 import yargs from 'yargs';
 import tf from '@tensorflow/tfjs';
 
+import {core as mx} from '..';
+
 // Do not warn about using pure-js tensorflow.
 tf.ENV.set('IS_TEST', true);
+
+// FIXME(zcbenz): Compilation fails on QEMU in CI.
+if (process.env.CI == 'true' &&
+    process.platform == 'linux' &&
+    process.arch == 'arm64') {
+  mx.disableCompile();
+}
 
 const argv = require('yargs')
   .string('g').alias('g', 'grep')

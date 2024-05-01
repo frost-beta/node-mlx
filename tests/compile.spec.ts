@@ -5,8 +5,11 @@ import {assert} from 'chai';
 describe('compile', function() {
   beforeEach(function() {
     // FIXME(zcbenz): Compilation fails on QEMU in CI.
-    if (process.platform == 'linux' && process.arch == 'arm64')
+    if (process.env.CI == 'true' &&
+        process.platform == 'linux' &&
+        process.arch == 'arm64') {
       this.skip();
+    }
   });
 
   this.timeout(10 * 1000);
@@ -94,18 +97,61 @@ describe('compile', function() {
 
   it('compileWithClosure', () => {
     let x = mx.array(1);
-    const closure = (y) => mx.add(x, y);
-    const compiled = mx.compile(closure);
 
+    const closure = (y) => {
+      return mx.add(x, y);
+    }
+
+    let compiled = mx.compile(closure);
     let out = compiled(mx.array(1));
     assert.equal(out.item(), 2);
 
+    // Try again
     out = compiled(mx.array(1));
     assert.equal(out.item(), 2);
 
+    // Change the shape of the enclosed variable
     x = mx.array([1, 2]);
     out = compiled(mx.array(1));
+
+    // We still get the original input (closures are not updated)
     assert.equal(out.item(), 2);
+
+    // Try with a tree of enclosed variables
+    let x2 = {a: mx.array(1), b: mx.array(2)};
+
+    const closure2 = (y) => {
+      return mx.add(mx.add(x2['a'], y), x2['b']);
+    }
+
+    compiled = mx.compile(closure2);
+    out = compiled(mx.array(1));
+    assert.equal(out.item(), 4);
+
+    // Change the shape of one input
+    x2['a'] = mx.array([4, 5]);
+    out = compiled(mx.array(1));
+    assert.equal(out.item(), 4);
+
+    x2['b'] = mx.array([-6, -8]);
+    out = compiled(mx.array(1));
+    assert.equal(out.item(), 4);
+
+    // Enclosed variable is not evaluated yet
+    x = mx.array(1);
+    x = mx.add(x, x);
+
+    const closure3 = (y) => {
+      return mx.add(x, y);
+    }
+
+    compiled = mx.compile(closure3);
+    out = compiled(mx.array(2));
+    assert.equal(out.item(), 4);
+
+    // And again
+    out = compiled(mx.array(2));
+    assert.equal(out.item(), 4);
   });
 
   it('functionCreatesArray', () => {

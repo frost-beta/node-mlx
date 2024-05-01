@@ -549,12 +549,6 @@ describe('layers', () => {
                    1e-4);
   });
 
-  beforeEach(function() {
-    // FIXME(zcbenz): Compilation fails on QEMU in CI.
-    if (process.platform == 'linux' && process.arch == 'arm64')
-      this.skip();
-  });
-
   it('sequential', () => {
     const x = mx.ones([10, 2]);
     const m = new nn.Sequential(new nn.Linear(2, 10), new nn.ReLU(), new nn.Linear(10, 1));

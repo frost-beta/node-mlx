@@ -352,6 +352,8 @@ export namespace core {
   function compile(func: LossFunctionSimpleGeneric, shapeless?: boolean): LossFunctionSimpleGeneric;
   function compile(func: LossFunctionScalar, shapeless?: boolean): LossFunctionScalar;
   function compile(func: LossFunctionGeneric, shapeless?: boolean): LossFunctionGeneric;
+  function disableCompile(): void;
+  function enableCompile(): void;
 
   // Metal.
   namespace metal {

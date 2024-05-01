@@ -56,4 +56,6 @@ jobs:
         with:
           image: zcbenz/node-mlx:main
           options: --platform=linux/${{ matrix.arch }} -v ${{ github.workspace }}:/build -w /build
-          run: yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
+          run: |
+            export CI=true
+            yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
