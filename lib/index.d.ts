@@ -200,10 +200,10 @@ export namespace core {
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
   function concatenate(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
-  function convolve(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
-  function conv1d(input: ScalarOrArray, weights?: ScalarOrArray, s?: StreamOrDevice): array;
-  function conv2d(input: ScalarOrArray, weights?: ScalarOrArray, s?: StreamOrDevice): array;
-  function convGeneral(input: ScalarOrArray, weights?: ScalarOrArray, s?: StreamOrDevice): array;
+  function convolve(input: ScalarOrArray, weight: ScalarOrArray, mode?: string, s?: StreamOrDevice): array;
+  function conv1d(input: ScalarOrArray, weight: ScalarOrArray, stride: number, padding: number, dilation: number, groups: number, s?: StreamOrDevice): array;
+  function conv2d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
+  function convGeneral(input: ScalarOrArray, weight?: ScalarOrArray, stride?: number | number[], padding?: number | number[] | [number[], number[]], kernelDilation?: number | number[], inputDilation?: number | number[], groups?: number, flip?: boolean, s?: StreamOrDevice): array;
   function cos(array: ScalarOrArray, s?: StreamOrDevice): array;
   function cosh(array: ScalarOrArray, s?: StreamOrDevice): array;
   function cummax(array: ScalarOrArray, s?: StreamOrDevice): array;

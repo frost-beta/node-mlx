@@ -478,7 +478,7 @@ export function tanh(x: mx.array) {
  * @param axis - The dimension to split along. Default: `-1`
  */
 export class GLU extends Module {
-  private axis: number;
+  axis: number;
 
   constructor(axis: number = -1) {
     super();
@@ -543,7 +543,7 @@ export class ReLU extends Module {
  * @param negativeSlope - Controls the angle of the negative slope. Default: `1e-2`
  */
 export class LeakyReLU extends Module {
-  private negativeSlope: number;
+  negativeSlope: number;
 
   constructor(negativeSlope = 1e-2) {
     super();
@@ -563,7 +563,7 @@ export class LeakyReLU extends Module {
  * @param alpha - The `alpha` value for the ELU formulation. Default: `1.0`
  */
 export class ELU extends Module {
-  private alpha: number;
+  alpha: number;
 
   constructor(alpha = 1.0) {
     super();
@@ -617,7 +617,7 @@ export class Softsign extends Module {
  * @param lambd - The `lambda` value for Softshrink. Default: `0.5`.
  */
 export class SoftShrink extends Module {
-  private lambd: number;
+  lambd: number;
 
   constructor(lambd = 0.5) {
     super();
@@ -639,7 +639,7 @@ export class SoftShrink extends Module {
  * @param alpha - The `alpha` value for the CELU formulation. Default: `1.0`.
  */
 export class CELU extends Module {
-  private alpha: number;
+  alpha: number;
 
   constructor(alpha = 1.0) {
     super();
@@ -687,7 +687,7 @@ export class LogSigmoid extends Module {
  * is an array.
  */
 export class PReLU extends Module {
-  private weight: mx.array;
+  weight: mx.array;
 
   constructor(numParameters = 1, init = 0.25) {
     super();
@@ -783,7 +783,7 @@ export class Hardswish extends Module {
  * @param threshold - The value to threshold at.
  */
 export class Step extends Module {
-  private threshold: number;
+  threshold: number;
 
   constructor(threshold: number = 0.0) {
     super();

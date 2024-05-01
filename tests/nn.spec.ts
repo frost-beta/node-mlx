@@ -459,4 +459,132 @@ describe('layers', () => {
     assert.deepEqual(batchNorm.runningMean.shape, runningMean.shape);
     assert.deepEqual(batchNorm.runningVar.shape, runningVar.shape);
   });
+
+  it('conv1d', () => {
+    const N = 5;
+    const L = 12;
+    const ks = 3;
+    const CIn = 2;
+    const COut = 4;
+    let x = mx.ones([N, L, CIn]);
+    let c = new nn.Conv1d(CIn, COut, ks);
+    c.weight = mx.onesLike(c.weight);
+    let y = c.forward(x);
+    assert.deepEqual(y.shape, [N, L - ks + 1, COut]);
+    assertArrayAllTrue(mx.arrayEqual(y, mx.full(y.shape, ks * CIn)));
+
+    c = new nn.Conv1d(CIn, COut, ks, 2);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [N, Math.floor((L - ks + 1) / 2), COut]);
+    assert.property(c.parameters(), 'bias');
+
+    const dil = 2;
+    c = new nn.Conv1d(CIn, COut, ks, undefined, undefined, dil);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [N, L - (ks - 1) * dil, COut]);
+
+    c = new nn.Conv1d(CIn, COut, ks, undefined, undefined, undefined, false);
+    assert.notProperty(c.parameters(), 'bias');
+  });
+
+  it('conv2d', () => {
+    let x = mx.ones([4, 8, 8, 3]);
+    let c = new nn.Conv2d(3, 1, 8);
+    let y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 1, 1, 1]);
+    c.weight = mx.divide(mx.onesLike(c.weight), 8*8*3);
+    y = c.forward(x);
+    assertArrayAllTrue(mx.allclose(y.index(0, 0, 0), x.mean([1, 2, 3])));
+
+    // 3x3 conv no padding stride 1
+    c = new nn.Conv2d(3, 8, 3);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 6, 6, 8]);
+    assert.isBelow(mx.subtract(y, c.weight.sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+
+    // 3x3 conv padding 1 stride 1
+    c = new nn.Conv2d(3, 8, 3, 1, 1);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 8, 8, 8]);
+    assert.isBelow(mx.subtract(y.index(mx.Slice(), mx.Slice(1, 7), mx.Slice(1, 7)),
+                               c.weight.sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+    assert.isBelow(mx.subtract(y.index(mx.Slice(), 0, 0),
+                               c.weight.index(mx.Slice(), mx.Slice(1), mx.Slice(1))
+                                .sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+    assert.isBelow(mx.subtract(y.index(mx.Slice(), 7, 7),
+                               c.weight.index(mx.Slice(), mx.Slice(null, -1), mx.Slice(null, -1))
+                                .sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+    assert.isBelow(mx.subtract(y.index(mx.Slice(), mx.Slice(1, 7), 7),
+                               c.weight.index(mx.Slice(), mx.Slice(), mx.Slice(null, -1))
+                                .sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+    assert.isBelow(mx.subtract(y.index(mx.Slice(), 7, mx.Slice(1, 7)),
+                               c.weight.index(mx.Slice(), mx.Slice(null, -1), mx.Slice())
+                                .sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+
+    // 3x3 conv no padding stride 2
+    c = new nn.Conv2d(3, 8, 3, 2, 0);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 3, 3, 8]);
+    assert.isBelow(mx.subtract(y, c.weight.sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+
+    c = new nn.Conv2d(3, 8, 3, undefined, undefined, 2);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 4, 4, 8]);
+    assert.isBelow(mx.subtract(y, c.weight.sum([1, 2, 3]))
+                     .abs().max().item() as number,
+                   1e-4);
+  });
+
+  it('sequential', () => {
+    const x = mx.ones([10, 2]);
+    const m = new nn.Sequential(new nn.Linear(2, 10), new nn.ReLU(), new nn.Linear(10, 1));
+    const y = m.forward(x);
+    assert.deepEqual(y.shape, [10, 1]);
+    const params = m.parameters();
+    assert.property(params, 'layers');
+    assert.equal(params['layers'].length, 3);
+    assert.property(params['layers'][0], 'weight');
+    assert.equal(Object.keys(params['layers'][1]).length, 0);
+    assert.property(params['layers'][2], 'weight');
+
+    m.layers[1] = nn.relu;
+    const y2 = m.forward(x);
+    assertArrayAllTrue(mx.arrayEqual(y, y2));
+  });
+
+  it('gelu', function() {
+    this.timeout(10 * 1000);
+
+    const inputs = mx.array([1.15286231, -0.81037411, 0.35816911, 0.77484438, 0.66276414]);
+    const expected = mx.array([1.0093501, -0.16925684, 0.22918941, 0.60498625, 0.49459383]);
+    const expectedApprox = mx.array([1.0091482, -0.1693441, 0.22918446, 0.60491, 0.4945476]);
+
+    const out = new nn.GELU().forward(inputs);
+    assertArrayAllTrue(mx.isclose(out, expected));
+
+    const outApprox = new nn.GELU('precise').forward(inputs);
+    assertArrayAllTrue(mx.isclose(outApprox, expectedApprox));
+
+    const x = mx.arange(-6.0, 6.0, 12 / 100);
+    const y = nn.gelu(x);
+    const yHat1 = nn.geluApprox(x);
+    const yHat2 = nn.geluFastApprox(x);
+
+    assert.isBelow(mx.subtract(y, yHat1).abs().max().item() as number, 0.0005);
+    assert.isBelow(mx.subtract(y, yHat2).abs().max().item() as number, 0.025);
+  });
 });

@@ -12,14 +12,15 @@ import {Module} from './base';
  * y = \frac{x - \mathrm{E}[x]}{ \sqrt{\mathrm{Var}[x] + \epsilon}} * \gamma + \beta,
  * ```
  *
- * where `gamma` and `beta` are learned per feature dimension
- * parameters initialized at 1 and 0 respectively. Both are of size `dims`,
- * if `affine` is `true`.
+ * where `gamma` and `beta` are learned per feature dimension parameters
+ * initialized at 1 and 0 respectively. Both are of size `dims`, if `affine` is
+ * `true`.
  *
  * Reference: https://arxiv.org/abs/1607.08022
  *
  * @param dims - The number of features of the input.
- * @param eps - A value added to the denominator for numerical stability. Default: `1e-5`.
+ * @param eps - A value added to the denominator for numerical stability.
+ * Default: `1e-5`.
  * @param affine - Default: `false`.
  *
  * @example
@@ -48,7 +49,7 @@ export class InstanceNorm extends Module {
   }
 
   override toStringExtra(): string {
-    return `${this.dims}, eps=${this.eps.toExponential()}, affine=${this.weight !== undefined}`;
+    return `${this.dims}, eps=${this.eps.toExponential()}, affine=${!!this.weight}`;
   }
 
   override forward(x: mx.array): mx.array {
@@ -78,16 +79,17 @@ export class InstanceNorm extends Module {
  * y = \frac{x - E[x]}{\sqrt{Var[x]} + \epsilon} \gamma + \beta,
  * ```
  *
- * where `gamma` and `beta` are learned per feature dimension
- * parameters initialized at 1 and 0 respectively.
+ * where `gamma` and `beta` are learned per feature dimension parameters
+ * initialized at 1 and 0 respectively.
  *
  * Reference: https://arxiv.org/abs/1607.06450
  *
  * @param dims - The feature dimension of the input to normalize over.
  * @param eps - A small additive constant for numerical stability.
- * @param affine - If true learn an affine transform to apply after the normalization.
- * @param bias - If true include a translation to the affine transformation.
- * If it's false the transformation is not affine but just scaling.
+ * @param affine - If true learn an affine transform to apply after the
+ * normalization.
+ * @param bias - If true include a translation to the affine transformation. If
+ * it's false the transformation is not affine but just scaling.
  */
 export class LayerNorm extends Module {
   dims: number;
@@ -127,8 +129,7 @@ export class LayerNorm extends Module {
  * y = \frac{x}{\sqrt{E[x^2] + \epsilon}} \gamma
  * ```
  *
- * where `gamma` is a learned per feature dimension parameter initialized at
- * 1.
+ * where `gamma` is a learned per feature dimension parameter initialized at 1.
  *
  * Reference: https://arxiv.org/abs/1910.07467
  *
@@ -165,11 +166,11 @@ export class RMSNorm extends Module {
  * y = \frac{x - E[x]}{\sqrt{Var[x]} + \epsilon} \gamma + \beta,
  * ```
  *
- * where `gamma` and `beta` are learned per feature dimension
- * parameters initialized at 1 and 0 respectively.
+ * where `gamma` and `beta` are learned per feature dimension parameters
+ * initialized at 1 and 0 respectively.
  *
- * The mean and variance are computed over the spatial dimensions and each group of
- * features. In particular, the input is split into numGroups across the
+ * The mean and variance are computed over the spatial dimensions and each group
+ * of features. In particular, the input is split into numGroups across the
  * feature dimension.
  *
  * The feature dimension is assumed to be the last dimension and the dimensions
@@ -180,8 +181,10 @@ export class RMSNorm extends Module {
  * @param numGroups - Number of groups to separate the features into.
  * @param dims - The feature dimensions of the input to normalize over.
  * @param eps - A small additive constant for numerical stability.
- * @param affine - If `true` learn an affine transform to apply after the normalization.
- * @param pyTorchCompatible - If `true` perform the group normalization in the same order/grouping as PyTorch.
+ * @param affine - If `true` learn an affine transform to apply after the
+ * normalization.
+ * @param pyTorchCompatible - If `true` perform the group normalization in the
+ * same order/grouping as PyTorch.
  */
 export class GroupNorm extends Module {
   numGroups: number;

@@ -1,6 +1,7 @@
 export * from './layers/activations';
 export * from './layers/base';
 export * from './layers/containers';
+export * from './layers/convolution';
 export * from './layers/embedding';
 export * from './layers/linear';
 export * from './layers/normalization';
