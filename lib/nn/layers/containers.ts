@@ -24,7 +24,7 @@ export class Sequential extends Module {
     this.layers = modules;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     for (const layer of this.layers) {
       x = typeof layer === 'function' ? layer(x) : layer.forward(x);
     }

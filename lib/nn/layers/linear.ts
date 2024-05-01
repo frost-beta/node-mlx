@@ -13,7 +13,7 @@ export class Identity extends Module {
     super();
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return x;
   }
 }
@@ -50,11 +50,11 @@ export class Linear extends Module {
       this.bias = mx.random.uniform(-scale, scale, [outputDims]);
   }
 
-  protected toStringExtra(): string {
+  override toStringExtra(): string {
     return `input_dims=${this.weight.shape[1]}, output_dims=${this.weight.shape[0]}, bias=${'bias' in this}`;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     if (this.bias)
       return mx.addmm(this.bias, x, this.weight.T);
     else
@@ -96,12 +96,12 @@ export class Bilinear extends Module {
       this.bias = mx.random.uniform(-scale, scale, [outputDims]);
   }
 
-  protected toStringExtra(): string {
+  override toStringExtra(): string {
     const [out, in2, in1] = this.weight.shape;
     return `input1_dims=${in1}, input2_dims=${in2}, output_dims=${out}, bias=${'bias' in this}`;
   }
 
-  forward(x1: mx.array, x2: mx.array): mx.array {
+  override forward(x1: mx.array, x2: mx.array): mx.array {
     // Normalize shapes.
     const [out, in2, in1] = this.weight.shape;
     const xshape = x1.shape.slice(0, -1);

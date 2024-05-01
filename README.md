@@ -2,12 +2,33 @@
 
 :construction:
 
+This project is not affiliated to Apple, you can sponsorits development by
+[sponsoring me](https://github.com/sponsors/zcbenz).
+
+## Supported platforms
+
+GPU support:
+- Macs with Apple Silicon
+
+CPU support:
+- x64 Macs
+- x64/arm64 Linux
+
+(No Windows support but I'll try to make MLX work on it in future.)
+
+Note that currently MLX does not have plans to support GPUs other than Apple
+Silicon, and personally I don't think they ever will considering their team size
+and the API design.
+
+For doing machine learning on GPUs with Node.js, you can go with TensorFlow.js,
+or wait for someone porting PyTorch to Node.js (could be me, haha).
+
 ## Usage
 
 ```typescript
-import {core as mx} from '@frost-beta/mlx';
+import {core as mx, nn} from '@frost-beta/mlx';
 
-const a = mx.arange(64).reshape([8, 8]);
+const a = mx.arange(64).reshape(8, 8);
 console.log(a.shape);
 ```
 
@@ -85,3 +106,8 @@ Here are some examples of translating Python indexing code to JavaScript:
 #### Setters
 
 #### Translating between Python/JavaScript index types
+
+## Versioning
+
+Before matching the features and stability of the official Python APIs, this
+project will stay on 0.0.x for versions.

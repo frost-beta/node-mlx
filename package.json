@@ -1,6 +1,6 @@
 {
   "name": "@frost-beta/mlx",
-  "version": "0.0.1",
+  "version": "0.0.1-dev",
   "description": "Node-API bindings for MLX",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

@@ -94,7 +94,7 @@ export class QuantizedEmbedding extends Module {
     this.freeze();
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     const s = x.shape;
     x = x.flatten();
     const out = mx.dequantize(this.weight.index(x),
@@ -122,7 +122,7 @@ export class QuantizedEmbedding extends Module {
                               this.bits);
   }
 
-  toStringExtra(): string {
+  override toStringExtra(): string {
     return `${this.numEmbeddings}, ${this.dims}, groupSize=${this.groupSize}, bits=${this.bits}`;
   }
 }
@@ -190,24 +190,24 @@ export class QuantizedLinear extends Module {
     this.freeze();
   }
 
-  // Wrap unfreeze so that we unfreeze any layers we might contain but
-  // our parameters will remain frozen.
-  unfreeze(...args): this {
-    super.unfreeze(...args);
-    return this.freeze(false);
+  override toStringExtra(): string {
+    let [outDims, inDims] = this.weight.shape;
+    inDims = inDims * 32 / this.bits;
+    return `input_dims=${inDims}, output_dims=${outDims}, bias=${!!this.bias}, `+
+           `group_size=${this.groupSize}, bits=${this.bits}`;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     x = mx.quantizedMatmul(x, this.weight, this.scales, this.biases, true, this.groupSize, this.bits);
     if (this.bias)
       x = mx.add(x, this.bias);
     return x;
   }
 
-  toStringExtra(): string {
-    let [outDims, inDims] = this.weight.shape;
-    inDims = inDims * 32 / this.bits;
-    return `input_dims=${inDims}, output_dims=${outDims}, bias=${!!this.bias}, `+
-           `group_size=${this.groupSize}, bits=${this.bits}`;
+  // Wrap unfreeze so that we unfreeze any layers we might contain but
+  // our parameters will remain frozen.
+  override unfreeze(...args): this {
+    super.unfreeze(...args);
+    return this.freeze(false);
   }
 }

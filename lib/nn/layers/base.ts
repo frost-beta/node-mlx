@@ -82,12 +82,6 @@ export abstract class Module {
   #noGrad = new Set();
   #training = true;
 
-  /**
-   * Define the computation performed at every call. Should be overridden by
-   * all subclasses.
-   */
-  abstract forward(...inputs: unknown[]): unknown;
-
   // Allow assigning arbitrary properties to the module.
   [key: string]: unknown;
 
@@ -149,6 +143,12 @@ export abstract class Module {
     }
     return Object.entries(results);
   }
+
+  /**
+   * Define the computation performed at every call. Should be overridden by
+   * all subclasses.
+   */
+  abstract forward(...inputs: unknown[]): unknown;
 
   /**
    * Recursively filter the contents of the module using `filterFn`, namely only

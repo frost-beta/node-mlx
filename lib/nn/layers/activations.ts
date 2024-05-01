@@ -485,7 +485,7 @@ export class GLU extends Module {
     this.axis = axis;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return glu(x, this.axis);
   }
 }
@@ -500,7 +500,7 @@ export class GLU extends Module {
  * ```
  */
 export class Sigmoid extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return sigmoid(x);
   }
 }
@@ -517,7 +517,7 @@ export class Sigmoid extends Module {
  * ```
  */
 export class Mish extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return mish(x);
   }
 }
@@ -530,7 +530,7 @@ export class Mish extends Module {
  * Simply `mx.maximum(x, 0)`.
  */
 export class ReLU extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return relu(x);
   }
 }
@@ -550,7 +550,7 @@ export class LeakyReLU extends Module {
     this.negativeSlope = negativeSlope;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return leakyRelu(x, this.negativeSlope);
   }
 }
@@ -570,7 +570,7 @@ export class ELU extends Module {
     this.alpha = alpha;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return elu(x, this.alpha);
   }
 }
@@ -579,7 +579,7 @@ export class ELU extends Module {
  * Applies the Rectified Linear Unit 6.
  */
 export class ReLU6 extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return relu6(x);
   }
 }
@@ -588,7 +588,7 @@ export class ReLU6 extends Module {
  * Applies the Softmax function.
  */
 export class Softmax extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return softmax(x);
   }
 }
@@ -597,7 +597,7 @@ export class Softmax extends Module {
  * Applies the Softplus function.
  */
 export class Softplus extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return softplus(x);
   }
 }
@@ -606,7 +606,7 @@ export class Softplus extends Module {
  * Applies the Softsign function.
  */
 export class Softsign extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return softsign(x);
   }
 }
@@ -624,7 +624,7 @@ export class SoftShrink extends Module {
     this.lambd = lambd;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return softshrink(x, this.lambd);
   }
 }
@@ -646,7 +646,7 @@ export class CELU extends Module {
     this.alpha = alpha;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return celu(x, this.alpha);
   }
 }
@@ -655,7 +655,7 @@ export class CELU extends Module {
  * Applies the Sigmoid Linear Unit. Also known as Swish.
  */
 export class SiLU extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return silu(x);
   }
 }
@@ -664,7 +664,7 @@ export class SiLU extends Module {
  * Applies the Log Softmax function.
  */
 export class LogSoftmax extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return logSoftmax(x);
   }
 }
@@ -673,7 +673,7 @@ export class LogSoftmax extends Module {
  * Applies the Log Sigmoid function.
  */
 export class LogSigmoid extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return logSigmoid(x);
   }
 }
@@ -694,7 +694,7 @@ export class PReLU extends Module {
     this.weight = mx.full([numParameters], init);
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return prelu(x, this.weight);
   }
 }
@@ -741,7 +741,7 @@ export class GELU extends Module {
     }
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return this.act(x);
   }
 }
@@ -750,7 +750,7 @@ export class GELU extends Module {
  * Applies the hyperbolic tangent function.
  */
 export class Tanh extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return tanh(x);
   }
 }
@@ -759,7 +759,7 @@ export class Tanh extends Module {
  * Applies the hardswish function, element-wise.
  */
 export class Hardswish extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return hardswish(x);
   }
 }
@@ -790,7 +790,7 @@ export class Step extends Module {
     this.threshold = threshold;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return step(x, this.threshold);
   }
 }
@@ -799,7 +799,7 @@ export class Step extends Module {
  * Applies the Scaled Exponential Linear Unit.
  */
 export class SELU extends Module {
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return selu(x);
   }
 }

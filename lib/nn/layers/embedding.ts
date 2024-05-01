@@ -23,11 +23,11 @@ export class Embedding extends Module {
     this.weight = mx.random.normal([numEmbeddings, dims], undefined, undefined, scale);
   }
 
-  toStringExtra(): string {
+  override toStringExtra(): string {
     return `${this.weight.shape[0]}, ${this.weight.shape[1]}`;
   }
 
-  forward(x: mx.array): mx.array {
+  override forward(x: mx.array): mx.array {
     return this.weight.index(x);
   }
 
