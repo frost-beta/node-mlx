@@ -63,6 +63,8 @@ Some features are not supported yet and will be implemented in future:
   taking `mx.array`.
 * When creating a `mx.array` from JavaScript Array, the Array must only include
   primitive values.
+* The APIs only accept plain parameters, e.g. `mx.uniform(0, 1, [2, 2])`. Named
+  parameter calls like `mx.uniform({shape: [2, 2]})` has not been implemented.
 
 ### Complex numbers
 

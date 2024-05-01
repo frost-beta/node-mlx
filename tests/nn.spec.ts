@@ -587,4 +587,65 @@ describe('layers', () => {
     assert.isBelow(mx.subtract(y, yHat1).abs().max().item() as number, 0.0005);
     assert.isBelow(mx.subtract(y, yHat2).abs().max().item() as number, 0.025);
   });
+
+  it('sinPe', () => {
+    const m = new nn.SinusoidalPositionalEncoding(16, 0.01);
+    const x = mx.arange(10);
+    const y = m.forward(x);
+    assert.deepEqual(y.shape, [10, 16]);
+
+    const similarities = mx.matmul(y, y.T);
+    assert.isBelow(mx.subtract(similarities.index(mx.arange(10, mx.int32),
+                                                  mx.arange(10, mx.int32)),
+                               1)
+                     .abs().max().item() as number,
+                   1e-5);
+  });
+
+  it('sigmoid', () => {
+    const x = mx.array([1.0, 0.0, -1.0]);
+    const y1 = mx.sigmoid(x);
+    const y2 = nn.activations.sigmoid(x);
+    const y3 = (new nn.Sigmoid()).forward(x);
+
+    assertArrayAllTrue(mx.equal(y1, y2));
+    assertArrayAllTrue(mx.equal(y1, y3));
+  });
+
+  it('relu', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    const y = nn.relu(x);
+    assertArrayAllTrue(mx.arrayEqual(y, mx.array([1.0, 0.0, 0.0])));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('leakyRelu', () => {
+    const x = mx.array([1.0, -1.0, 0.0]);
+    let y = nn.leakyRelu(x);
+    assertArrayAllTrue(mx.arrayEqual(y, mx.array([1.0, -0.01, 0.0])));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+
+    y = new nn.LeakyReLU(0.1).forward(x);
+    assertArrayAllTrue(mx.arrayEqual(y, mx.array([1.0, -0.1, 0.0])));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('elu', () => {
+    let x = mx.array([1.0, -1.0, 0.0]);
+    let y = nn.elu(x);
+    const epsilon = 1e-4;
+    let expectedY = mx.array([1.0, -0.6321, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+
+    y = new nn.ELU(1.1).forward(x);
+    expectedY = mx.array([1.0, -0.6953, 0.0]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
 });
