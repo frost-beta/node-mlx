@@ -21,7 +21,7 @@ Silicon, and personally I don't think they ever will considering their team size
 and the API design.
 
 For doing machine learning on GPUs with Node.js, you can go with TensorFlow.js,
-or wait for someone porting PyTorch to Node.js (which should not be hard).
+or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
 ## Usage
 

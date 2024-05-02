@@ -29,10 +29,10 @@ export class Identity extends Module {
  * y = x W^\top + b
  * ```
  *
- * where `W` has shape `[output_dims, input_dims]` and `b` has shape `[output_dims]`.
+ * where `W` has shape `[outputDims, inputDims]` and `b` has shape `[outputDims]`.
  *
  * The values are initialized from the uniform distribution U(-k, k),
- * where k = 1/sqrt(Di) and Di is equal to `input_dims`.
+ * where k = 1/sqrt(Di) and Di is equal to `inputDims`.
  *
  * @param inputDims - The dimensionality of the input features.
  * @param outputDims - The dimensionality of the output features.
@@ -51,7 +51,7 @@ export class Linear extends Module {
   }
 
   override toStringExtra(): string {
-    return `input_dims=${this.weight.shape[1]}, output_dims=${this.weight.shape[0]}, bias=${'bias' in this}`;
+    return `inputDims=${this.weight.shape[1]}, outputDims=${this.weight.shape[0]}, bias=${'bias' in this}`;
   }
 
   override forward(x: mx.array): mx.array {
@@ -73,11 +73,11 @@ export class Linear extends Module {
  * y_i = x_1^\top W_i x_2 + b_i
  * ```
  *
- * where `W` has shape `[output_dims, input1_dims, input2_dims]`, `b` has shape `[output_dims]`,
+ * where `W` has shape `[outputDims, input1Dims, input2Dims]`, `b` has shape `[outputDims]`,
  * and `i` indexes the output dimension.
  *
  * The values are initialized from the uniform distribution U(-k, k),
- * where `k = 1/sqrt(D1)` and `D1` is `input1_dims`.
+ * where `k = 1/sqrt(D1)` and `D1` is `input1Dims`.
  *
  * @param input1Dims - The dimensionality of the input1 features.
  * @param input2Dims - The dimensionality of the input2 features.
@@ -98,7 +98,7 @@ export class Bilinear extends Module {
 
   override toStringExtra(): string {
     const [out, in2, in1] = this.weight.shape;
-    return `input1_dims=${in1}, input2_dims=${in2}, output_dims=${out}, bias=${'bias' in this}`;
+    return `input1Dims=${in1}, input2Dims=${in2}, outputDims=${out}, bias=${'bias' in this}`;
   }
 
   override forward(x1: mx.array, x2: mx.array): mx.array {

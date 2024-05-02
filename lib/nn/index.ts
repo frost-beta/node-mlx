@@ -8,5 +8,6 @@ export * from './layers/linear';
 export * from './layers/normalization';
 export * from './layers/positional-encoding';
 export * from './layers/quantized';
+export * from './layers/upsample';
 export * as init from './init';
 export * as losses from './losses';

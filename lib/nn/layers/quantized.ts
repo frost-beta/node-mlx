@@ -193,8 +193,8 @@ export class QuantizedLinear extends Module {
   override toStringExtra(): string {
     let [outDims, inDims] = this.weight.shape;
     inDims = inDims * 32 / this.bits;
-    return `input_dims=${inDims}, output_dims=${outDims}, bias=${!!this.bias}, `+
-           `group_size=${this.groupSize}, bits=${this.bits}`;
+    return `inputDims=${inDims}, outputDims=${outDims}, bias=${!!this.bias}, `+
+           `groupSize=${this.groupSize}, bits=${this.bits}`;
   }
 
   override forward(x: mx.array): mx.array {

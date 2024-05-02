@@ -48,7 +48,7 @@ export class Conv1d extends Module {
 
   override toStringExtra(): string {
     return `${this.weight.shape[2]}, ${this.weight.shape[0]}, ` +
-           `kernel_size=${this.weight.shape[1]}, stride=${this.stride}, ` +
+           `kernelSize=${this.weight.shape[1]}, stride=${this.stride}, ` +
            `padding=${this.padding}, dilation=${this.dilation}, ` +
            `bias=${!!this.bias}`;
   }
@@ -111,7 +111,7 @@ export class Conv2d extends Module {
 
   override toStringExtra(): string {
     return `${this.weight.shape[3]}, ${this.weight.shape[0]}, ` +
-           `kernel_size=${this.weight.shape.slice(1, 3)}, stride=${this.stride}, ` +
+           `kernelSize=${this.weight.shape.slice(1, 3)}, stride=${this.stride}, ` +
            `padding=${this.padding}, dilation=${this.dilation}, ` +
            `bias=${!!this.bias}`;
   }
