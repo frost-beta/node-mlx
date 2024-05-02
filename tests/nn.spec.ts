@@ -1357,4 +1357,94 @@ describe('layers', () => {
     layer.setDtype(mx.int16, x => mx.issubdtype(x, mx.integer));
     assertDtype(layer, mx.int16);
   });
+
+  it('rnn', () => {
+    let layer = new nn.RNN(5, 12, true);
+    let inp = mx.random.normal([2, 25, 5]);
+
+    let hOut = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+
+    layer = new nn.RNN(5, 12, false, x => mx.maximum(0, x));
+
+    hOut = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+
+    assert.throws(() => new nn.RNN(5, 12, undefined, 'tanh' as any));
+
+    inp = mx.random.normal([44, 5]);
+    hOut = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [44, 12]);
+
+    hOut = layer.forward(inp, hOut.index(-1));
+    assert.deepEqual(hOut.shape, [44, 12]);
+  });
+
+  it('gru', () => {
+    let layer = new nn.GRU(5, 12, true);
+    let inp = mx.random.normal([2, 25, 5]);
+
+    let hOut = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+
+    hOut = layer.forward(inp, hOut.index(mx.Slice(), -1, mx.Slice()));
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+
+    inp = mx.random.normal([44, 5]);
+    hOut = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [44, 12]);
+
+    hOut = layer.forward(inp, hOut.index(-1, mx.Slice()));
+    assert.deepEqual(hOut.shape, [44, 12]);
+  });
+
+  it('lstm', () => {
+    let layer = new nn.LSTM(5, 12);
+    let inp = mx.random.normal([2, 25, 5]);
+
+    let [hOut, cOut] = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+    assert.deepEqual(cOut.shape, [2, 25, 12]);
+
+    [hOut, cOut] = layer.forward(inp,
+                                 hOut.index(mx.Slice(), -1, mx.Slice()),
+                                 cOut.index(mx.Slice(), -1, mx.Slice()));
+    assert.deepEqual(hOut.shape, [2, 25, 12]);
+    assert.deepEqual(cOut.shape, [2, 25, 12]);
+
+    inp = mx.random.normal([44, 5]);
+    [hOut, cOut] = layer.forward(inp);
+    assert.deepEqual(hOut.shape, [44, 12]);
+    assert.deepEqual(cOut.shape, [44, 12]);
+
+    inp = mx.random.normal([44, 5]);
+    [hOut, cOut] = layer.forward(inp,
+                                 hOut.index(-1, mx.Slice()),
+                                 cOut.index(-1, mx.Slice()));
+    assert.deepEqual(hOut.shape, [44, 12]);
+    assert.deepEqual(cOut.shape, [44, 12]);
+  });
+
+  it('quantizedEmbedding', () => {
+    const emb = new nn.Embedding(32, 256);
+    const qemb = nn.QuantizedEmbedding.fromEmbedding(emb, undefined, 8);
+    let x = mx.array([2, 6, 9, 3, 0, 3], mx.int32);
+    let y = emb.forward(x);
+    let yq = qemb.forward(x);
+    assert.isBelow(mx.abs(mx.subtract(y, yq)).max().item() as number,
+                   qemb.scales.max().item() as number);
+
+    x = mx.random.uniform(0, 1, [2, 256]);
+    y = emb.asLinear(x);
+    yq = qemb.asLinear(x);
+
+    const cosine = (a, b) => {
+      const ab = mx.multiply(a, b).sum(-1);
+      const aa = mx.linalg.norm(a, -1);
+      const bb = mx.linalg.norm(b, -1);
+      return mx.divide(mx.divide(ab, aa), bb);
+    };
+
+    assert.isAbove(cosine(y, yq).min().item() as number, 0.99);
+  });
 });
