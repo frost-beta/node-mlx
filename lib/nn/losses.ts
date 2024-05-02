@@ -1,4 +1,5 @@
 import {core as mx} from '../..';
+import {deepEqual} from './layers/pytools';
 
 type Reduction = 'none' | 'mean' | 'sum';
 
@@ -567,8 +568,4 @@ const reduce = (loss: mx.array, reduction: Reduction = 'none'): mx.array => {
   } else {
     throw new Error("Invalid reduction. Must be 'none', 'mean', or 'sum'.");
   }
-};
-
-const deepEqual = (s1: number[], s2: number[]): boolean => {
-  return s1.length === s2.length && s1.every((u, i) => u === s2[i]);
 };

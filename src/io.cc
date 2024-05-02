@@ -9,7 +9,7 @@ std::variant<mx::array,
              mx::GGUFLoad>
 Load(std::string file,
      std::optional<std::string> format,
-     std::optional<bool> return_metadata,
+     std::optional<bool> return_metadata_arg,
      mx::StreamOrDevice s) {
   if (!format) {
     size_t ext = file.find_last_of('.');
@@ -20,6 +20,7 @@ Load(std::string file,
     format = file.substr(ext + 1);
   }
 
+  bool return_metadata = return_metadata_arg.value_or(false);
   if (return_metadata && (*format == "npy" || *format == "npz")) {
     throw std::invalid_argument(
         "[load] metadata not supported for format " + *format);

@@ -12,22 +12,22 @@ import {Module} from './base';
  * * `L` is the sequence length
  * * `D` is the input's feature dimension
  *
- * Concretely, for each element along the sequence length axis, this
- * layer applies the function:
+ * Concretely, for each element along the sequence length axis, this layer
+ * applies the function:
  *
  * ```math
  * h_{t + 1} = \text{tanh} (W_{ih}x_t + W_{hh}h_t + b)
  * ```
  *
- * The hidden state `h` has shape `NH` or `H`, depending on
- * whether the input is batched or not. Returns the hidden state at each
- * time step, of shape `NLH` or `LH`.
+ * The hidden state `h` has shape `NH` or `H`, depending on whether the input is
+ * batched or not. Returns the hidden state at each time step, of shape `NLH` or
+ * `LH`.
  *
  * @param inputDims - Dimension of the input, `D`.
  * @param hiddenDims - Dimension of the hidden state, `H`.
  * @param bias - Whether to use a bias. Default: `true`.
- * @param nonlinearity - Non-linearity to use. If `null`,
- * then func:`tanh` is used. Default: `null`.
+ * @param nonlinearity - Non-linearity to use. If `null`, then func:`tanh` is
+ * used. Default: `null`.
  */
 export class RNN extends Module {
   nonlinearity: (x: mx.array) => mx.array;
@@ -102,9 +102,10 @@ export class RNN extends Module {
  * h_{t + 1} &= (1 - z_t) \odot n_t + z_t \odot h_t
  * \end{aligned}
  * ```
- * The hidden state `h` has shape `NH` or `H` depending on
- * whether the input is batched or not. Returns the hidden state at each
- * time step of shape `NLH` or `LH`.
+ *
+ * The hidden state `h` has shape `NH` or `H` depending on whether the input is
+ * batched or not. Returns the hidden state at each time step of shape `NLH` or
+ * `LH`.
  *
  * @param inputDims - Dimension of the input, `D`.
  * @param hiddenDims - Dimension of the hidden state, `H`.
@@ -202,11 +203,11 @@ export class GRU extends Module {
  * \end{aligned}
  * ```
  *
- * The hidden state `h` and cell state `c` have shape `NH`
- * or `H`, depending on whether the input is batched or not.
+ * The hidden state `h` and cell state `c` have shape `NH` or `H`, depending on
+ * whether the input is batched or not.
  *
- * The layer returns two arrays, the hidden state and the cell state at
- * each time step, both of shape `NLH` or `LH`.
+ * The layer returns two arrays, the hidden state and the cell state at each
+ * time step, both of shape `NLH` or `LH`.
  *
  * @param inputDims - Dimension of the input, `D`.
  * @param hiddenDims - Dimension of the hidden state, `H`.

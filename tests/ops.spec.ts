@@ -1089,7 +1089,6 @@ describe('ops', () => {
       'subtract': 'sub',
       'multiply': 'mul',
       'divide': 'div',
-      'floorDivide': 'floorDiv',
       'maximum': 'maximum',
       'minimum': 'minimum',
       'power': 'pow'

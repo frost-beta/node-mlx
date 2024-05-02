@@ -110,7 +110,8 @@ export class QuantizedEmbedding extends Module {
    *
    * @remarks
    *
-   * Use this for example when input embedding and output projection weights are tied.
+   * Use this for example when input embedding and output projection weights are
+   * tied.
    */
   asLinear(x: mx.array): mx.array {
     return mx.quantizedMatmul(x,
@@ -128,16 +129,17 @@ export class QuantizedEmbedding extends Module {
 }
 
 /**
- * Applies an affine transformation to the input using a quantized weight matrix.
+ * Applies an affine transformation to the input using a quantized weight
+ * matrix.
  *
  * @remarks
  *
  * It is the quantized equivalent of `Linear`. For now its parameters are frozen
- * and will not be included in any gradient computation but this will probably change
- * in the future.
+ * and will not be included in any gradient computation but this will probably
+ * change in the future.
  *
- * `QuantizedLinear` also provides a classmethod `fromLinear` to convert
- * linear layers to `QuantizedLinear` layers.
+ * `QuantizedLinear` also provides a classmethod `fromLinear` to convert linear
+ * layers to `QuantizedLinear` layers.
  */
 export class QuantizedLinear extends Module {
   /**
@@ -165,9 +167,9 @@ export class QuantizedLinear extends Module {
    * @param inDims - The dimensionality of the input features.
    * @param outDims - The dimensionality of the output features.
    * @param bias - If set to `false` then the layer will not use a bias.
-   *   Default: `true`.
+   * Default: `true`.
    * @param groupSize - The group size to use for the quantized weight.
-   *   Default: `64`.
+   * Default: `64`.
    * @param bits - The bit width to use for the quantized weight. Default: `4`.
    */
   constructor(inDims: number, outDims: number, bias = true, groupSize = 64, bits = 4) {

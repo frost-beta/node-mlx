@@ -1,3 +1,7 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
 import {core as mx, nn, utils} from '..';
 import {assertArrayAllTrue} from './utils';
 import {assert} from 'chai';
@@ -85,6 +89,65 @@ describe('base', () => {
     assert.equal(utils.treeFlatten(params).length, 2);
     assertArrayAllTrue(mx.arrayEqual(params['weights']['w1'], mx.zeros([2, 2])));
     assertArrayAllTrue(mx.arrayEqual(params['weights']['w2'], mx.ones([2, 2])));
+  });
+
+  it('saveSafetensorsWeights', () => {
+    const makeModel = () => {
+      return new nn.Sequential(new nn.Linear(2, 2),
+                               new nn.ReLU(),
+                               new nn.Linear(2, 2),
+                               new nn.ReLU());
+    };
+
+    const tdir = fs.mkdtempSync(path.join(os.tmpdir(), 'test-'));
+    const safetensorsFile = path.join(tdir, 'model.safetensors');
+    after(() => fs.rmSync(tdir, { recursive: true }));
+
+    const m = makeModel();
+    const params = Object.fromEntries(utils.treeFlatten(m.parameters())) as Record<string, mx.array>;
+    m.saveWeights(safetensorsFile);
+
+    const mLoad = makeModel();
+    mLoad.loadWeights(safetensorsFile);
+
+    const eqTree = utils.treeMap(mx.arrayEqual, m.parameters(), [ mLoad.parameters() ]);
+    assert.notInclude(utils.treeFlatten(eqTree).map(v => v[1]), false);
+  });
+
+  it('loadFromWeights', () => {
+    const m = new nn.Linear(2, 2);
+
+    // Too few weights
+    let weights: [string, mx.array][] = [['weight', mx.ones([2, 2])]];
+    assert.throws(() => m.loadWeights(weights), Error);
+
+    m.loadWeights(weights, false);
+    assertArrayAllTrue(mx.arrayEqual(m.weight, weights[0][1]));
+
+    // Wrong name
+    assert.throws(() => m.loadWeights([['weihgt', mx.ones([2, 2])]]), Error);
+
+    // Ok
+    m.loadWeights([['weihgt', mx.ones([2, 2])]], false);
+
+    // Too many weights
+    assert.throws(() => m.loadWeights([
+      ['weight', mx.ones([2, 2])],
+      ['bias', mx.ones([2])],
+      ['bias2', mx.ones([2])]
+    ]), Error);
+
+    // Wrong shape
+    assert.throws(() => m.loadWeights([
+      ['weight', mx.ones([2, 2])],
+      ['bias', mx.ones([2, 1])]
+    ]), Error);
+
+    // Wrong type
+    assert.throws(() => m.loadWeights([
+      ['weight', mx.ones([2, 2])],
+      ['bias', 3 as unknown as mx.array],
+    ]), Error);
   });
 
   it('moduleState', () => {

@@ -282,11 +282,9 @@ export namespace core {
   function rightShift(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function round(array: ScalarOrArray, s?: StreamOrDevice): array;
   function rsqrt(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function save(array: ScalarOrArray, filepath: string, s?: StreamOrDevice): void;
-  function savez(dict: { [key: string]: array }, filepath: string, s?: StreamOrDevice): void;
-  function savezCompressed(dict: { [key: string]: array }, filepath: string, s?: StreamOrDevice): void;
-  function saveGguf(array: ScalarOrArray, filepath: string, s?: StreamOrDevice): void;
-  function saveSafetensors(dict: { [key: string]: array }, filepath: string, s?: StreamOrDevice): void;
+  function save(filepath: string, array: array): void;
+  function saveGguf(filepath: string, arrays: Record<string, array>, metadata?: Record<string, string>): void;
+  function saveSafetensors(filepath: string, arrays: Record<string, array>, metadata?: Record<string, string>): void;
   function sigmoid(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sign(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sin(array: ScalarOrArray, s?: StreamOrDevice): array;

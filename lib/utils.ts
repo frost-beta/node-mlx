@@ -181,23 +181,24 @@ export function treeUnflatten(tree: [string, unknown][]): unknown {
   // Walkthrough path and collect children.
   const children: {[key: string]: [string, unknown][]} = {};
   for (let [key, value] of tree) {
-    const [currentIndex, ...nextIndices] = key.split('.');
-    const nextIndex = nextIndices.length === 0 ? '' : nextIndices[0];
-    if (!(currentIndex in children)) {
-      children[currentIndex] = [];
-    }
-    children[currentIndex].push([nextIndex, value]);
+    const [index, ...nextIndices] = key.split('.');
+    const next = nextIndices?.join('.') ?? '';
+    if (!(index in children))
+      children[index] = [];
+    children[index].push([next, value]);
   }
 
   // Recursively map them to the original container.
   if (isList) {
-    const keys = Object.keys(children).sort().map((idx) => parseInt(idx));
-    return keys.map((i: number) => treeUnflatten(children[i]));
+    const keys = Object.keys(children).sort().map((idx) => [ parseInt(idx), idx ]);
+    const newList = [];
+    for (const [i, k] of keys)
+      newList[i] = treeUnflatten(children[k]);
+    return newList;
   } else {
     const newTree = {};
-    for (let k in children) {
+    for (let k in children)
       newTree[k] = treeUnflatten(children[k]);
-    }
     return newTree;
   }
 }

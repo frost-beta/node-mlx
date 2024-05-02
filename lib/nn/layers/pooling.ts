@@ -129,8 +129,8 @@ export class AvgPool1d extends Pool1d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, H, W, C)` and `kernelSize` is `(k_H, k_W)`, the output
- * is a tensor of shape `(N, H_out, W_out, C)`, given by:
+ * Assuming an input of shape `(N, H, W, C)` and `kernelSize` is `(k_H, k_W)`,
+ * the output is a tensor of shape `(N, H_out, W_out, C)`, given by:
  *
  * `out(N_i, h, w, C_j) = max_{m=0,...,k_H-1} max_{n=0,...,k_W-1} input(N_i, stride[0] * h + m, stride[1] * w + n, C_j)`
  *
@@ -138,9 +138,10 @@ export class AvgPool1d extends Pool1d {
  *       `W_out = floor((W + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
  *
  * The parameters `kernelSize`, `stride`, `padding`, can either be:
- *   - a single `number` -- in which case the same value is used for both the height and width axis;
- *   - a `tuple` of two `numbers`s -- in which case, the first `number`
- *   is used for the height axis, the second `number` for the width axis.
+ *   - a single `number` -- in which case the same value is used for both the
+ *     height and width axis;
+ *   - a `tuple` of two `numbers`s -- in which case, the first `number` is used
+ *     for the height axis, the second `number` for the width axis.
  *
  * @param kernelSize - The size of the pooling window.
  * @param stride - The stride of the pooling window. Default: `kernelSize`.
@@ -173,8 +174,8 @@ export class MaxPool2d extends Pool2d {
  *
  * - a single `number` -- in which case the same value is used for both the
  *   height and width axis
- * - a `number[]` of two numbers -- in which case, the first number is
- *   used for the height axis, the second number for the width axis.
+ * - a `number[]` of two numbers -- in which case, the first number is used for
+ *   the height axis, the second number for the width axis.
  *
  * @param kernelSize - The size of the pooling window.
  * @param stride - The stride of the pooling window. Default: `kernelSize`.

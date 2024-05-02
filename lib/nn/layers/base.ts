@@ -1,4 +1,5 @@
 import {core as mx, utils} from '../../..';
+import {deepEqual} from './pytools';
 
 // A nested type that always has T as leaves.
 type Nested<T> = T | Nested<T>[] | {[key: string]: Nested<T>};
@@ -149,6 +150,105 @@ export abstract class Module {
    * all subclasses.
    */
   abstract forward(...inputs: unknown[]): unknown;
+
+  /**
+   * Update the model's weights from a `.npz` or `.safetensors` file, or a list.
+   *
+   * @param fileOrWeights - The path to the weights `.npz` file (`.npz` or `.safetensors`) or a list of
+   * pairs of parameter names and arrays.
+   * @param strict - If `true` then checks that the provided weights exactly match the parameters of the
+   * model. Otherwise, only the weights actually contained in the model are loaded and shapes are not checked.
+   * Default: `true`.
+   *
+   * @returns The module instance after updating the weights.
+   *
+   * @example
+   * ```typescript
+   * import {core as mx, nn} from '@frost-beta/mlx';
+   *
+   * let model = new nn.Linear(10, 10);
+   *
+   * // Load from file
+   * model.loadWeights('weights.npz');
+   *
+   * // Load from .safetensors file
+   * model.loadWeights('weights.safetensors');
+   *
+   * // Load from list
+   * let weights = [
+   *   ['weight', mx.random.uniform(0, 1, [10, 10])],
+   *   ['bias', mx.zeros([10])],
+   * ];
+   * model.loadWeights(weights);
+   *
+   * // Missing weight raise exception
+   * weights = [
+   *   ['weight', mx.random.uniform(0, 1, [10, 10])]
+   * ];
+   * try {
+   *   model.loadWeights(weights);
+   * } catch (e) {
+   *   console.log(e);
+   * }
+   *
+   * // Ok, only updates the weight but not the bias
+   * model.loadWeights(weights, false);
+   * ```
+   */
+  loadWeights(fileOrWeights: string | [string, mx.array][], strict = true): this {
+    let weights = fileOrWeights;
+    if (typeof weights === 'string') {
+      weights = Object.entries(mx.load(weights));
+    }
+
+    if (strict) {
+      const newWeights = Object.fromEntries(weights) as Record<string, mx.array>;
+      const currentWeights = Object.fromEntries(utils.treeFlatten(this.parameters())) as Record<string, mx.array>;
+      const extras = Object.keys(newWeights).filter(key => !(key in currentWeights));
+      if (extras.length > 0) {
+        throw Error(`Received parameters not in model: ${extras.join(' ')}.`);
+      }
+      const missing = Object.keys(currentWeights).filter(key => !(key in newWeights));
+      if (missing.length > 0) {
+        throw Error(`Missing parameters: ${missing.join(' ')}.`);
+      }
+
+      Object.keys(currentWeights).forEach(key => {
+        const vNew = newWeights[key];
+        if (!(vNew instanceof mx.array)) {
+          throw Error(`Expected mx.array but received ${typeof vNew} for parameter ${key}`);
+        }
+        if (!deepEqual(vNew.shape, currentWeights[key].shape)) {
+          throw Error(`Expected shape ${currentWeights[key].shape} but received shape ${vNew.shape} for parameter ${key}`);
+        }
+      });
+    }
+
+    this.update(utils.treeUnflatten(weights) as Record<string, unknown>);
+    return this;
+  }
+
+  /**
+   * Save the model's weights to a file.
+   *
+   * @remarks
+   *
+   * The saving method is determined by the file extension:
+   * - `.npz` will use `mx.savez`
+   * - `.safetensors` will use `mx.saveSafetensors`
+   *
+   * @param filepath - The name of the file to save the weights to.
+   */
+  saveWeights(filepath: string): void {
+    const params = Object.fromEntries(utils.treeFlatten(this.parameters())) as Record<string, mx.array>;
+    if (filepath.endsWith('.npz')) {
+      throw Error('Support for .npz format has not been implemented yet.');
+    } else if (filepath.endsWith('.safetensors')) {
+      mx.saveSafetensors(filepath, params);
+    } else {
+      throw Error("Unsupported file extension. Use '.npz' or '.safetensors'.");
+    }
+  }
 
   /**
    * Recursively filter the contents of the module using `filterFn`, namely only
@@ -546,5 +646,5 @@ function unwrap(model: Module,
     return newValue;
   }
 
-  throw new Error("Unexpected leaf found while traversing the module");
+  throw Error("Unexpected leaf found while traversing the module");
 }
