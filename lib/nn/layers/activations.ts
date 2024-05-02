@@ -1,7 +1,6 @@
 import {core as mx} from '../../..';
 import {Module} from './base';
 
-let compiledSigmoid;
 /**
  * Applies the sigmoid function.
  *
@@ -11,16 +10,8 @@ let compiledSigmoid;
  * \text{Sigmoid}(x) = \sigma(x) = \frac{1}{1 + \exp(-x)}
  * ```
  */
-export function sigmoid(x: mx.array): mx.array {
-  if (!compiledSigmoid) {
-    compiledSigmoid = mx.compile((x: mx.array) => {
-      return mx.sigmoid(x);
-    }, true);
-  }
-  return compiledSigmoid(x);
-}
+export const sigmoid = mx.compile((x: mx.array) => mx.sigmoid(x), true);
 
-let compiledRelu;
 /**
  * Applies the Rectified Linear Unit.
  *
@@ -28,16 +19,8 @@ let compiledRelu;
  *
  * Simply `mx.maximum(x, 0)`.
  */
-export function relu(x: mx.array): mx.array {
-  if (!compiledRelu) {
-    compiledRelu = mx.compile((x: mx.array) => {
-      return mx.maximum(x, 0);
-    }, true);
-  }
-  return compiledRelu(x);
-}
+export const relu = mx.compile((x: mx.array) => mx.maximum(x, 0), true);
 
-let compiledLeakyRelu;
 /**
  * Applies the Leaky Rectified Linear Unit.
  *
@@ -45,16 +28,10 @@ let compiledLeakyRelu;
  *
  * Simply `mx.maximum(negativeSlope * x, x)`.
  */
-export function leakyRelu(x: mx.array, negativeSlope = 0.01): mx.array {
-  if (!compiledLeakyRelu) {
-    compiledLeakyRelu = mx.compile((x: mx.array, negativeSlope: number) => {
-      return mx.maximum(mx.multiply(negativeSlope, x), x);
-    }, true);
-  }
-  return compiledLeakyRelu(x, negativeSlope);
-}
+export const leakyRelu = mx.compile((x: mx.array, negativeSlope = 0.01) => {
+  return mx.maximum(mx.multiply(negativeSlope, x), x)
+}, true);
 
-let compiledLogSoftmax;
 /**
  * Applies the Log Softmax function.
  *
@@ -62,16 +39,10 @@ let compiledLogSoftmax;
  *
  * Applies `x + log(sum(e^x[i]))` element wise.
  */
-export function logSoftmax(x: mx.array, axis = -1): mx.array {
-  if (!compiledLogSoftmax) {
-    compiledLogSoftmax = mx.compile((x: mx.array, axis: number) => {
-      return mx.subtract(x, mx.logsumexp(x, axis, true));
-    }, true);
-  }
-  return compiledLogSoftmax(x, axis);
-}
+export const logSoftmax = mx.compile((x: mx.array, axis = -1) => {
+  return mx.subtract(x, mx.logsumexp(x, axis, true));
+}, true);
 
-let compiledElu;
 /**
  * Applies the Exponential Linear Unit.
  *
@@ -79,19 +50,13 @@ let compiledElu;
  *
  * Simply `mx.where(x > 0, x, alpha * (mx.exp(x) - 1))`.
  */
-export function elu(x: mx.array, alpha = 1.0): mx.array {
-  if (!compiledElu) {
-    compiledElu = mx.compile((x: mx.array, alpha: number) => {
-      return mx.where(mx.greater(x, 0),
-                      x,
-                      mx.multiply(alpha,
-                                  mx.subtract(mx.exp(x), 1)));
-    }, true);
-  }
-  return compiledElu(x, alpha);
-}
+export const elu = mx.compile((x: mx.array, alpha = 1.0) => {
+  return mx.where(mx.greater(x, 0),
+                  x,
+                  mx.multiply(alpha,
+                              mx.subtract(mx.exp(x), 1)));
+}, true);
 
-let compiledRelu6;
 /**
  * Applies the Rectified Linear Unit 6.
  *
@@ -99,16 +64,10 @@ let compiledRelu6;
  *
  * Applies `min(max(x, 0), 6.0)` element wise.
  */
-export function relu6(x: mx.array): mx.array {
-  if (!compiledRelu6) {
-    compiledRelu6 = mx.compile((x: mx.array) => {
-      return mx.minimum(mx.maximum(x, 0), 6.0);
-    }, true);
-  }
-  return compiledRelu6(x);
-}
+export const relu6 = mx.compile((x: mx.array) => {
+  return mx.minimum(mx.maximum(x, 0), 6.0);
+}, true);
 
-let compiledSoftmax;
 /**
  * Applies the Softmax function.
  *
@@ -116,16 +75,10 @@ let compiledSoftmax;
  *
  * Applies `mx.exp(x_i) / mx.sum(mx.exp(x_j))` element wise.
  */
-export function softmax(x: mx.array, axis = -1): mx.array {
-  if (!compiledSoftmax) {
-    compiledSoftmax = mx.compile((x: mx.array, axix: number) => {
-      return mx.softmax(x, axis);
-    }, true);
-  }
-  return compiledSoftmax(x, axis);
-}
+export const softmax = mx.compile((x: mx.array, axis = -1) => {
+  return mx.softmax(x, axis);
+}, true);
 
-let compiledSoftplus;
 /**
  * Applies the Softplus function.
  *
@@ -133,16 +86,10 @@ let compiledSoftplus;
  *
  * Applies `mx.log(1 + mx.exp(x))` element wise.
  */
-export function softplus(x: mx.array): mx.array {
-  if (!compiledSoftplus) {
-    compiledSoftplus = mx.compile((x: mx.array) => {
-      return mx.logaddexp(x, 0);
-    }, true);
-  }
-  return compiledSoftplus(x);
-}
+export const softplus = mx.compile((x: mx.array) => {
+  return mx.logaddexp(x, 0);
+}, true);
 
-let compiledSoftsign;
 /**
  * Applies the Softsign function.
  *
@@ -150,16 +97,10 @@ let compiledSoftsign;
  *
  * Applies `x / (1 + mx.abs(x))` element wise.
  */
-export function softsign(x: mx.array): mx.array {
-  if (!compiledSoftsign) {
-    compiledSoftsign = mx.compile((x: mx.array) => {
-      return mx.divide(x, mx.add(1, mx.abs(x)));
-    }, true);
-  }
-  return compiledSoftsign(x);
-}
+export const softsign = mx.compile((x: mx.array) => {
+  return mx.divide(x, mx.add(1, mx.abs(x)));
+}, true);
 
-let compiledSoftshrink;
 /**
  * Applies the Softshrink activation function.
  *
@@ -173,18 +114,12 @@ let compiledSoftshrink;
  * \end{cases}
  * ```
  */
-export function softshrink(x: mx.array, lambd: number = 0.5): mx.array {
-  if (!compiledSoftshrink) {
-    compiledSoftshrink = mx.compile((x: mx.array, lambd: number) => {
-      return mx.where(mx.greater(mx.abs(x), lambd),
-                      mx.subtract(x, mx.multiply(mx.sign(x), lambd)),
-                      0);
-    }, true);
-  }
-  return compiledSoftshrink(x, lambd);
-}
+export const softshrink = mx.compile((x: mx.array, lambd: number = 0.5) => {
+  return mx.where(mx.greater(mx.abs(x), lambd),
+                  mx.subtract(x, mx.multiply(mx.sign(x), lambd)),
+                  0);
+}, true);
 
-let compiledCelu;
 /**
  * Applies the Continuously Differentiable Exponential Linear Unit.
  *
@@ -192,21 +127,15 @@ let compiledCelu;
  *
  * Applies `max(0, x) + min(0, alpha * (exp(x / alpha) - 1))` element wise.
  */
-export function celu(x: mx.array, alpha = 1.0): mx.array {
-  if (!compiledCelu) {
-    compiledCelu = mx.compile((x: mx.array, alpha: number) => {
-      return mx.add(
-          mx.maximum(x, 0.0),
-          mx.multiply(alpha,
-                      mx.subtract(mx.exp(mx.divide(mx.minimum(x, 0.0),
-                                                   alpha)),
-                                  1)));
-    }, true);
-  }
-  return compiledCelu(x, alpha);
-}
+export const celu = mx.compile((x: mx.array, alpha = 1.0) => {
+  return mx.add(
+      mx.maximum(x, 0.0),
+      mx.multiply(alpha,
+                  mx.subtract(mx.exp(mx.divide(mx.minimum(x, 0.0),
+                                               alpha)),
+                              1)));
+}, true);
 
-let compiledSilu;
 /**
  * Applies the Sigmoid Linear Unit. Also known as Swish.
  *
@@ -215,16 +144,10 @@ let compiledSilu;
  * Applies `x * mx.sigmoid(x)` element wise, where `mx.sigmoid(x)`
  * is the logistic sigmoid.
  */
-export function silu(x: mx.array): mx.array {
-  if (!compiledSilu) {
-    compiledSilu = mx.compile((x: mx.array) => {
-      return mx.multiply(x, mx.sigmoid(x));
-    }, true);
-  }
-  return compiledSilu(x);
-}
+export const silu = mx.compile((x: mx.array) => {
+  return mx.multiply(x, mx.sigmoid(x));
+}, true);
 
-let compiledLogSigmoid;
 /**
  * Applies the Log Sigmoid function.
  *
@@ -232,16 +155,10 @@ let compiledLogSigmoid;
  *
  * Applies `log(sigma(x)) = -log(1 + e^{-x})` element wise.
  */
-export function logSigmoid(x: mx.array): mx.array {
-  if (!compiledLogSigmoid) {
-    compiledLogSigmoid = mx.compile((x: mx.array) => {
-      return mx.negative(softplus(mx.negative(x)));
-    }, true);
-  }
-  return compiledLogSigmoid(x);
-}
+export const logSigmoid = mx.compile((x: mx.array) => {
+  return mx.negative(softplus(mx.negative(x)));
+}, true);
 
-let compiledGelu;
 /**
  * Applies the Gaussian Error Linear Units function.
  *
@@ -255,19 +172,13 @@ let compiledGelu;
  *
  * where `phi(x)` is the Gaussian CDF.
  */
-export function gelu(x: mx.array): mx.array {
-  if (!compiledGelu) {
-    compiledGelu = mx.compile((x: mx.array) => {
-      return mx.divide(mx.multiply(x,
-                                   mx.add(1,
-                                          mx.erf(mx.divide(x, Math.sqrt(2))))),
-                       2);
-    }, true);
-  }
-  return compiledGelu(x);
-}
+export const gelu = mx.compile((x: mx.array) => {
+  return mx.divide(mx.multiply(x,
+                               mx.add(1,
+                                      mx.erf(mx.divide(x, Math.sqrt(2))))),
+                   2);
+}, true);
 
-let compiledGeluApprox;
 /**
  * An approximation to Gaussian Error Linear Unit.
  *
@@ -280,25 +191,19 @@ let compiledGeluApprox;
  * x = 0.5 * x * \left(1 + \text{Tanh}\left((\sqrt{2 / \pi} * \left(x + 0.044715 * x^3\right)\right)\right)
  * ```
  */
-export function geluApprox(x: mx.array): mx.array {
-  if (!compiledGeluApprox) {
-    compiledGeluApprox = mx.compile((x: mx.array) => {
-      return mx.multiply(
-          0.5,
-          mx.multiply(
-              x,
-              mx.add(
-                1,
-                mx.tanh(mx.multiply(
-                          Math.sqrt(2 / Math.PI),
-                          mx.add(x, mx.multiply(0.044715,
-                                                mx.power(x, 3))))))));
-    }, true);
-  }
-  return compiledGeluApprox(x);
-}
+export const geluApprox = mx.compile((x: mx.array) => {
+  return mx.multiply(
+      0.5,
+      mx.multiply(
+          x,
+          mx.add(
+             1,
+             mx.tanh(
+                mx.multiply(
+                   Math.sqrt(2 / Math.PI),
+                   mx.add(x, mx.multiply(0.044715, mx.power(x, 3))))))));
+}, true);
 
-let compiledGeluFastApprox;
 /**
  * A fast approximation to Gaussian Error Linear Unit.
  *
@@ -317,14 +222,9 @@ let compiledGeluFastApprox;
  * - https://github.com/hendrycks/GELUs
  * - https://arxiv.org/abs/1606.08415
  */
-export function geluFastApprox(x: mx.array): mx.array {
-  if (!compiledGeluFastApprox) {
-    compiledGeluFastApprox = mx.compile((x: mx.array) => {
-      return mx.multiply(x, mx.sigmoid(mx.multiply(1.702, x)));
-    }, true);
-  }
-  return compiledGeluFastApprox(x);
-}
+export const geluFastApprox = mx.compile((x: mx.array) => {
+  return mx.multiply(x, mx.sigmoid(mx.multiply(1.702, x)));
+}, true);
 
 /**
  * Applies the gated linear unit function.
@@ -341,7 +241,6 @@ export function glu(x: mx.array, axis: number = -1): mx.array {
   return mx.multiply(a, mx.sigmoid(b));
 }
 
-let compiledStep;
 /**
  * Applies the Step Activation Function.
  *
@@ -358,16 +257,10 @@ let compiledStep;
  *
  * @param threshold - The value to threshold at.
  */
-export function step(x: mx.array, threshold = 0.0): mx.array {
-  if (!compiledStep) {
-    compiledStep = mx.compile((x: mx.array, threshold: number) => {
-      return mx.where(mx.greater(x, threshold), 1, 0);
-    }, true);
-  }
-  return compiledStep(x, threshold);
-}
+export const step = mx.compile((x: mx.array, threshold = 0.0) => {
+  return mx.where(mx.greater(x, threshold), 1, 0);
+}, true);
 
-let compiledSELU;
 /**
  * Applies the Scaled Exponential Linear Unit.
  *
@@ -382,16 +275,10 @@ let compiledSELU;
  *
  * where `lambda = 1.0507` and `alpha = 1.67326`.
  */
-export function selu(x: mx.array): mx.array {
-  if (!compiledSELU) {
-    compiledSELU = mx.compile((x: mx.array) => {
-      return mx.multiply(elu(x, 1.67326), 1.0507);
-    }, true);
-  }
-  return compiledSELU(x);
-}
+export const selu = mx.compile((x: mx.array) => {
+  return mx.multiply(elu(x, 1.67326), 1.0507);
+}, true);
 
-let compiledPrelu;
 /**
  * Applies the element-wise parametric ReLU.
  *
@@ -403,16 +290,10 @@ let compiledPrelu;
  *
  * where `a` is an array.
  */
-export function prelu(x: mx.array, alpha: mx.array) {
-  if (!compiledPrelu) {
-    compiledPrelu = mx.compile((x: mx.array, alpha: mx.array) => {
-      return mx.add(mx.maximum(0, x), mx.multiply(alpha, mx.minimum(0, x)));
-    }, true);
-  }
-  return compiledPrelu(x, alpha);
-}
+export const prelu = mx.compile((x: mx.array, alpha: mx.array) => {
+  return mx.add(mx.maximum(0, x), mx.multiply(alpha, mx.minimum(0, x)));
+}, true);
 
-let compiledMish;
 /**
  * Applies the Mish function, element-wise.
  *
@@ -426,16 +307,10 @@ let compiledMish;
  * \text{Mish}(x) = x * \text{Tanh}(\text{Softplus}(x))
  * ```
  */
-export function mish(x: mx.array): mx.array {
-  if (!compiledMish) {
-    compiledMish = mx.compile((x: mx.array) => {
-      return mx.multiply(x, mx.tanh(softplus(x)));
-    }, true);
-  }
-  return compiledMish(x);
-}
+export const mish = mx.compile((x: mx.array) => {
+  return mx.multiply(x, mx.tanh(softplus(x)));
+}, true);
 
-let compiledHardswish;
 /**
  * Applies the hardswish function, element-wise.
  *
@@ -445,15 +320,10 @@ let compiledHardswish;
  * \text{Hardswish}(x) = x * \min(\max(x + 3, 0), 6) / 6
  * ```
  */
-export function hardswish(x: mx.array): mx.array {
-  if (!compiledHardswish) {
-    compiledHardswish = mx.compile((x: mx.array) => {
-      const max_x_3 = mx.maximum(mx.add(x, 3), 0);
-      return mx.divide(mx.multiply(x, mx.minimum(max_x_3, 6)), 6);
-    }, true);
-  }
-  return compiledHardswish(x);
-}
+export const hardswish = mx.compile((x: mx.array) => {
+  const max_x_3 = mx.maximum(mx.add(x, 3), 0);
+  return mx.divide(mx.multiply(x, mx.minimum(max_x_3, 6)), 6);
+}, true);
 
 /**
  * Applies the hyperbolic tangent function.
