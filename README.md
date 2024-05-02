@@ -67,8 +67,9 @@ There are a few exceptions due to limitations of JavaScript:
 
 Some features are not supported yet and will be implemented in future:
 
-* The function passed to `mx.vmap`/`mx.compile` must have all its parameters
-  taking `mx.array`.
+* The function passed to `mx.vmap` must have all parameters being `mx.array`.
+* The captured `inputs`/`outputs` parameters of `mx.compile` has not been
+  implemented.
 * When creating a `mx.array` from JavaScript Array, the Array must only include
   primitive values.
 * The APIs only accept plain parameters, e.g. `mx.uniform(0, 1, [2, 2])`. Named

@@ -149,7 +149,7 @@ describe('fast', () => {
 
     const gf = f => {
       return (x, w, y) => {
-        const [gx, gw] = mx.grad(f, [0, 1])(x, w, y);
+        const [gx, gw] = mx.grad(f, [0, 1])(x, w, y) as any;
         return mx.sum(mx.add(gx, gw));
       };
     };
@@ -307,7 +307,7 @@ describe('fast', () => {
     assert.isBelow((mx.subtract(gb1, gb2).abs().max().item() as number) / (gb1.abs().mean().item() as number), 1e-5);
 
     const gf = f => (x, w, b, y) => {
-      const [gx, gw, gb] = mx.grad(f, [0, 1, 2])(x, w, b, y);
+      const [gx, gw, gb] = mx.grad(f, [0, 1, 2])(x, w, b, y) as any;
       return mx.multiply(mx.add(gx, mx.add(gw, gb)), y).sum();
     };
 

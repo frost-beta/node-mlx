@@ -42,31 +42,40 @@ describe('compile', function() {
   });
 
   it('compileGrad', () => {
-    const lossFn = x => mx.exp(x).sum();
+    const lossFn = (x) => {
+      return mx.exp(x).sum();
+    }
+
     const gradFn = mx.grad(lossFn);
 
     let x = mx.array([0.5, -0.5, 1.2]);
     let dfdx = gradFn(x);
     let compileGradFn = mx.compile(gradFn);
-    let cDfdx = compileGradFn(x);
+    let cDfdx = gradFn(x);
 
     assertArrayAllTrue(mx.allclose(cDfdx, dfdx));
 
+    // Run it again without calling compile
     cDfdx = compileGradFn(x);
     assertArrayAllTrue(mx.allclose(cDfdx, dfdx));
 
+    // Run it again with calling compile
     cDfdx = mx.compile(gradFn)(x);
     assertArrayAllTrue(mx.allclose(cDfdx, dfdx));
 
-    let loss, cLoss;
-    const valAndGradFn = mx.valueAndGrad(lossFn);
-    [loss, dfdx] = valAndGradFn(x);
-    [cLoss, cDfdx] = mx.compile(valAndGradFn)(x);
+    // Value and grad
+    const lossFnValGrad = (x) => {
+      return [mx.exp(x).sum(), mx.sin(x)];
+    }
 
-    assertArrayAllTrue(mx.allclose(cDfdx, dfdx));
-    assertArrayAllTrue(mx.equal(cLoss, loss));
+    const valAndGradFn = mx.valueAndGrad(lossFnValGrad);
+    const [[loss, val], dfdx2] = valAndGradFn(x);
+    const [[cLoss, cVal], cDfdx2] = mx.compile(valAndGradFn)(x);
+
+    assertArrayAllTrue(mx.allclose(cDfdx2, dfdx2));
+    assertArrayAllTrue(mx.allclose(cLoss, loss));
+    assertArrayAllTrue(mx.allclose(cVal, val));
   });
-
 
   it('compileInputsWithPrimitives', () => {
     let x = mx.array([1, 2, 3]);
@@ -278,7 +287,7 @@ describe('compile', function() {
   });
 
   // TODO(zcbenz): Add test_compile_capture/test_compile_rng after implementing
-  // tree flatten.
+  // capturing.
 
   it('shapelessCompile', () => {
     let y = 1;
@@ -314,9 +323,7 @@ describe('compile', function() {
     assertArrayAllTrue(mx.arrayEqual(cfun(y, x), fun(y, x)));
   });
 
-  it('shapelessCompileWithReduction', function() {
-    this.timeout(10 * 1000);  // slow in QEMU
-
+  it('shapelessCompileWithReduction', () => {
     let z = 1;
     const fun = mx.compile((x: mx.array, y: mx.array) => {
       return mx.add(mx.add(x, y.sum(0, true)), z);
@@ -342,8 +349,128 @@ describe('compile', function() {
     assertArrayAllTrue(mx.arrayEqual(fun1(x2), cfun(x2)));
   });
 
-  // TODO(zcbenz): Add test_compile_with_constant after implementing tree
-  // flatten.
+  describe('compileWithConstant', () => {
+    it('float', () => {
+      const fun = (x, y) => {
+        return mx.add(x, y);
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1.0), 1.0);
+      assert.equal(z.item(), 2.0);
+
+      z = compiledFun(mx.array(1.0), 2.0);
+      assert.equal(z.item(), 3.0);
+
+      z = compiledFun(mx.array(1.0), 1.0);
+      assert.equal(z.item(), 2.0);
+
+      z = compiledFun(mx.array(1.0), 3.0);
+      assert.equal(z.item(), 4.0);
+    });
+
+    it('tuple', () => {
+      const fun = (x, y = [1, 2]) => {
+        return mx.add(mx.add(x, y[0]), y[1]);
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1));
+      assert.equal(z.item(), 4);
+
+      z = compiledFun(mx.array(1), [2, 2]);
+      assert.equal(z.item(), 5);
+
+      z = compiledFun(mx.array(1), [2, 1]);
+      assert.equal(z.item(), 4);
+    });
+
+    it('bool', () => {
+      const fun = (x, y) => {
+        if (y) {
+          return mx.add(x, 1);
+        } else {
+          return mx.add(x, 2);
+        }
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1), true);
+      assert.equal(z.item(), 2);
+
+      z = compiledFun(mx.array(1), false);
+      assert.equal(z.item(), 3);
+    });
+
+    it('string', () => {
+      const fun = (x, y) => {
+        if (y === 'one') {
+          return mx.add(x, 1);
+        } else {
+          return mx.add(x, 2);
+        }
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1), 'one');
+      assert.equal(z.item(), 2);
+
+      z = compiledFun(mx.array(1), 'two');
+      assert.equal(z.item(), 3);
+    });
+
+    it('nested', () => {
+      const fun = (x, y) => {
+        if (y[0][0] === 1) {
+          return mx.add(x, 1);
+        } else {
+          return mx.add(x, 2);
+        }
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1), [[1]]);
+      assert.equal(z.item(), 2);
+
+      z = compiledFun(mx.array(1), [[0]]);
+      assert.equal(z.item(), 3);
+    });
+
+    it('loop', () => {
+      const fun = (x, a, b) => {
+        for (const ai of a) {
+          for (const bi of b) {
+            x = mx.add(mx.multiply(bi, x), ai);
+          }
+        }
+        return x;
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1), [1, 1], [2]);
+      assert.equal(z.item(), 7);
+
+      z = compiledFun(mx.array(1), [1], [1, 2]);
+      assert.equal(z.item(), 5);
+    });
+
+    it('counter', () => {
+      let counter = 0;
+      const fun = (x, y) => {
+        counter += 1;
+        return mx.add(x, y);
+      }
+
+      const compiledFun = mx.compile(fun);
+      let z = compiledFun(mx.array(1), 1);
+      assert.equal(z.item(), 2);
+
+      z = compiledFun(1, mx.array(1));
+      assert.equal(z.item(), 2);
+
+      assert.equal(counter, 2);
+    });
+  });
 
   it('compileInf', () => {
     const fun = mx.compile((x: mx.array) => mx.isinf(mx.add(x, 2)));
@@ -360,9 +487,7 @@ describe('compile', function() {
     mx.eval(...out);
   });
 
-  it('compileVjp', function() {
-    this.timeout(10 * 1000);
-
+  it('compileVjp', () => {
     const fun = w => {
       let w1 = mx.add(w, w);
       let w2 = mx.add(w, w);
@@ -447,6 +572,19 @@ describe('compile', function() {
     assert.equal(out.item(), 10.0);
   });
 
-  // TODO(zcbenz): Add test_compile_multi_output after implementing tree
-  // flatten.
+  it('compileMultiOutput', () => {
+    const fn = (x: mx.array): [mx.array[], mx.array] => {
+      let ys = [ x ];
+      for (let i = 0; i < 5; i++) {
+        ys.push(mx.add(ys[ys.length - 1], x));
+      }
+      return [ ys, mx.sum(ys[ys.length - 1]) ];
+    }
+
+    const x = mx.ones(1, mx.int32);
+    const y1 = mx.compile(fn)(x)[1];
+    const y2 = fn(x)[1];
+    assert.equal(y1.item(), y2.item());
+    assert.equal(y1.item(), 6);
+  });
 });

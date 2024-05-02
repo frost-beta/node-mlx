@@ -47,7 +47,7 @@ let compiledLeakyRelu;
  */
 export function leakyRelu(x: mx.array, negativeSlope = 0.01): mx.array {
   if (!compiledLeakyRelu) {
-    compiledLeakyRelu = mx.compile((x: mx.array, negativeSlope: boolean) => {
+    compiledLeakyRelu = mx.compile((x: mx.array, negativeSlope: number) => {
       return mx.maximum(mx.multiply(negativeSlope, x), x);
     }, true);
   }
@@ -64,9 +64,7 @@ let compiledLogSoftmax;
  */
 export function logSoftmax(x: mx.array, axis = -1): mx.array {
   if (!compiledLogSoftmax) {
-    // FIXME(zcbenz): axis is now being passed via closure, we should pass it by
-    // parameter once tree flatten is implemented in mx.compile.
-    compiledLogSoftmax = mx.compile((x: mx.array) => {
+    compiledLogSoftmax = mx.compile((x: mx.array, axis: number) => {
       return mx.subtract(x, mx.logsumexp(x, axis, true));
     }, true);
   }
@@ -84,7 +82,10 @@ let compiledElu;
 export function elu(x: mx.array, alpha = 1.0): mx.array {
   if (!compiledElu) {
     compiledElu = mx.compile((x: mx.array, alpha: number) => {
-      return mx.where(mx.greater(x, 0), x, mx.multiply(alpha, mx.subtract(mx.exp(x), 1)));
+      return mx.where(mx.greater(x, 0),
+                      x,
+                      mx.multiply(alpha,
+                                  mx.subtract(mx.exp(x), 1)));
     }, true);
   }
   return compiledElu(x, alpha);
@@ -117,9 +118,7 @@ let compiledSoftmax;
  */
 export function softmax(x: mx.array, axis = -1): mx.array {
   if (!compiledSoftmax) {
-    // FIXME(zcbenz): axis is now being passed via closure, we should pass it by
-    // parameter once tree flatten is implemented in mx.compile.
-    compiledSoftmax = mx.compile((x: mx.array) => {
+    compiledSoftmax = mx.compile((x: mx.array, axix: number) => {
       return mx.softmax(x, axis);
     }, true);
   }

@@ -326,32 +326,10 @@ export namespace core {
   function asyncEval(...args: unknown[]): void;
   function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
   function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
-  // The transform APIs take functions with arbitrary args and results.
-  type LossFunctionScalar = (...args: unknown[]) => unknown;
-  type LossFunctionGeneric = (...args: unknown[]) => unknown[];
-  type ValueAndGradFunctionScalar = (...args: unknown[]) => [unknown, unknown];
-  type ValueAndGradFunctionGeneric = (...args: unknown[]) => [unknown[], unknown[]];
-  // To ease the use of APIs, provide explicit array versions.
-  type LossFunctionSimpleScalar = (...args: unknown[]) => array;
-  type LossFunctionSimpleGeneric = (...args: unknown[]) => array[];
-  type ValueAndGradFunctionSimpleScalar = (...args: unknown[]) => [array, array];
-  type ValueAndGradFunctionSimpleGeneric = (...args: unknown[]) => [array[], array[]];
-  function valueAndGrad(func: LossFunctionSimpleScalar, argnums?: number | number[]): ValueAndGradFunctionSimpleScalar;
-  function valueAndGrad(func: LossFunctionSimpleGeneric, argnums?: number | number[]): ValueAndGradFunctionSimpleGeneric;
-  function valueAndGrad(func: LossFunctionScalar, argnums?: number | number[]): ValueAndGradFunctionScalar;
-  function valueAndGrad(func: LossFunctionGeneric, argnums?: number | number[]): ValueAndGradFunctionGeneric;
-  function grad(func: LossFunctionSimpleScalar, argnums?: number | number[]): LossFunctionSimpleScalar;
-  function grad(func: LossFunctionSimpleGeneric, argnums?: number | number[]): LossFunctionSimpleGeneric;
-  function grad(func: LossFunctionScalar, argnums?: number | number[]): LossFunctionScalar;
-  function grad(func: LossFunctionGeneric, argnums?: number | number[]): LossFunctionGeneric;
-  function vmap(func: LossFunctionSimpleScalar, inAxes?: number | number[], outAxis?: number): LossFunctionSimpleScalar;
-  function vmap(func: LossFunctionSimpleGeneric, inAxes?: number | number[], outAxes?: number[]): LossFunctionSimpleGeneric;
-  function vmap(func: LossFunctionScalar, inAxes?: number | number[], outAxis?: number): LossFunctionScalar;
-  function vmap(func: LossFunctionGeneric, inAxes?: number | number[], outAxes?: number[]): LossFunctionGeneric;
-  function compile(func: LossFunctionSimpleScalar, shapeless?: boolean): LossFunctionSimpleScalar;
-  function compile(func: LossFunctionSimpleGeneric, shapeless?: boolean): LossFunctionSimpleGeneric;
-  function compile(func: LossFunctionScalar, shapeless?: boolean): LossFunctionScalar;
-  function compile(func: LossFunctionGeneric, shapeless?: boolean): LossFunctionGeneric;
+  function valueAndGrad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => U;
+  function grad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => U;
+  function vmap<T extends any[], U>(func: (...args: T) => U, inAxes?: number | number[], outAxes?: number | number[]): (...args: T) => U;
+  function compile<T extends any[], U>(func: (...args: T) => U, shapeless?: boolean): (...args: T) => U;
   function disableCompile(): void;
   function enableCompile(): void;
 

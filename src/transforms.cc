@@ -7,6 +7,18 @@
 
 namespace {
 
+// Use large prime numbers to represent non-constant JS elements. The numbers
+constexpr uint64_t kArrayIdentifier = 18446744073709551557UL;
+constexpr uint64_t kListIdentifier = 18446744073709551533UL;
+constexpr uint64_t kDictIdentifier = 18446744073709551521UL;
+constexpr uint64_t kArgIdentifier = 18446744073709551437UL;
+
+// Used by compiled function to transfer JS results to callers.
+auto& CompiledFunctionRelay() {
+  static std::map<void*, ki::Persistent> relay;
+  return relay;
+}
+
 // Unflatten the function call result.
 inline napi_value UnflattenResults(napi_env env,
                                    const std::vector<mx::array>& results) {
@@ -39,6 +51,15 @@ std::vector<mx::array> ExecuteWithPrimals(
     return std::move(*v);
   ki::ThrowError(env, "function does not return mx.array or Array of mx.array");
   return {};
+}
+
+// Converts a string to a uint64_t, does not need to be reliable.
+uint64_t StrToConstant(std::string_view str) {
+  uint64_t r = 1;
+  size_t length = std::min<size_t>(20, str.size());
+  for (size_t i = 0; i < length; ++i)
+    r *= str[i];
+  return r;
 }
 
 // A template converter for ops that accept infinite |array|s.
@@ -75,10 +96,6 @@ JVPOpWrapper(
   };
 }
 
-}  // namespace
-
-namespace transforms_ops {
-
 std::function<std::pair<napi_value, napi_value>(ki::Arguments)>
 ValueAndGradImpl(const char* error_tag,
                  bool scalar_func_only,
@@ -95,6 +112,9 @@ ValueAndGradImpl(const char* error_tag,
       return nullptr;
     }
   }
+  // Return a wrapper that does value_and_grad lazily instead of calling the
+  // function directly. This simplifies the implementation, and is fine since
+  // the result is usually called immediately and only once.
   return [error_tag,
           scalar_func_only,
           js_func = std::move(js_func),
@@ -218,6 +238,10 @@ ValueAndGradImpl(const char* error_tag,
   };
 }
 
+}  // namespace
+
+namespace transforms_ops {
+
 auto ValueAndGrad(ki::Persistent js_func,
                   std::optional<std::variant<int, std::vector<int>>> argnums) {
   return ValueAndGradImpl("[value_and_grad]", false, std::move(js_func),
@@ -235,12 +259,9 @@ Grad(ki::Persistent js_func,
 }
 
 std::function<napi_value(ki::Arguments*)>
-VMap(napi_env env,
-     napi_value value,
+VMap(ki::Persistent js_func,
      std::optional<std::variant<int, std::vector<int>>> in_axes,
      std::optional<std::variant<int, std::vector<int>>> out_axes) {
-  // Reference the JS function as napi_value only lives at current tick.
-  ki::Persistent js_func(env, value);
   // Call vmap with the JS function.
   auto func = mx::vmap(
       [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
@@ -249,40 +270,134 @@ VMap(napi_env env,
       ToIntVector(std::move(in_axes.value_or(std::vector<int>()))),
       ToIntVector(std::move(out_axes.value_or(std::vector<int>()))));
   // Return a JS function that converts JS args into primals.
-  return [env, func = std::move(func)](ki::Arguments* args) -> napi_value {
+  return [func = std::move(func)](ki::Arguments* args) -> napi_value {
     std::vector<mx::array> arrays;
     if (!ReadArgs(args, &arrays))
       return nullptr;
     auto results = func(std::move(arrays));
-    if (ki::IsExceptionPending(env))
+    if (ki::IsExceptionPending(args->Env()))
       return nullptr;
-    return UnflattenResults(env, results);
+    return UnflattenResults(args->Env(), results);
   };
 }
 
-std::function<napi_value(ki::Arguments*)>
-Compile(napi_env env,
-        napi_value value,
-        std::optional<bool> shapeless) {
-  // Reference the JS function as napi_value only lives at current tick.
-  ki::Persistent js_func(env, value);
-  std::uintptr_t func_id = reinterpret_cast<std::uintptr_t>(js_func.Id());
-  // Call compile with the JS function.
-  auto func = mx::detail::compile(
-      [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
-        return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals);
-      },
-      func_id,
-      shapeless.value_or(false));
-  // Return a JS function that converts JS args into primals.
-  return [env, func = std::move(func)](ki::Arguments* args) -> napi_value {
-    std::vector<mx::array> arrays;
-    if (!ReadArgs(args, &arrays))
+std::function<napi_value(ki::Arguments)>
+Compile(ki::Persistent js_func, std::optional<bool> shapeless) {
+  // The |erase_compilation_cache| will be called when |freer| is destroyed, and
+  // the |freer|'s lifetime is managed by the returned compiled function.
+  // i.e. The compilation cache will be freed when compiled function is garbage
+  // collected in JS.
+  auto erase_compilation_cache = [](void* func_id) {
+    CompiledFunctionRelay().erase(func_id);
+    mx::detail::compile_erase(reinterpret_cast<std::uintptr_t>(func_id));
+  };
+  std::shared_ptr<void> freer(js_func.Id(), erase_compilation_cache);
+  // Return a wrapper that calls mx::compile lazily instead of calling the
+  // function directly, because the native compiled function "freezes" all the
+  // non-array args and for the JS function that takes arbitrary args to work
+  // we have to re-compile the function for each call that passes different set
+  // of constants.
+  return [js_func = std::move(js_func),
+          freer = std::move(freer),
+          shapeless](ki::Arguments args)
+        -> napi_value {
+    // Iterate the args to record its tree structure, will be used as part of
+    // the keys for deciding whether to re-compile the function.
+    std::vector<mx::array> inputs;
+    std::vector<uint64_t> records;
+    ListVisitCallback recurse;
+    recurse = [&recurse, &records, &inputs](napi_env env,
+                                            napi_value value,
+                                            bool is_leaf) {
+      napi_valuetype type = napi_undefined;
+      napi_typeof(env, value, &type);
+      if (is_leaf) {
+        if (auto a = ki::FromNodeTo<mx::array*>(env, value); a) {
+          records.push_back(kArrayIdentifier);
+          inputs.push_back(*a.value());
+        } else if (type == napi_boolean) {
+          records.push_back(*ki::FromNodeTo<bool>(env, value) ? 1 : 0);
+        } else if (type == napi_number) {
+          // Re-represent the number with uint64_t. Do not use static_cast as
+          // float numbers like 0.1/0.01 will all become 0.
+          double f = *ki::FromNodeTo<double>(env, value);
+          records.push_back(*reinterpret_cast<uint64_t*>(&f));
+        } else if (type == napi_string) {
+          records.push_back(
+              StrToConstant(*ki::FromNodeTo<std::string>(env, value)));
+        } else {
+          throw new std::invalid_argument(
+              "[compile] Function arguments must be recordss of arrays or "
+              "constants (booleans, numbers, or strings).");
+        }
+      } else {
+        if (ki::IsArray(env, value))
+          records.push_back(kListIdentifier);
+        else if (type == napi_object)
+          records.push_back(kDictIdentifier);
+        ListVisit(env, value, recurse);
+      }
       return nullptr;
-    auto results = func(std::move(arrays));
-    if (ki::IsExceptionPending(env))
+    };
+    for (size_t i = 0; i < args.Length(); ++i) {
+      records.push_back(kArgIdentifier);
+      ListVisit(args.Env(), args[i], recurse);
+    }
+
+    // Call compile with the JS function.
+    auto func = mx::detail::compile(
+        // Note that this function is only called when there is cache-miss.
+        [&js_func, &args, &inputs](const std::vector<mx::array>& primals) {
+          // Read the args into |js_args| vector, and replace the arrays in it
+          // with the traced |primals|.
+          std::vector<napi_value> js_args;
+          size_t index = 0;
+          for (size_t i = 0; i < args.Length(); ++i) {
+            js_args.push_back(
+                TreeUnflatten(args.Env(), args[i], primals, index, &index));
+          }
+          // Call the JS function with |js_args|.
+          napi_value func = js_func.Value();
+          napi_value result;
+          if (napi_make_callback(args.Env(), nullptr, func, func,
+                                 js_args.size(),
+                                 js_args.empty() ? nullptr : &js_args.front(),
+                                 &result) != napi_ok) {
+            return std::vector<mx::array>();
+          }
+          // As this function is not called after it is compiled, we can not
+          // transfer the JS result to caller. Instead we are saving the result
+          // of first call when it was being compiled, and reuse the object as
+          // result for following calls by replacing the array elements with
+          // the ones from new results.
+          if (!ki::FromNodeTo<mx::array*>(args.Env(), result)) {
+            CompiledFunctionRelay().emplace(js_func.Id(),
+                                            ki::Persistent(args.Env(), result));
+          }
+          // Return flattened results which will be traced.
+          return TreeFlattenWithPlaceholder(args.Env(), result);
+        },
+        reinterpret_cast<std::uintptr_t>(js_func.Id()),
+        shapeless.value_or(false),
+        std::move(records));
+    // Call the compiled function.
+    std::vector<mx::array> outputs = func(inputs);
+    if (ki::IsExceptionPending(args.Env()))
       return nullptr;
-    return UnflattenResults(env, results);
+    // Get the cached result of compiled function.
+    auto it = CompiledFunctionRelay().find(js_func.Id());
+    if (it == CompiledFunctionRelay().end()) {
+      // Not result means the function returns a single array.
+      if (outputs.size() != 1) {
+        ki::ThrowError(args.Env(), "The compiled function is not supposed to "
+                                   "return anything other than a mx.array.");
+        return nullptr;
+      }
+      return ki::ToNodeValue(args.Env(), std::move(outputs.front()));
+    }
+    // Unflatten the resutls.
+    napi_value result = it->second.Value();
+    return TreeUnflattenFromPlaceholder(args.Env(), result, outputs);
   };
 }
 

@@ -117,18 +117,18 @@ describe('autograd', () => {
     assert.equal(value.item(), 1.0);
     assert.equal(dfdx.item(), 0.5);
 
-    fun = p => mx.multiply(p['x'], p['y']);
-    [value, dfdx] = mx.valueAndGrad(fun)({ 'x': mx.array(0.5), 'y': mx.array(2.0) });
+    let fun2 = p => mx.multiply(p['x'], p['y']);
+    [value, dfdx] = mx.valueAndGrad(fun2)({x: mx.array(0.5), y: mx.array(2.0)});
     assert.equal(value.item(), 1.0);
     assert.equal(dfdx['x'].item(), 2.0);
     assert.equal(dfdx['y'].item(), 0.5);
 
-    fun = p => mx.multiply(p['x'], p['y']);
+    fun2 = p => mx.multiply(p['x'], p['y']);
     assert.throws(() => {
-      mx.valueAndGrad(fun)({x: 'string', y: mx.array(2.0)});
+      mx.valueAndGrad(fun2)({x: 'string', y: mx.array(2.0)});
     }, Error);
     assert.throws(() => {
-      mx.valueAndGrad(fun, [0, 1])({x: mx.array(0.5), y: mx.array(2.0)});
+      mx.valueAndGrad(fun2, [0, 1])({x: mx.array(0.5), y: mx.array(2.0)});
     }, Error);
 
     fun = (p, b) => mx.multiply(mx.square(p[0]['foo'][2]), b);
@@ -175,7 +175,7 @@ describe('autograd', () => {
     const dfdx = mx.grad(f);
     assert.equal(dfdx(a).item(), 1.0);
 
-    const dgdx = mx.grad(g);
+    const dgdx = mx.grad(g) as (x: mx.array) => mx.array;
     assert.equal(dgdx(a).item(), 0.0);
 
     const dhdx = mx.grad(h);
