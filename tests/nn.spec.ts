@@ -605,7 +605,7 @@ describe('layers', () => {
   it('sigmoid', () => {
     const x = mx.array([1.0, 0.0, -1.0]);
     const y1 = mx.sigmoid(x);
-    const y2 = nn.activations.sigmoid(x);
+    const y2 = nn.sigmoid(x);
     const y3 = (new nn.Sigmoid()).forward(x);
 
     assertArrayAllTrue(mx.equal(y1, y2));
@@ -795,6 +795,57 @@ describe('layers', () => {
     assert.equal(y.dtype, mx.float32);
 
     y = alibi.forward(x.astype(mx.float16));
+    assert.equal(y.dtype, mx.float16);
+  });
+
+  it('dropout', () => {
+    let x = mx.ones([2, 4]);
+    let y = new nn.Dropout(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.float32);
+
+    x = mx.ones([2, 4], mx.bfloat16);
+    y = new nn.Dropout(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.bfloat16);
+
+    x = mx.ones([2, 4], mx.float16);
+    y = new nn.Dropout(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.float16);
+  });
+
+  it('dropout2d', () => {
+    let x = mx.ones([2, 4, 4, 4]);
+    let y = new nn.Dropout2d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.float32);
+
+    x = mx.ones([2, 4, 4, 4], mx.bfloat16);
+    y = new nn.Dropout2d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.bfloat16);
+
+    x = mx.ones([2, 4, 4, 4], mx.float16);
+    y = new nn.Dropout2d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.float16);
+  });
+
+  it('dropout3d', () => {
+    let x = mx.ones([2, 4, 4, 4, 4]);
+    let y = new nn.Dropout3d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.float32);
+
+    x = mx.ones([2, 4, 4, 4, 4], mx.bfloat16);
+    y = new nn.Dropout3d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
+    assert.equal(y.dtype, mx.bfloat16);
+
+    x = mx.ones([2, 4, 4, 4, 4], mx.float16);
+    y = new nn.Dropout3d(0.5).forward(x);
+    assert.deepEqual(y.shape, x.shape);
     assert.equal(y.dtype, mx.float16);
   });
 });
