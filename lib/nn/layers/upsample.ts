@@ -1,32 +1,34 @@
 import {core as mx, utils} from '../../..';
+import {product} from './pytools';
 import {Module} from './base';
 
 /**
  * Upsample the input signal spatially.
  *
- * The spatial dimensions are by convention dimensions `1` to `x.ndim -
- * 2`. The first is the batch dimension and the last is the feature
- * dimension.
+ * @remarks
+ *
+ * The spatial dimensions are by convention dimensions `1` to `x.ndim - 2`. The
+ * first is the batch dimension and the last is the feature dimension.
  *
  * For example, an audio signal would be 3D with 1 spatial dimension, an image
  * would be 4D with 2 and so on and so forth.
  *
- * There are three upsampling algorithms implemented: nearest neighbor upsampling,
- * linear interpolation, and cubic interpolation. All can be applied to any number
- * of spatial dimensions. The linear interpolation will be bilinear, trilinear etc
- * when applied to more than one spatial dimension. And cubic interpolation will be
- * bicubic when there are 2 spatial dimensions.
+ * There are three upsampling algorithms implemented: nearest neighbor
+ * upsampling, linear interpolation, and cubic interpolation. All can be applied
+ * to any number of spatial dimensions. The linear interpolation will be
+ * bilinear, trilinear etc when applied to more than one spatial dimension. And
+ * cubic interpolation will be bicubic when there are 2 spatial dimensions.
  *
  * When using one of the linear or cubic interpolation modes, the `alignCorners`
  * argument changes how the corners are treated in the input image. If
- * `alignCorners=true` then the top and left edge of the input and
- * output will be matching as will the bottom right edge.
+ * `alignCorners=true` then the top and left edge of the input and output will
+ * be matching as will the bottom right edge.
  *
  * @param scaleFactor The multiplier for the spatial size.
- * @param mode The upsampling algorithm, either `"nearest"`,
- * `"linear"` or `"cubic"`. Default: `"nearest"`.
- * @param alignCorners it changes the way the corners are treated
- * during `"linear"` and `"cubic"` upsampling.
+ * @param mode The upsampling algorithm, either `"nearest"`, `"linear"` or
+ * `"cubic"`. Default: `"nearest"`.
+ * @param alignCorners it changes the way the corners are treated during
+ * `"linear"` and `"cubic"` upsampling.
  */
 export class Upsample extends Module {
   scaleFactor: number | number[];
@@ -263,31 +265,3 @@ export function upsampleCubic(x: mx.array,
                               alignCorners = false): mx.array {
   return interpolate(x, scaleFactor, cubicIndices, alignCorners);
 };
-
-// itertools.product
-// https://gist.github.com/cybercase/db7dde901d7070c98c48
-function* product<T extends Array<Iterable<any>>>(...iterables: T): IterableIterator<{
-  [K in keyof T]: T[K] extends Iterable<infer U> ? U : never
-}> {
-  if (iterables.length === 0)
-    return;
-  // Make a list of iterators from the iterables.
-  const iterators = iterables.map(it => it[Symbol.iterator]());
-  const results = iterators.map(it => it.next());
-  if (results.some(r => r.done))
-    throw new Error("Input contains an empty iterator.");
-  for (let i = 0;;) {
-    if (results[i].done) {
-      // Reset the current iterator.
-      iterators[i] = iterables[i][Symbol.iterator]();
-      results[i] = iterators[i].next();
-      // Advance, and exit if we've reached the end.
-      if (++i >= iterators.length)
-        return;
-    } else {
-      yield results.map(({value}) => value) as any;
-      i = 0;
-    }
-    results[i] = iterators[i].next();
-  }
-}

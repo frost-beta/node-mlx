@@ -477,8 +477,9 @@ export abstract class Module {
    * only parameters of type `mx.floating` will be updated to avoid casting
    * integer parameters to the new dtype.
    */
-  setDtype(dtype: mx.Dtype, predicate = (x: mx.Dtype) => mx.issubdtype(x, mx.floating)): void {
-    this.apply((x: mx.array) => predicate(x.dtype) ? x.astype(dtype) : x);
+  setDtype(dtype: mx.Dtype,
+           predicate: ((x: mx.Dtype) => boolean) | null = (x: mx.Dtype) => mx.issubdtype(x, mx.floating)): void {
+    this.apply((x: mx.array) => (!predicate || predicate(x.dtype)) ? x.astype(dtype) : x);
   }
 
   private validateKeys(keys: string | string[], strict: boolean): string[] {

@@ -1053,4 +1053,308 @@ describe('layers', () => {
       "Upsample(scaleFactor=2,3, mode='nearest', alignCorners=false)"
     );
   });
+
+  describe('pooling', () => {
+    it('1d', () => {
+      const x = mx.array(
+        [
+          [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]],
+          [[12, 13, 14], [15, 16, 17], [18, 19, 20], [21, 22, 23]],
+        ]
+      );
+      const expectedMaxPoolOutputNoPaddingStride1 = [
+        [[3, 4, 5], [6, 7, 8], [9, 10, 11]],
+        [[15, 16, 17], [18, 19, 20], [21, 22, 23]],
+      ];
+      const expectedMaxPoolOutputNoPaddingStride2 = [
+        [[3, 4, 5], [9, 10, 11]],
+        [[15, 16, 17], [21, 22, 23]],
+      ];
+      const expectedMaxPoolOutputPadding1Stride2 = [
+        [[0, 1, 2], [6, 7, 8], [9, 10, 11]],
+        [[12, 13, 14], [18, 19, 20], [21, 22, 23]],
+      ];
+      const expectedMaxPoolOutputPadding1Stride2Kernel3 = [
+        [[3, 4, 5], [9, 10, 11]],
+        [[15, 16, 17], [21, 22, 23]],
+      ];
+      const expectedAvgPoolOutputNoPaddingStride1 = [
+        [
+          [1.5000, 2.5000, 3.5000],
+          [4.5000, 5.5000, 6.5000],
+          [7.5000, 8.5000, 9.5000],
+        ],
+        [
+          [13.5000, 14.5000, 15.5000],
+          [16.5000, 17.5000, 18.5000],
+          [19.5000, 20.5000, 21.5000],
+        ],
+      ];
+      const expectedAvgPoolOutputNoPaddingStride2 = [
+        [[1.5000, 2.5000, 3.5000], [7.5000, 8.5000, 9.5000]],
+        [[13.5000, 14.5000, 15.5000], [19.5000, 20.5000, 21.5000]],
+      ];
+      const expectedAvgPoolOutputPadding1Stride2 = [
+        [
+          [0.0000, 0.5000, 1.0000],
+          [4.5000, 5.5000, 6.5000],
+          [4.5000, 5.0000, 5.5000],
+        ],
+        [
+          [6.0000, 6.5000, 7.0000],
+          [16.5000, 17.5000, 18.5000],
+          [10.5000, 11.0000, 11.5000],
+        ],
+      ];
+      const expectedAvgPoolOutputPadding1Kernel3 = [
+        [[1, 1.66667, 2.33333], [6, 7, 8]],
+        [[9, 9.66667, 10.3333], [18, 19, 20]],
+      ];
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool1d(2, 1, 0).forward(x),
+        expectedMaxPoolOutputNoPaddingStride1,
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool1d(2, 2, 0).forward(x),
+        expectedMaxPoolOutputNoPaddingStride2,
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool1d(2, 2, 1).forward(x),
+        expectedMaxPoolOutputPadding1Stride2,
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool1d(3, 2, 1).forward(x),
+        expectedMaxPoolOutputPadding1Stride2Kernel3,
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool1d(2, 1, 0).forward(x),
+        expectedAvgPoolOutputNoPaddingStride1,
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool1d(2, 2, 0).forward(x),
+        expectedAvgPoolOutputNoPaddingStride2,
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool1d(2, 2, 1).forward(x),
+        expectedAvgPoolOutputPadding1Stride2,
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool1d(3, 2, 1).forward(x),
+        expectedAvgPoolOutputPadding1Kernel3,
+      ));
+    });
+
+    it('2d', () => {
+      const x = mx.array(
+        [
+          [
+            [[0, 16], [1, 17], [2, 18], [3, 19]],
+            [[4, 20], [5, 21], [6, 22], [7, 23]],
+            [[8, 24], [9, 25], [10, 26], [11, 27]],
+            [[12, 28], [13, 29], [14, 30], [15, 31]],
+          ]
+        ]
+      );
+      const expectedMaxPoolOutputNoPaddingStride1 = [
+        [
+          [[5, 21], [6, 22], [7, 23]],
+          [[9, 25], [10, 26], [11, 27]],
+          [[13, 29], [14, 30], [15, 31]],
+        ],
+      ];
+      const expectedMaxPoolOutputNoPaddingStride2 = [
+        [[[5, 21], [7, 23]], [[13, 29], [15, 31]]]
+      ];
+      const expectedMaxPoolOutputPadding1 = [
+        [
+          [[0, 16], [2, 18], [3, 19]],
+          [[8, 24], [10, 26], [11, 27]],
+          [[12, 28], [14, 30], [15, 31]]
+        ]
+      ];
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool2d(2, 1, 0).forward(x),
+        expectedMaxPoolOutputNoPaddingStride1
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool2d(2, 2, 0).forward(x),
+        expectedMaxPoolOutputNoPaddingStride2
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool2d(2, 2, 1).forward(x),
+        expectedMaxPoolOutputPadding1
+      ));
+    });
+
+    it('average', () => {
+      const x = mx.array(
+        [
+          [
+            [[0, 16], [1, 17], [2, 18], [3, 19]],
+            [[4, 20], [5, 21], [6, 22], [7, 23]],
+            [[8, 24], [9, 25], [10, 26], [11, 27]],
+            [[12, 28], [13, 29], [14, 30], [15, 31]],
+          ]
+        ]
+      );
+      const expectedMeanPoolOutputNoPaddingStride1 = [
+        [
+          [[2.5000, 18.5000], [3.5000, 19.5000], [4.5000, 20.5000]],
+          [[6.5000, 22.5000], [7.5000, 23.5000], [8.5000, 24.5000]],
+          [[10.5000, 26.5000], [11.5000, 27.5000], [12.5000, 28.5000]],
+        ],
+      ];
+      const expectedMeanPoolOutputNoPaddingStride2 = [
+        [
+          [[2.5000, 18.5000], [4.5000, 20.5000]],
+          [[10.5000, 26.5000], [12.5000, 28.5000]],
+        ],
+      ];
+      const expectedMeanPoolOutputPadding1 = [
+        [
+          [[0.0000, 4.0000], [0.7500, 8.7500], [0.7500, 4.7500]],
+          [[3.0000, 11.0000], [7.5000, 23.5000], [4.5000, 12.5000]],
+          [[3.0000, 7.0000], [6.7500, 14.7500], [3.7500, 7.7500]],
+        ],
+      ];
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool2d(2, 1, 0).forward(x),
+        expectedMeanPoolOutputNoPaddingStride1,
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.AvgPool2d(2, 2, 0).forward(x),
+        expectedMeanPoolOutputNoPaddingStride2,
+      ));
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.AvgPool2d(2, 2, 1).forward(x),
+        expectedMeanPoolOutputPadding1,
+      ));
+    });
+
+    it('multiBatch', () => {
+      const x = mx.array(
+        [
+          [
+            [[0, 1], [2, 3], [4, 5], [6, 7]],
+            [[8, 9], [10, 11], [12, 13], [14, 15]],
+            [[16, 17], [18, 19], [20, 21], [22, 23]],
+            [[24, 25], [26, 27], [28, 29], [30, 31]],
+          ],
+          [
+            [[32, 33], [34, 35], [36, 37], [38, 39]],
+            [[40, 41], [42, 43], [44, 45], [46, 47]],
+            [[48, 49], [50, 51], [52, 53], [54, 55]],
+            [[56, 57], [58, 59], [60, 61], [62, 63]],
+          ],
+        ]
+      );
+      const expectedMaxPoolOutput = [
+        [[[10, 11], [14, 15]], [[26, 27], [30, 31]]],
+        [[[42, 43], [46, 47]], [[58, 59], [62, 63]]],
+      ];
+      const expectedAvgPoolOutput = [
+        [[[2.22222, 2.66667], [5.33333, 6]], [[11.3333, 12], [20, 21]]],
+        [[[16.4444, 16.8889], [26.6667, 27.3333]], [[32.6667, 33.3333], [52, 53]]],
+      ];
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool2d(3, 2, 1).forward(x),
+        expectedMaxPoolOutput,
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool2d(3, 2, 1).forward(x),
+        expectedAvgPoolOutput,
+      ));
+    });
+
+    it('irregular', () => {
+      const x = mx.array([
+        [
+          [[0, 1, 2], [3, 4, 5], [6, 7, 8], [9, 10, 11]],
+          [[12, 13, 14], [15, 16, 17], [18, 19, 20], [21, 22, 23]],
+          [[24, 25, 26], [27, 28, 29], [30, 31, 32], [33, 34, 35]],
+          [[36, 37, 38], [39, 40, 41], [42, 43, 44], [45, 46, 47]],
+        ],
+        [
+          [[48, 49, 50], [51, 52, 53], [54, 55, 56], [57, 58, 59]],
+          [[60, 61, 62], [63, 64, 65], [66, 67, 68], [69, 70, 71]],
+          [[72, 73, 74], [75, 76, 77], [78, 79, 80], [81, 82, 83]],
+          [[84, 85, 86], [87, 88, 89], [90, 91, 92], [93, 94, 95]],
+        ]
+      ]);
+      const expectedIrregularMaxPoolOutput = [
+        [
+          [[3, 4, 5], [6, 7, 8], [9, 10, 11], [9, 10, 11], [9, 10, 11]],
+          [[39, 40, 41], [42, 43, 44], [45, 46, 47], [45, 46, 47], [45, 46, 47]],
+        ],
+        [
+          [[51, 52, 53], [54, 55, 56], [57, 58, 59], [57, 58, 59], [57, 58, 59]],
+          [[87, 88, 89], [90, 91, 92], [93, 94, 95], [93, 94, 95], [93, 94, 95]],
+        ]
+      ];
+      const expectedIrregularAveragePoolOutput = [
+        [
+          [[0.3750, 0.6250, 0.8750], [1.1250, 1.5000, 1.8750], [2.2500, 2.7500, 3.2500], [2.2500, 2.6250, 3.0000], [1.8750, 2.1250, 2.3750]],
+          [[15.7500, 16.2500, 16.7500], [24.7500, 25.5000, 26.2500], [34.5000, 35.5000, 36.5000], [27.0000, 27.7500, 28.5000], [18.7500, 19.2500, 19.7500]],
+        ],
+        [
+          [[12.3750, 12.6250, 12.8750], [19.1250, 19.5000, 19.8750], [26.2500, 26.7500, 27.2500], [20.2500, 20.6250, 21.0000], [13.8750, 14.1250, 14.3750]],
+          [[39.7500, 40.2500, 40.7500], [60.7500, 61.5000, 62.2500], [82.5000, 83.5000, 84.5000], [63.0000, 63.7500, 64.5000], [42.7500, 43.2500, 43.7500]],
+        ]
+      ];
+      assertArrayAllTrue(mx.arrayEqual(
+        new nn.MaxPool2d([2, 4], [3, 1], [1, 2]).forward(x),
+        mx.array(expectedIrregularMaxPoolOutput),
+      ));
+      assertArrayAllTrue(mx.allclose(
+        new nn.AvgPool2d([2, 4], [3, 1], [1, 2]).forward(x),
+        mx.array(expectedIrregularAveragePoolOutput),
+      ));
+    });
+
+    it('toString', () => {
+      assert.equal(
+        new nn.MaxPool1d(3, undefined, 2).toString(),
+        'MaxPool1d(kernelSize=3, stride=3, padding=2)',
+      );
+      assert.equal(
+        new nn.AvgPool1d(2, 3).toString(),
+        'AvgPool1d(kernelSize=2, stride=3, padding=0)',
+      );
+      assert.equal(
+        new nn.MaxPool2d(3, 2, 1).toString(),
+        'MaxPool2d(kernelSize=3,3, stride=2,2, padding=1,1)',
+      );
+      assert.equal(
+        new nn.AvgPool2d([1, 2], 2, [1, 2]).toString(),
+        'AvgPool2d(kernelSize=1,2, stride=2,2, padding=1,2)',
+      );
+    });
+  });
+
+  it('setDtype', () => {
+    const assertDtype = (layer: nn.Linear, dtype: mx.Dtype) => {
+      const parameters = layer.parameters();
+      for (const key of Object.keys(parameters)) {
+        assert.equal((parameters[key] as mx.array).dtype, dtype, `dtype mismatch for ${key}`);
+      }
+    };
+
+    const layer = new nn.Linear(4, 8, true);
+    assertDtype(layer, mx.float32);
+
+    layer.setDtype(mx.bfloat16);
+    assertDtype(layer, mx.bfloat16);
+
+    layer.setDtype(mx.float32, () => false);
+    assertDtype(layer, mx.bfloat16);
+
+    layer.setDtype(mx.int32, () => true);
+    assertDtype(layer, mx.int32);
+
+    layer.setDtype(mx.int64, null);
+    assertDtype(layer, mx.int64);
+
+    layer.setDtype(mx.int16, x => mx.issubdtype(x, mx.integer));
+    assertDtype(layer, mx.int16);
+  });
 });

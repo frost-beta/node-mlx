@@ -6,6 +6,7 @@ export * from './layers/dropout';
 export * from './layers/embedding';
 export * from './layers/linear';
 export * from './layers/normalization';
+export * from './layers/pooling';
 export * from './layers/positional-encoding';
 export * from './layers/quantized';
 export * from './layers/upsample';

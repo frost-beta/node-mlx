@@ -1,4 +1,5 @@
 import {core as mx, utils} from '../../..';
+import {range} from './pytools';
 import {Module} from './base';
 
 /**
@@ -365,9 +366,4 @@ export class BatchNorm extends Module {
     const reductionAxes = range(0, x.ndim - 1);
     return [mx.mean(x, reductionAxes), mx.variance(x, reductionAxes)];
   }
-}
-
-// Helpers.
-function range(start: number, end: number): number[] {
-  return Array.from({length: end - start}, (v, k) => k + start);
 }
