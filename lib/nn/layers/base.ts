@@ -1,8 +1,5 @@
-import {core as mx, utils} from '../../..';
-import {deepEqual} from './pytools';
-
-// A nested type that always has T as leaves.
-type Nested<T> = T | Nested<T>[] | {[key: string]: Nested<T>};
+import {core as mx} from '../../..';
+import {NestedDict, deepEqual, isDict, treeFlatten, treeUnflatten} from '../../utils';
 
 /**
  * Base class for building neural networks with MLX.
@@ -64,7 +61,7 @@ export abstract class Module {
   }
 
   static validChildFilter(m: Module, k: string, v: unknown): boolean {
-    return Array.isArray(v) || (typeof v === 'object' && utils.isDict(v));
+    return Array.isArray(v) || (typeof v === 'object' && isDict(v));
   }
 
   static validParameterFilter(m: Module, k: string, v: unknown): boolean {
@@ -72,7 +69,7 @@ export abstract class Module {
       return false;
     if (typeof v !== 'object')
       return false;
-    return Array.isArray(v) || utils.isDict(v) || (v instanceof mx.array);
+    return Array.isArray(v) || isDict(v) || (v instanceof mx.array);
   }
 
   static trainableParameterFilter(m: Module, k: string, v: unknown): boolean {
@@ -113,7 +110,7 @@ export abstract class Module {
   // Convert to string representation.
   toString(): string {
     let value = `${this.constructor.name}(${this.toStringExtra()}`;
-    const children = utils.treeFlatten(this.children(), '', Module.isModule);
+    const children = treeFlatten(this.children(), '', Module.isModule);
     for (const [k, v] of children) {
       value += `\n  ${k}: ${v}`;
     }
@@ -202,8 +199,8 @@ export abstract class Module {
     }
 
     if (strict) {
-      const newWeights = Object.fromEntries(weights) as Record<string, mx.array>;
-      const currentWeights = Object.fromEntries(utils.treeFlatten(this.parameters())) as Record<string, mx.array>;
+      const newWeights = Object.fromEntries(weights);
+      const currentWeights = Object.fromEntries(treeFlatten(this.parameters())) as Record<string, mx.array>;
       const extras = Object.keys(newWeights).filter(key => !(key in currentWeights));
       if (extras.length > 0) {
         throw Error(`Received parameters not in model: ${extras.join(' ')}.`);
@@ -224,7 +221,7 @@ export abstract class Module {
       });
     }
 
-    this.update(utils.treeUnflatten(weights) as Record<string, unknown>);
+    this.update(treeUnflatten(weights) as NestedDict<mx.array>);
     return this;
   }
 
@@ -240,7 +237,7 @@ export abstract class Module {
    * @param filepath - The name of the file to save the weights to.
    */
   saveWeights(filepath: string): void {
-    const params = Object.fromEntries(utils.treeFlatten(this.parameters())) as Record<string, mx.array>;
+    const params = Object.fromEntries(treeFlatten(this.parameters())) as Record<string, mx.array>;
     if (filepath.endsWith('.npz')) {
       throw Error('Support for .npz format has not been implemented yet.');
     } else if (filepath.endsWith('.safetensors')) {
@@ -270,13 +267,13 @@ export abstract class Module {
    * @returns A dictionary containing the contents of the module recursively
    * filtered.
    */
-  filterAndMap(filterFn: (m: Module, k: string, v: unknown) => boolean,
-               mapFn: ((x: unknown) => unknown) = x => x,
-               isLeafFn: ((m: Module, k: string, v: unknown) => boolean) = defaultIsLeafFn): Record<string, unknown> {
-    const result: Record<string, unknown> = {};
+  filterAndMap<U>(filterFn: (m: Module, k: string, v: unknown) => boolean,
+                  mapFn: ((x: unknown) => U) = x => x as U,
+                  isLeafFn: ((m: Module, k: string, v: unknown) => boolean) = defaultIsLeafFn): Record<string, U> {
+    const result: Record<string, U> = {};
     for (let [k, v] of this.items()) {
       if (filterFn(this, k, v))
-        result[k] = unwrap(this, k, v, filterFn, mapFn, isLeafFn);
+        result[k] = unwrap(this, k, v, filterFn, mapFn, isLeafFn) as U;
     }
     return result;
   }
@@ -285,34 +282,34 @@ export abstract class Module {
    * Recursively return all the `mlx.core.array` members of this Module as a
    * dict of dicts and lists.
    */
-  parameters(): {[key: string]: Nested<mx.array>} {
-    return this.filterAndMap(Module.validParameterFilter) as {[key: string]: Nested<mx.array>};
+  parameters(): NestedDict<mx.array> {
+    return this.filterAndMap(Module.validParameterFilter) as NestedDict<mx.array>;
   }
 
   /**
    * Recursively return all the non-frozen `mlx.core.array` members of this
    * Module as a dict of dicts and lists.
    */
-  trainableParameters(): {[key: string]: Nested<mx.array>} {
-    return this.filterAndMap(Module.trainableParameterFilter) as {[key: string]: Nested<mx.array>};
+  trainableParameters(): NestedDict<mx.array> {
+    return this.filterAndMap(Module.trainableParameterFilter) as NestedDict<mx.array>;
   }
 
   /**
    * Return the direct descendants of this Module instance.
    */
-  children(): {[key: string]: Nested<Module>} {
+  children(): NestedDict<Module> {
     const isLeaf = (m: Module, k: string, v: unknown) => v instanceof Module;
-    return this.filterAndMap(Module.validChildFilter, undefined, isLeaf) as {[key: string]: Nested<Module>};
+    return this.filterAndMap(Module.validChildFilter, undefined, isLeaf) as NestedDict<Module>;
   }
 
   /**
    * Return the submodules that do not contain other modules.
    */
-  leafModules(): {[key: string]: Nested<Module>} {
+  leafModules(): NestedDict<Module> {
     const isLeafModule = (m: this, k: string, v: unknown) => {
-      return v instanceof Module && utils.treeFlatten(v.children()).length === 0;
+      return v instanceof Module && treeFlatten(v.children()).length === 0;
     };
-    return this.filterAndMap(Module.validChildFilter, undefined, isLeafModule) as {[key: string]: Nested<Module>};
+    return this.filterAndMap(Module.validChildFilter, undefined, isLeafModule) as NestedDict<Module>;
   }
 
   /**
@@ -333,7 +330,7 @@ export abstract class Module {
    *
    * @returns The module instance after updating the parameters.
    */
-  update(parameters: Record<string, unknown>): this {
+  update(parameters: NestedDict<mx.array>): this {
     const apply = (target, parameters) => {
       if (typeof parameters !== 'object')
         return;
@@ -392,7 +389,7 @@ export abstract class Module {
    *
    * @returns The module instance after updating the submodules.
    */
-  updateModules(modules: {[key: string]: Module}): this {
+  updateModules(modules: NestedDict<Module>): this {
     const apply = (target, modules) => {
       if (typeof modules !== 'object')
         return;
@@ -425,7 +422,7 @@ export abstract class Module {
       let [prefix, m] = stack.pop();
       applyFn(prefix, m);
       prefix = prefix ? `.${prefix}` : '';
-      stack.push(...utils.treeFlatten(m.children(), prefix, Module.isModule) as [string, Module][]);
+      stack.push(...treeFlatten(m.children(), prefix, Module.isModule) as [string, Module][]);
     }
     return this;
   }
@@ -485,7 +482,7 @@ export abstract class Module {
       let localKeys = keys;
       if (keys == null) {
         const params = m.filterAndMap((m, k, v) => !(v instanceof Module) && Module.validParameterFilter(m, k, v));
-        localKeys = utils.treeFlatten(params).map(([k, v]) => k);
+        localKeys = treeFlatten(params).map(([k, v]) => k);
       }
       m.validateKeys(localKeys, strict)
        .forEach(k => m.#noGrad.add(k));
@@ -598,7 +595,7 @@ export abstract class Module {
 function defaultIsLeafFn(m, k, v) {
   if (typeof v !== 'object')
     return true;
-  return !Array.isArray(v) && !utils.isDict(v);
+  return !Array.isArray(v) && !isDict(v);
 }
 
 function unwrap(model: Module,

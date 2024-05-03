@@ -23,7 +23,7 @@
  * model.update(utils.treeMap((x: mx.array) => mx.multiply(x, x), model.parameters()));
  * ```
  *
- * @param fn - The function that processes the leaves of the tree.
+ * @param func - The function that processes the leaves of the tree.
  * @param tree - The main Object that will be iterated upon.
  * @param rest - Extra trees to be iterated together with `tree`.
  * @param isLeaf - An optional function that returns `true` if the passed
@@ -31,28 +31,28 @@
  *
  * @returns An Object with the new values returned by `fn`.
  */
-export function treeMap(fn: (...args: unknown[]) => unknown,
+export function treeMap(func: (...args: any[]) => unknown,
                         tree: unknown,
                         rest?: object[],
                         isLeaf?: (node: unknown) => boolean): unknown {
   if (isLeaf && isLeaf(tree)) {
     if (rest)
-      return fn(tree, ...rest);
+      return func(tree, ...rest);
     else
-      return fn(tree);
+      return func(tree);
   } else if (Array.isArray(tree)) {
-    return tree.map((child, i) => treeMap(fn, child, rest?.map(r => r[i]), isLeaf));
+    return tree.map((child, i) => treeMap(func, child, rest?.map(r => r[i]), isLeaf));
   } else if (typeof tree === 'object' && isDict(tree)) {
     const newTree = {};
     for (const k in tree) {
-      newTree[k] = treeMap(fn, tree[k], rest?.map(r => r[k]), isLeaf);
+      newTree[k] = treeMap(func, tree[k], rest?.map(r => r[k]), isLeaf);
     }
     return newTree;
   } else {
     if (rest)
-      return fn(tree, ...rest);
+      return func(tree, ...rest);
     else
-      return fn(tree);
+      return func(tree);
   }
 }
 
@@ -204,6 +204,16 @@ export function treeUnflatten(tree: [string, unknown][]): unknown {
       newTree[k] = treeUnflatten(children[k]);
     return newTree;
   }
+}
+
+// A nested type that always has T as leaves.
+export type Nested<T> = T | T[] | {[key: string]: Nested<T>};
+export type NestedDict<T> = {[key: string]: Nested<T>};
+
+// Compare if 2 arrays are equal.
+// TOOD(zcbenz): Extend to objects when needed.
+export function deepEqual(s1: number[], s2: number[]): boolean {
+  return s1.length === s2.length && s1.every((u, i) => u === s2[i]);
 }
 
 // Internal helper to check if an object is a dictionary.

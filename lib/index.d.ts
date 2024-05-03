@@ -330,6 +330,7 @@ export namespace core {
   function compile<T extends any[], U>(func: (...args: T) => U, shapeless?: boolean): (...args: T) => U;
   function disableCompile(): void;
   function enableCompile(): void;
+  function checkpoint<T extends any[], U>(func: (...args: T) => U): (...args: T) => U;
 
   // Metal.
   namespace metal {

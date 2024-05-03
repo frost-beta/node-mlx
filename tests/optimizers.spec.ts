@@ -16,8 +16,8 @@ describe('optimizers', () => {
 
   it('optimizers', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -43,8 +43,8 @@ describe('optimizers', () => {
 
   it('sgd', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -57,7 +57,7 @@ describe('optimizers', () => {
 
     // Implicit init
     optim = new opt.SGD(0.01, 0.9);
-    optim.applyGradients(grads as Record<string, unknown>, params);
+    optim.applyGradients(grads as any, params);
     utils.treeMap((g: mx.array, s: Record<string, mx.array>) => {
       assertArrayAllTrue(mx.arrayEqual(s['v'], g));
     }, grads, [optim.state]);
@@ -65,8 +65,8 @@ describe('optimizers', () => {
 
   it('rmsprop', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -80,7 +80,7 @@ describe('optimizers', () => {
     // Implicit init
     const alpha = 0.99;
     optim = new opt.RMSprop(0.01, alpha);
-    optim.applyGradients(grads as Record<string, unknown>, params);
+    optim.applyGradients(grads as any, params);
     utils.treeMap((g: mx.array, s: Record<string, mx.array>) => {
       assertArrayAllTrue(mx.allclose(s['v'], mx.multiply(1 - alpha, g)));
     }, grads, [optim.state]);
@@ -88,8 +88,8 @@ describe('optimizers', () => {
 
   it('adagrad', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -103,8 +103,8 @@ describe('optimizers', () => {
 
   it('adadelta', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -121,8 +121,8 @@ describe('optimizers', () => {
 
   it('adam', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -141,8 +141,8 @@ describe('optimizers', () => {
 
   it('lion', () => {
     const params = {
-      first: [mx.zeros([10]), mx.zeros([1])],
-      second: mx.zeros([1]),
+      'first': [mx.zeros([10]), mx.zeros([1])],
+      'second': mx.zeros([1]),
     };
     const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
 
@@ -159,7 +159,7 @@ describe('optimizers', () => {
     let grad = mx.onesLike(x);
     let optimizer = new opt.Adafactor();
     for (let i = 0; i < 2; i++) {
-      const xp = optimizer.applyGradients(grad, x);
+      const xp = optimizer.applyGradients(grad, x) as mx.array;
       assert.equal(xp.dtype, x.dtype);
       assert.deepEqual(xp.shape, x.shape);
     }
@@ -168,14 +168,16 @@ describe('optimizers', () => {
     grad = mx.onesLike(x);
     optimizer = new opt.Adafactor();
     for (let i = 0; i < 2; i++) {
-      const xp = optimizer.applyGradients(grad, x);
+      const xp = optimizer.applyGradients(grad, x) as mx.array;
       assert.equal(xp.dtype, x.dtype);
       assert.deepEqual(xp.shape, x.shape);
     }
     assert.equal((optimizer.state['step'] as mx.array).item(), 2);
   });
 
-  it('compiled', () => {
+  it('compiled', function() {
+    this.timeout(10 * 1000);
+
     const model = new nn.Linear(10, 10);
     let x = mx.random.uniform(0, 1, [2, 10]);
     let optim = new opt.SGD(0.01, 0.9);

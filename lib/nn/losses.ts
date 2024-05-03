@@ -1,5 +1,5 @@
 import {core as mx} from '../..';
-import {deepEqual} from './layers/pytools';
+import {deepEqual} from '../utils';
 
 type Reduction = 'none' | 'mean' | 'sum';
 

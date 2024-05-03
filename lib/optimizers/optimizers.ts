@@ -1,4 +1,5 @@
 import {core as mx, nn, utils} from '../..';
+import {Nested, NestedDict} from '../utils';
 
 /**
  * The base class for all optimizers. It allows us to implement an optimizer on
@@ -23,12 +24,11 @@ export abstract class Optimizer {
    * with the new parameters.
    *
    * @param model - An MLX module to be updated.
-   * @param gradients - A Python tree of gradients, most likely computed via
+   * @param gradients - A tree of gradients, most likely computed via
    * `mlx.nn.valueAndGrad`.
    */
-  update(model: nn.Module,
-         gradients: mx.array | Record<string, unknown>): void {
-    model.update(this.applyGradients(gradients, model));
+  update(model: nn.Module, gradients: Nested<mx.array>): void {
+    model.update(this.applyGradients(gradients, model.parameters()) as NestedDict<mx.array>);
   }
 
   /**
@@ -52,7 +52,7 @@ export abstract class Optimizer {
    * console.log(Object.keys(optimizer.state)); // ['step', 'learningRate', 'weight', 'bias']
    * ```
    */
-  init(parameters: mx.array | Record<string, unknown>): void {
+  init(parameters: Nested<mx.array>): void {
     Object.assign(this.#state, utils.treeMap(() => ({}), parameters));
     utils.treeMap(this.initSingle.bind(this), parameters, [ this.#state ]);
     this.#initialized = true;
@@ -99,8 +99,8 @@ export abstract class Optimizer {
    * the gradients. In that case the returned python tree will be of the same
    * structure as the gradients.
    */
-  applyGradients(gradients: mx.array | Record<string, unknown>,
-                 parameters: mx.array | Record<string, unknown>): Record<string, unknown> {
+  applyGradients(gradients: Nested<mx.array>,
+                 parameters: Nested<mx.array>): Nested<mx.array> {
     if (!this.#initialized)
       this.init(gradients);
 
@@ -112,7 +112,7 @@ export abstract class Optimizer {
     this.state['step'] = mx.add(this.step, 1);
 
     // Apply the update.
-    return utils.treeMap(this.applySingle.bind(this), gradients, [parameters, this.state]) as Record<string, unknown>;
+    return utils.treeMap(this.applySingle.bind(this), gradients, [parameters, this.state]) as Nested<mx.array>;
   }
 
   /**

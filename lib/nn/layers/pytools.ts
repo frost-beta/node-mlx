@@ -1,7 +1,3 @@
-export function deepEqual(s1: number[], s2: number[]): boolean {
-  return s1.length === s2.length && s1.every((u, i) => u === s2[i]);
-}
-
 export function range(start: number, end: number, step = 1): number[] {
   return Array.from({length: Math.ceil((end - start) / step)},
                     (_, i) => start + i * step);
