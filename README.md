@@ -1,6 +1,7 @@
 # node-mlx
 
-:construction:
+A machine learning framework for Node.js, based on
+[MLX](https://github.com/ml-explore/mlx).
 
 This project is not affiliated with Apple, you can support the development by
 [sponsoring me](https://github.com/sponsors/zcbenz).
@@ -17,10 +18,7 @@ CPU support:
 (No support for Windows yet, but I'll try to make MLX work on it in future)
 
 Note that currently MLX does not have plans to support GPUs other than Apple
-Silicon, and personally I don't think they ever will considering their team size
-and the API design.
-
-For doing machine learning on GPUs with Node.js, you can go with TensorFlow.js,
+Silicon, for computing with NVIDIA GPUs, you have to go with TensorFlow.js,
 or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
 ## Usage
@@ -28,16 +26,14 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
 ```typescript
 import {core as mx, nn} from '@frost-beta/mlx';
 
-const a = mx.arange(64).reshape(8, 8);
-console.log(a.shape);
-
-const mod = new nn.Sequential(
+const model = new nn.Sequential(
   new nn.Sequential(new nn.Linear(2, 10), nn.relu),
   new nn.Sequential(new nn.Linear(10, 10), new nn.ReLU()),
   new nn.Linear(10, 1),
   mx.sigmoid,
 );
-const y = mod.forward(x);
+const y = model.forward(mx.random.normal([32, 2]));
+console.log(y);
 ```
 
 ## APIs
@@ -159,7 +155,47 @@ Here are some examples of translating Python indexing code to JavaScript:
 | `1:3:2`              | `mx.Slice(1, 3, 2)`          |
 | `mx.array([1, 2])`   | `mx.array([1, 2], mx.int32)` |
 
-## Versioning
+## Building
+
+For building on platforms other than Macs with Apple Silicon, you must have blas
+installed.
+
+```bash
+# Linux
+sudo apt-get install -y libblas-dev liblapack-dev liblapacke-dev
+# x64 Mac
+brew install openblas
+```
+
+This project is mixed with C++ and TypeScript code, and uses
+[cmake-js](https://github.com/cmake-js/cmake-js) to build the native code.
+
+```bash
+git clone --recursive https://github.com/frost-beta/node-mlx.git
+cd node-mlx
+npm install
+npm run build -p 8
+npm run test
+```
+
+### Releasing
+
+The prebuilt binaries are uploaded to the GitHub Releases, when installing
+node-mlx from npm registry, the prebuilt binaries will always be downloaded and
+there is no fallback for building from source code.
+
+The version string is always `0.0.1-dev` in `package.json`, which means local
+development, and npm package can only be published via GitHub workflow by
+pushing a new tag.
+
+### Versioning
 
 Before matching the features and stability of the official Python APIs, this
-project will stay on 0.0.x for versions.
+project will stay on `0.0.x` for npm versions.
+
+## Syncing with upstream
+
+The tests and most TypeScript source code were converted from the Python code
+of the official MLX project, when updating the `deps/mlx` submodule, review
+every new commit and make sure changes to Python APIs/tests/implementations are
+also reflected in this repo.

@@ -1,0 +1,25 @@
+name: npm-publish
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+jobs:
+  post-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get tag
+        run: echo "VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+
+      - name: Set package version
+        run: |
+          npm config set git-tag-version=false
+          npm version $VERSION
+
+      - name: Install deps
+        run: yarn

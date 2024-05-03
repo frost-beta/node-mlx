@@ -59,3 +59,38 @@ jobs:
           run: |
             export CI=true
             yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
+
+      - name: Rename file for uploading
+        run: cp build/Release/mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
+
+      - name: Upload Binary Files
+        uses: actions/upload-artifact@v4
+        with:
+          name: mlx-${{ matrix.os }}-${{ matrix.arch }}
+          path: mlx-${{ matrix.os }}-${{ matrix.arch }}.node
+          retention-days: 1
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed by action-gh-release.
+      contents: write
+
+    steps:
+      - name: Download Files
+        uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+
+      - name: Compress files
+        run: gzip *.node
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          name: Boilerplate ${{ github.ref_name }}
+          generate_release_notes: true
+          files: '*.node.gz'
