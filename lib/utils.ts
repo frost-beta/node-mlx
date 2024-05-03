@@ -36,7 +36,10 @@ export function treeMap(fn: (...args: unknown[]) => unknown,
                         rest?: object[],
                         isLeaf?: (node: unknown) => boolean): unknown {
   if (isLeaf && isLeaf(tree)) {
-    return fn(tree, ...rest);
+    if (rest)
+      return fn(tree, ...rest);
+    else
+      return fn(tree);
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMap(fn, child, rest?.map(r => r[i]), isLeaf));
   } else if (typeof tree === 'object' && isDict(tree)) {

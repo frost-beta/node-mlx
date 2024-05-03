@@ -81,6 +81,47 @@ napi_value ListVisit(napi_env env,
   return visit(env, value, true);
 }
 
+napi_value TreeMap(napi_env env,
+                   napi_value tree,
+                   const TreeVisitCallback& visit) {
+  TreeVisitCallback recurse;
+  recurse = [&recurse, &visit](napi_env env, napi_value value) {
+    // Iterate arrays.
+    if (ki::IsArray(env, value)) {
+      uint32_t length = 0;
+      napi_get_array_length(env, value, &length);
+      napi_value new_array = nullptr;
+      napi_create_array_with_length(env, length, &new_array);
+      for (uint32_t i = 0; i < length; ++i) {
+        napi_value item;
+        if (napi_get_element(env, value, i, &item) != napi_ok)
+          break;
+        napi_value result = visit(env, item);
+        if (result)
+          napi_set_element(env, new_array, i, result);
+      }
+      return new_array;
+    }
+    // Only iterate objects when they do not wrap a native instance.
+    void* ptr;
+    if (napi_unwrap(env, value, &ptr) != napi_ok) {
+      auto m = ki::FromNodeTo<std::map<napi_value, napi_value>>(env, value);
+      if (m) {
+        napi_value new_dict = nullptr;
+        napi_create_object(env, &new_dict);
+        for (auto [key, item] : *m) {
+          napi_value result = visit(env, item);
+          if (result)
+            napi_set_property(env, new_dict, key, result);
+        }
+        return new_dict;
+      }
+    }
+    return visit(env, value);
+  };
+  return recurse(env, tree);
+}
+
 std::vector<mx::array> TreeFlatten(napi_env env, napi_value tree, bool strict) {
   std::vector<mx::array> flat;
   TreeVisit(env, tree, [strict, &flat](napi_env env, napi_value value) {
@@ -114,13 +155,13 @@ napi_value TreeUnflatten(napi_env env,
                          const std::vector<mx::array>& arrays,
                          size_t index,
                          size_t* new_index) {
-  napi_value result = TreeVisit(
+  napi_value result = TreeMap(
       env, tree,
       [&arrays, &index](napi_env env, napi_value value) -> napi_value {
     if (ki::FromNodeTo<mx::array*>(env, value)) {
       return ki::ToNodeValue(env, arrays[index++]);
     } else {
-      return nullptr;
+      return value;
     }
   });
   if (new_index)
@@ -136,7 +177,7 @@ std::vector<mx::array> TreeFlattenWithPlaceholder(napi_env env,
       flat.push_back(*a.value());
       return ki::ToNodeValue(env, Placeholder());
     } else {
-      return nullptr;
+      return value;
     }
   });
   return flat;
@@ -152,7 +193,7 @@ napi_value TreeUnflattenFromPlaceholder(napi_env env,
     if (ki::FromNodeTo<Placeholder>(env, value)) {
       return ki::ToNodeValue(env, arrays[index++]);
     } else {
-      return nullptr;
+      return value;
     }
   });
   return result ? result : tree;

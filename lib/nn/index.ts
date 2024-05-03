@@ -11,5 +11,6 @@ export * from './layers/positional-encoding';
 export * from './layers/quantized';
 export * from './layers/recurrent';
 export * from './layers/upsample';
+export * from './utils';
 export * as init from './init';
 export * as losses from './losses';

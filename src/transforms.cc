@@ -224,7 +224,7 @@ ValueAndGradImpl(const char* error_tag,
     napi_value js_grads = nullptr;
     if (argnums.size() == 1) {
       js_grads = TreeUnflatten(env, args[argnums[0]], gradients, strides[0]);
-    } else if (argnums.size() > 0) {
+    } else if (argnums.size() > 1) {
       std::vector<napi_value> grads;
       for (size_t i = 0; i < argnums.size(); ++i) {
         grads.push_back(

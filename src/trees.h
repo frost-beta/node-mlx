@@ -15,20 +15,26 @@ napi_value ListVisit(napi_env env,
                      napi_value value,
                      const ListVisitCallback& visit);
 
+// Similiar to TreeVisit, but instead of modifying the passed tree directly,
+// a new tree will be returned.
+napi_value TreeMap(napi_env env,
+                   napi_value tree,
+                   const TreeVisitCallback& visit);
+
 // Put all arrays in JS object into a flat vector.
 std::vector<mx::array> TreeFlatten(napi_env env,
                                    napi_value tree,
                                    bool strict = false);
 std::vector<mx::array> TreeFlatten(ki::Arguments* args, bool strict = false);
 
-// Replace the arrays in JS object with the ones in |arrays|.
+// Return a new tree by replacing the arrays with the passed |arrays|.
 napi_value TreeUnflatten(napi_env env,
                          napi_value tree,
                          const std::vector<mx::array>& arrays,
                          size_t index = 0,
                          size_t* new_index = nullptr);
 
-// Like TreeFlatten but also replaces the array in |tree| with a placeholder.
+// Like TreeFlatten but also replace the array in |tree| with a placeholder.
 std::vector<mx::array> TreeFlattenWithPlaceholder(napi_env env,
                                                   napi_value tree);
 napi_value TreeUnflattenFromPlaceholder(napi_env env,

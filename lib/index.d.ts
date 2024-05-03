@@ -324,7 +324,7 @@ export namespace core {
   function asyncEval(...args: unknown[]): void;
   function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
   function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
-  function valueAndGrad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => U;
+  function valueAndGrad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => [U, array];
   function grad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => U;
   function vmap<T extends any[], U>(func: (...args: T) => U, inAxes?: number | number[], outAxes?: number | number[]): (...args: T) => U;
   function compile<T extends any[], U>(func: (...args: T) => U, shapeless?: boolean): (...args: T) => U;
@@ -411,6 +411,9 @@ export namespace core {
 
 // The nn module.
 export * as nn from './nn';
+
+// The optim module.
+export * as optimizers from './optimizers';
 
 // The utils module.
 export * as utils from './utils';
