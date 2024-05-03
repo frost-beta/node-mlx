@@ -220,6 +220,88 @@ describe('optimizers', () => {
 
     // TODO(zcbenz): Add impure test after implementing captures for mx.compile.
   });
+
+  // TODO(zcbenz): Add test_update_lr_compiled after implementing captures for mx.compile.
+});
+
+describe('schedulers', () => {
+  it('decayLr', () => {
+    for (let optimClass of Object.values(optimizersDict)) {
+      const lrSchedule = opt.stepDecay(1e-1, 0.9, 1);
+      const optimizer = new optimClass(lrSchedule);
+
+      const params = {w: mx.ones([5, 5])};
+      const grads = utils.treeMap((x: mx.array) => mx.onesLike(x), params);
+
+      for (let i = 0; i < 10; ++i) {
+        optimizer.applyGradients(grads, params);
+        assert.closeTo(optimizer.learningRate.item() as number,
+                       0.1 * Math.pow(0.9, i),
+                       1e-7);
+      }
+    }
+  });
+
+  it('stepDecay', () => {
+    const lrSchedule = opt.stepDecay(1e-1, 0.9, 1000);
+    const lr = lrSchedule(2500);
+    const expectedLr = 0.1 * Math.pow(0.9, 2);
+    assert.closeTo(lr.item() as number, expectedLr, 1e-7);
+  });
+
+  it('exponentialDecay', () => {
+    const lrSchedule = opt.exponentialDecay(1e-1, 0.99);
+    const lr = lrSchedule(10);
+    const expectedLr = 0.1 * Math.pow(0.99, 10);
+    assert.closeTo(lr.item() as number, expectedLr, 1e-7);
+  });
+
+  it('cosineDecay', () => {
+    let lrSchedule = opt.cosineDecay(0.1, 10);
+    let lr = lrSchedule(4);
+    let expectedLr = 0.1 * 0.5 * (1.0 + Math.cos(Math.PI * 4 / 10));
+    assert.closeTo(lr.item() as number, expectedLr, 1e-7);
+
+    lrSchedule = opt.cosineDecay(0.1, 10, 0.05);
+    lr = lrSchedule(20);
+    expectedLr = 0.05;
+    assert.closeTo(lr.item() as number, expectedLr, 1e-7);
+  });
+
+  it('scheduleJoiner', () => {
+    let boundaries = [2, 3, 4];
+    let schedules = [() => 3, () => 4, () => 5];
+    assert.throws(() => opt.joinSchedules(schedules, boundaries), Error);
+    boundaries = [2, 4];
+    const schedule = opt.joinSchedules(schedules, boundaries);
+    assert.equal(schedule(0).item(), 3);
+    assert.equal(schedule(1).item(), 3);
+    assert.equal(schedule(2).item(), 4);
+    assert.equal(schedule(3).item(), 4);
+    assert.equal(schedule(5).item(), 5);
+    assert.equal(schedule(7).item(), 5);
+  });
+
+  it('linearWarmupWithCosineDecay', () => {
+    const warmupSchedule = opt.linearSchedule(0.0, 1e-5, 100);
+    const cosineSchedule = opt.cosineDecay(1e-5, 100);
+    const cosWithWarmup = opt.joinSchedules([warmupSchedule, cosineSchedule], [101]);
+    assert.equal(cosWithWarmup(0).item(), 0.0);
+    assert.closeTo(cosWithWarmup(101).item() as number, 1e-5, 0.1);
+    const optimizer = new opt.Adam(cosWithWarmup);
+    const model = new nn.Linear(10, 10);
+    for (let i = 0; i < 100; ++i) {
+      optimizer.update(model, {});
+    }
+    assert.closeTo(optimizer.learningRate.item() as number, 1e-5, 0.1);
+    for (let i = 0; i < 100; ++i) {
+      optimizer.update(model, {});
+    }
+    const expectedLr = 1e-5 * 0.5 * (1.0 + Math.cos(Math.PI * 200 / 10));
+    assert.closeTo(optimizer.learningRate.item() as number, expectedLr, 0.1);
+  });
+
+  // TODO(zcbenz): Add test_compile_with_schedule after implementing captures for mx.compile.
 });
 
 function getAllOptimizers(): Record<string, any> {
