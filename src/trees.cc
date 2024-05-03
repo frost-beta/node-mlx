@@ -96,9 +96,7 @@ napi_value TreeMap(napi_env env,
         napi_value item;
         if (napi_get_element(env, value, i, &item) != napi_ok)
           break;
-        napi_value result = visit(env, item);
-        if (result)
-          napi_set_element(env, new_array, i, result);
+        napi_set_element(env, new_array, i, TreeMap(env, item, recurse));
       }
       return new_array;
     }
@@ -109,11 +107,8 @@ napi_value TreeMap(napi_env env,
       if (m) {
         napi_value new_dict = nullptr;
         napi_create_object(env, &new_dict);
-        for (auto [key, item] : *m) {
-          napi_value result = visit(env, item);
-          if (result)
-            napi_set_property(env, new_dict, key, result);
-        }
+        for (auto [key, item] : *m)
+          napi_set_property(env, new_dict, key, TreeMap(env, item, recurse));
         return new_dict;
       }
     }
@@ -169,10 +164,12 @@ napi_value TreeUnflatten(napi_env env,
   return result ? result : tree;
 }
 
-std::vector<mx::array> TreeFlattenWithPlaceholder(napi_env env,
-                                                  napi_value tree) {
+std::pair<std::vector<mx::array>, napi_value> TreeFlattenWithPlaceholder(
+    napi_env env,
+    napi_value tree) {
   std::vector<mx::array> flat;
-  TreeVisit(env, tree, [&flat](napi_env env, napi_value value) -> napi_value {
+  napi_value result = TreeMap(
+      env, tree, [&flat](napi_env env, napi_value value) -> napi_value {
     if (auto a = ki::FromNodeTo<mx::array*>(env, value); a) {
       flat.push_back(*a.value());
       return ki::ToNodeValue(env, Placeholder());
@@ -180,14 +177,14 @@ std::vector<mx::array> TreeFlattenWithPlaceholder(napi_env env,
       return value;
     }
   });
-  return flat;
+  return {std::move(flat), result};
 }
 
 napi_value TreeUnflattenFromPlaceholder(napi_env env,
                                         napi_value tree,
                                         const std::vector<mx::array>& arrays,
                                         size_t index) {
-  napi_value result = TreeVisit(
+  return TreeMap(
       env, tree,
       [&arrays, &index](napi_env env, napi_value value) -> napi_value {
     if (ki::FromNodeTo<Placeholder>(env, value)) {
@@ -196,5 +193,4 @@ napi_value TreeUnflattenFromPlaceholder(napi_env env,
       return value;
     }
   });
-  return result ? result : tree;
 }

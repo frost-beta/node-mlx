@@ -34,9 +34,11 @@ napi_value TreeUnflatten(napi_env env,
                          size_t index = 0,
                          size_t* new_index = nullptr);
 
-// Like TreeFlatten but also replace the array in |tree| with a placeholder.
-std::vector<mx::array> TreeFlattenWithPlaceholder(napi_env env,
-                                                  napi_value tree);
+// Like TreeFlatten but return a new tree by replacing the array in |tree| with
+// a placeholder.
+std::pair<std::vector<mx::array>, napi_value> TreeFlattenWithPlaceholder(
+    napi_env env,
+    napi_value tree);
 napi_value TreeUnflattenFromPlaceholder(napi_env env,
                                         napi_value tree,
                                         const std::vector<mx::array>& arrays,

@@ -365,17 +365,18 @@ Compile(ki::Persistent js_func, std::optional<bool> shapeless) {
                                  &result) != napi_ok) {
             return std::vector<mx::array>();
           }
+          // Get the array elements from |result|, and replace them with
+          // placeholders in the |replaced| object.
+          auto [outputs, replaced] = TreeFlattenWithPlaceholder(args.Env(),
+                                                                result);
           // As this function is not called after it is compiled, we can not
           // transfer the JS result to caller. Instead we are saving the result
           // of first call when it was being compiled, and reuse the object as
           // result for following calls by replacing the array elements with
           // the ones from new results.
-          if (!ki::FromNodeTo<mx::array*>(args.Env(), result)) {
-            CompiledFunctionRelay().emplace(js_func.Id(),
-                                            ki::Persistent(args.Env(), result));
-          }
-          // Return flattened results which will be traced.
-          return TreeFlattenWithPlaceholder(args.Env(), result);
+          CompiledFunctionRelay().emplace(js_func.Id(),
+                                          ki::Persistent(args.Env(), replaced));
+          return outputs;
         },
         reinterpret_cast<std::uintptr_t>(js_func.Id()),
         shapeless.value_or(false),
@@ -384,18 +385,14 @@ Compile(ki::Persistent js_func, std::optional<bool> shapeless) {
     std::vector<mx::array> outputs = func(inputs);
     if (ki::IsExceptionPending(args.Env()))
       return nullptr;
-    // Get the cached result of compiled function.
+    // Get the placeholder result object for the compiled function.
     auto it = CompiledFunctionRelay().find(js_func.Id());
     if (it == CompiledFunctionRelay().end()) {
-      // Not result means the function returns a single array.
-      if (outputs.size() != 1) {
-        ki::ThrowError(args.Env(), "The compiled function is not supposed to "
-                                   "return anything other than a mx.array.");
-        return nullptr;
-      }
-      return ki::ToNodeValue(args.Env(), std::move(outputs.front()));
+      ki::ThrowError(args.Env(), "The compiled function did not provide any "
+                                 "result, was it failed?");
+      return nullptr;
     }
-    // Unflatten the resutls.
+    // Replace the placeholders in the object with actual array results.
     napi_value result = it->second.Value();
     return TreeUnflattenFromPlaceholder(args.Env(), result, outputs);
   };

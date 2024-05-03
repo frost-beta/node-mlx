@@ -174,6 +174,52 @@ describe('optimizers', () => {
     }
     assert.equal((optimizer.state['step'] as mx.array).item(), 2);
   });
+
+  it('compiled', () => {
+    const model = new nn.Linear(10, 10);
+    let x = mx.random.uniform(0, 1, [2, 10]);
+    let optim = new opt.SGD(0.01, 0.9);
+
+    const origParams = model.parameters();
+
+    function loss(model: nn.Linear, x: mx.array) {
+      return model.forward(x).sum();
+    }
+
+    // Uncompiled version
+    function step(x: mx.array) {
+      const [_, grad] = nn.valueAndGrad(model, loss)(model, x);
+      optim.update(model, grad);
+    }
+
+    step(x);
+    const uncompiledParams = model.parameters();
+
+    // Pure version
+    function pureLoss(params: any, x: mx.array) {
+      model.update(params);
+      return model.forward(x).sum();
+    }
+
+    model.update(origParams);
+    optim = new opt.SGD(0.01, 0.9);
+
+    const compiledStep = mx.compile((params: any, state: any, x: mx.array) => {
+      const grad = mx.grad(pureLoss)(params, x);
+      optim.state = state;
+      params = optim.applyGradients(grad, params);
+      return [params, optim.state];
+    });
+
+    optim.init(model.parameters());
+    const [pureParams] = compiledStep(model.parameters(), optim.state, x);
+    assertArrayAllTrue(mx.allclose(pureParams['weight'],
+                                   uncompiledParams['weight'] as mx.array));
+    assertArrayAllTrue(mx.allclose(pureParams['bias'],
+                                   uncompiledParams['bias'] as mx.array));
+
+    // TODO(zcbenz): Add impure test after implementing captures for mx.compile.
+  });
 });
 
 function getAllOptimizers(): Record<string, any> {
