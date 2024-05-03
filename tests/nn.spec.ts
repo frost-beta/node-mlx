@@ -182,7 +182,9 @@ describe('base', () => {
   });
 });
 
-describe('layers', () => {
+describe('layers', function() {
+  this.timeout(10 * 1000);
+
   it('identity', () => {
     const inputs = mx.zeros([10, 4]);
     const layer = new nn.Identity();
@@ -629,9 +631,7 @@ describe('layers', () => {
     assertArrayAllTrue(mx.arrayEqual(y, y2));
   });
 
-  it('gelu', function() {
-    this.timeout(10 * 1000);
-
+  it('gelu', () => {
     const inputs = mx.array([1.15286231, -0.81037411, 0.35816911, 0.77484438, 0.66276414]);
     const expected = mx.array([1.0093501, -0.16925684, 0.22918941, 0.60498625, 0.49459383]);
     const expectedApprox = mx.array([1.0091482, -0.1693441, 0.22918446, 0.60491, 0.4945476]);

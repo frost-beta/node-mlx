@@ -6,6 +6,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "install": "node install.js",
+    "prepack": "tsc",
     "prebuild": "tsc",
     "build": "cmake-js build",
     "test": "ts-node tests/run.ts"
@@ -14,7 +15,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/frost-beta/node-mlx"
+    "url": "git+https://github.com/frost-beta/node-mlx.git"
   },
   "binary": {
     "napi_versions": [

@@ -91,6 +91,6 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           draft: true
-          name: Boilerplate ${{ github.ref_name }}
-          generate_release_notes: true
+          name: node-mlx ${{ github.ref_name }}
+          body: '## Changelog'
           files: '*.node.gz'

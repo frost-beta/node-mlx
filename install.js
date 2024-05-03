@@ -3,7 +3,7 @@
 const packageJson = require('./package.json');
 
 // Local developement.
-if (packageJson.version === '0.0.1-dev' && !process.argv.includes('--force'))
+if (packageJson.version === '0.0.1-dev')
   process.exit(0);
 
 const fs = require('node:fs');
@@ -32,7 +32,7 @@ async function main() {
   if (!response.ok)
     throw new Error(`HTTP error! Status: ${response.status}`);
 
-  const pipeline = promisify(stream.pipeline);
+  const pipeline = util.promisify(stream.pipeline);
   const gunzip = zlib.createGunzip();
   await pipeline(response.body,
                  gunzip,

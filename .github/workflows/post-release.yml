@@ -1,7 +1,6 @@
 name: npm-publish
 
 on:
-  workflow_dispatch:
   release:
     types: [published]
 
@@ -22,4 +21,13 @@ jobs:
           npm version $VERSION
 
       - name: Install deps
-        run: yarn
+        run: |
+          yarn
+          yarn prepack
+          yarn test
+
+      - name: Publish npm package
+        uses: JS-DevTools/npm-publish@v3
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
+          access: public
