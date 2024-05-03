@@ -5,6 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "install": "node install.js",
     "prebuild": "tsc",
     "build": "cmake-js build",
     "test": "ts-node tests/run.ts"

@@ -1,13 +1,20 @@
 # Unused source files
+/CmakeLists.txt
 /.github/
+/src/
+/deps/
+/tests/
+
+# Ignore build but keep .node file
+/build/**/*
+!/build/**/*.node
 
 # Everything else should keep same with .gitignore
 *.swp
-*.zip
+*.tgz
 
 yarn.lock
 package-lock.json
 npm-debug.log
 yarn-error.log
 /node_modules/
-/build/

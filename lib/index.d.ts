@@ -12,7 +12,7 @@ export namespace core {
   type DeviceOrType = Device | DeviceType;
 
   function defaultDevice(): Device;
-  function setDefaultDevice(device: DeviceOrType);
+  function setDefaultDevice(device: DeviceOrType): void;
 
   // Stream.
   class Stream {
@@ -20,7 +20,7 @@ export namespace core {
   }
 
   function defaultStream(device: DeviceOrType): Stream;
-  function setDefaultStream();
+  function setDefaultStream(): void;
   function newStream(device: DeviceOrType): Stream;
   function toStream(s: StreamOrDevice): Stream;
   function stream(s: StreamOrDevice): Disposable;
