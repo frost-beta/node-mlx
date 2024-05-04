@@ -167,7 +167,7 @@ export function treeFlatten(tree: unknown,
  *
  * @example
  * ```typescript
- * import { utils } from '@frost-beta/mlx';
+ * import {utils} from '@frost-beta/mlx';
  *
  * const d = utils.treeUnflatten([['hello.world', 42]]);
  * console.log(d);

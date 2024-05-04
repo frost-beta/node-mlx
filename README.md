@@ -24,7 +24,8 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
 ## Usage
 
 ```typescript
-import {core as mx, nn} from '@frost-beta/mlx';
+import mlx from '@frost-beta/mlx';
+const {core: mx, nn} = mlx;
 
 const model = new nn.Sequential(
   new nn.Sequential(new nn.Linear(2, 10), nn.relu),

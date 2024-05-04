@@ -26,7 +26,7 @@ import {Module} from './base';
  *
  * @example
  * ```typescript
- * import {core as mx} from '@frost-beta/mlx';
+ * import {core as mx, nn} from '@frost-beta/mlx';
  *
  * const x = mx.random.normal([8, 4, 4, 16]);
  * const inorm = new nn.InstanceNorm(16);
