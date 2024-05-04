@@ -10,6 +10,7 @@ export * from './layers/pooling';
 export * from './layers/positional-encoding';
 export * from './layers/quantized';
 export * from './layers/recurrent';
+export * from './layers/transformer';
 export * from './layers/upsample';
 export * from './utils';
 export * as init from './init';
