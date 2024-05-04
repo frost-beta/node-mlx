@@ -630,6 +630,14 @@ describe('array', () => {
       a = mx.zeros([2, 2, 2, 2]);
       a.indexPut_([null, '...', null], 1);
       assert.deepEqual(a.tolist(), mx.ones([2, 2, 2, 2]).tolist());
+
+      a = mx.zeros([2, 3, 4, 5, 3]);
+      a.indexPut_(['...', 0], 1);
+      assert.deepEqual(a.index('...', 0).tolist(), mx.ones([2, 3, 4, 5]).tolist());
+
+      a = mx.zeros([2, 3, 4, 5, 3]);
+      a.indexPut_([mx.Slice(), 0], 1);
+      assert.deepEqual(a.index(mx.Slice(), 0).tolist(), mx.ones([2, 4, 5, 3]).tolist());
     });
   });
 

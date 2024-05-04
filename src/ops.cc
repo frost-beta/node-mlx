@@ -698,6 +698,8 @@ void InitOps(napi_env env, napi_value exports) {
           "outer", &mx::outer,
           "tile", &ops::Tile,
           "addmm", &ops::AddMM,
+          "blockMaskedMM", &mx::block_masked_mm,
+          "blockSparseMM", &mx::block_sparse_mm,
           "diagonal", &ops::Diagonal,
           "diag", &ops::Diag,
           "atleast1d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_1d),

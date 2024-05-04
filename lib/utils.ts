@@ -206,6 +206,53 @@ export function treeUnflatten(tree: [string, unknown][]): unknown {
   }
 }
 
+/**
+ * Applies a reduction to the leaves of a tree.
+ *
+ * @remarks
+ *
+ * This function reduces trees into an accumulated result by applying
+ * the provided function `func` to the leaves of the tree.
+ *
+ * @example
+ * ```
+ * const tree = {a: [1, 2, 3], b: [4, 5]};
+ * treeReduce((acc, x) => acc + x, tree, 0);  // Returns 15
+ * ```
+ *
+ * @param func - The reducer function that takes two arguments (accumulator,
+ * current value) and returns the updated accumulator.
+ * @param tree - The Python tree to reduce. It can be any nested combination of
+ * lists, tuples, or dictionaries.
+ * @param initializer - The initial value to start the reduction. If
+ * not provided, the first leaf value is used.
+ * @param isLeaf - A function to determine if an object is a
+ * leaf, returning `true` for leaf nodes and `false` otherwise.
+ *
+ * @returns The accumulated value.
+ */
+export function treeReduce<U>(func: (accumulator: U, currentValue: U) => U,
+                              tree: Nested<U>,
+                              initializer?: U,
+                              isLeaf?: (node: unknown) => boolean): U {
+  if (isLeaf && isLeaf(tree))
+    return initializer != null ? func(initializer, tree as U) : tree as U;
+
+  let accumulator = initializer;
+
+  if (Array.isArray(tree)) {
+    for (const item of tree)
+      accumulator = treeReduce(func, item, accumulator, isLeaf);
+  } else if (typeof tree === 'object' && isDict(tree)) {
+    for (const item of Object.values(tree))
+      accumulator = treeReduce(func, item, accumulator, isLeaf);
+  } else {
+    return accumulator != null ? func(accumulator, tree as U) : tree as U;
+  }
+
+  return accumulator;
+}
+
 // A nested type that always has T as leaves.
 export type Nested<T> = T | T[] | {[key: string]: Nested<T>};
 export type NestedDict<T> = {[key: string]: Nested<T>};

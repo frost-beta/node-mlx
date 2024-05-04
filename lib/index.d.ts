@@ -197,6 +197,7 @@ export namespace core {
   function bitwiseXor(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function broadcastTo(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
   function blockMaskedMM(a: ScalarOrArray, b: ScalarOrArray, blockSize: number, maskOut?: ScalarOrArray, maskLhs?: ScalarOrArray, maskRhs?: ScalarOrArray, s?: StreamOrDevice): array;
+  function blockSparseMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, s?: StreamOrDevice): array;
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
   function concatenate(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
@@ -337,12 +338,14 @@ export namespace core {
     function isAvailable(): boolean;
     function getActiveMemory(): number;
     function getPeakMemory(): number;
+    function resetPeakMemory(): void;
     function getCacheMemory(): number;
     function setMemoryLimit(limit: number, relaxed?: boolean): number;
     function clearCache(): void;
     function setCacheLimit(limit: number): number;
     function startCapture(path: string): boolean;
     function stopCapture(): void;
+    function deviceInfo(): {[key: string]: string | number};
   }
 
   // Random.

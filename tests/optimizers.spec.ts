@@ -224,6 +224,42 @@ describe('optimizers', () => {
   });
 
   // TODO(zcbenz): Add test_update_lr_compiled after implementing captures for mx.compile.
+
+  it('clipGradNorm', () => {
+    // Test with small gradients that do not require clipping
+    const smallGrads = {
+      first: [mx.array([0.1, 0.2]), mx.array([0.1])],
+      second: mx.array([0.3]),
+    };
+    let maxNorm = 10.0;  // A large maxNorm that shouldn't trigger clipping
+    let [clippedGrads, totalNorm] = opt.clipGradNorm(smallGrads, maxNorm);
+    utils.treeMap((x: mx.array, y: mx.array) => {
+      assertArrayAllTrue(mx.arrayEqual(x, y));
+    }, smallGrads, [clippedGrads]);
+
+    // Test with large gradients that require clipping
+    const largeGrads = {
+      first: [mx.array([10, 20]), mx.array([10])],
+      second: mx.array([30]),
+    };
+    maxNorm = 1.0;  // A small maxNorm that should trigger clipping
+    [clippedGrads, totalNorm] = opt.clipGradNorm(largeGrads, maxNorm);
+    // Correctly extract only the gradient values for norm calculation
+    const clippedValues = utils.treeFlatten(clippedGrads);
+    let normOfClipped = mx.array(0);
+    for (const [_, g] of clippedValues) {
+      normOfClipped = mx.add(normOfClipped, mx.square(g as mx.array).sum());
+    }
+    normOfClipped = mx.sqrt(normOfClipped);
+    assert.closeTo(normOfClipped.item() as number, maxNorm, 1e-6);
+
+    // Ensures that the scaling was done correctly
+    const scale = mx.divide(maxNorm, totalNorm);
+    const expectedGrads = utils.treeMap((g: mx.array) => mx.multiply(g, scale), largeGrads);
+    utils.treeMap((x: mx.array, y: mx.array) => {
+      assertArrayAllTrue(mx.allclose(x, y, 1e-6));
+    }, expectedGrads, [clippedGrads]);
+  });
 });
 
 describe('schedulers', () => {

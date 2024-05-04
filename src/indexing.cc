@@ -603,65 +603,93 @@ std::pair<bool, mx::array> SliceUpdate(
     ScalarOrArray vals) {
   bool is_slice = std::holds_alternative<ArrayIndex>(obj) &&
                   std::holds_alternative<Slice>(std::get<ArrayIndex>(obj));
+  // Can't route to slice update if not slice or tuple.
   if (a->ndim() == 0 ||
       (!is_slice && !std::holds_alternative<ArrayIndices>(obj))) {
     return std::make_pair(false, *a);
   }
+  if (std::holds_alternative<ArrayIndices>(obj)) {
+    // Can't route to slice update if any arrays are present.
+    for (const ArrayIndex& index : std::get<ArrayIndices>(obj)) {
+      if (std::holds_alternative<mx::array*>(index))
+        return std::make_pair(false, *a);
+    }
+  }
 
+  // Should be able to route to slice update.
+
+  // Pre process tuple.
   mx::array up = ToArray(std::move(vals), a->dtype());
+
+  // Remove leading singletons dimensions from the update.
   std::vector<int> up_shape = GetUpShape(up);
   up = mx::reshape(std::move(up), up_shape.empty() ? std::vector<int>{1}
                                                    : std::move(up_shape));
 
+  // Build slice update params.
   std::vector<int> starts(a->ndim(), 0);
   std::vector<int> stops(a->shape());
   std::vector<int> steps(a->ndim(), 1);
+  // If it's just a simple slice, just do a slice update and return.
   if (is_slice) {
     ReadSlice(std::get<Slice>(std::get<ArrayIndex>(obj)), a->shape(0),
               &starts[0], &stops[0], &steps[0]);
+    // Do slice update.
     return {true,
             mx::slice_update(*a, std::move(up), std::move(starts),
                              std::move(stops), std::move(steps))};
   }
 
+  // It must be a tuple.
   ArrayIndices entries = std::move(std::get<ArrayIndices>(obj));
-  for (const ArrayIndex& index : entries) {
-    if (std::holds_alternative<mx::array*>(index))
-      return std::make_pair(false, *a);
-  }
 
+  // Expand ellipses into a series of ':' slices.
   auto [non_none_indices, indices] = ExpandEllipsis(a->shape(),
                                                     std::move(entries));
+  // Dimension check.
   if (non_none_indices > a->ndim()) {
     std::ostringstream msg;
     msg << "Too many indices for array with " << a->ndim() << "dimensions.";
     throw std::invalid_argument(msg.str());
   }
+  // If no non-None indices return the broadcasted update.
   if (non_none_indices == 0) {
     return std::make_pair(true, mx::broadcast_to(std::move(up), a->shape()));
   }
 
-  std::vector<int> upd_expand_dims;
-  size_t axis = 0;
-  for (const ArrayIndex& index : indices) {
+  // Process entries.
+  std::vector<int> up_reshape(a->ndim());
+  int axis = a->ndim() - 1;
+  int up_axis = up.ndim() - 1;
+  while (axis >= non_none_indices) {
+    if (up_axis >= 0) {
+      up_reshape[axis] = up.shape(up_axis);
+      up_axis--;
+    } else {
+      up_reshape[axis] = 1;
+    }
+    axis--;
+  }
+
+  for (auto it = indices.rbegin(); it != indices.rend(); ++it) {
+    const ArrayIndex& index = *it;
     if (std::holds_alternative<Slice>(index)) {
       ReadSlice(std::get<Slice>(index), a->shape(axis),
                 &starts[axis], &stops[axis], &steps[axis]);
-      axis++;
+      up_reshape[axis] = (up_axis >= 0) ? up.shape(up_axis--) : 1;
+      axis--;
     } else if (std::holds_alternative<int>(index)) {
       int start = std::get<int>(index);
       if (start < 0)
         start += a->shape(axis);
       starts[axis] = start;
       stops[axis] = start + 1;
-      if (a->ndim() - axis < up.ndim()) {
-        upd_expand_dims.push_back(axis - a->ndim());
-      }
-      axis++;
+      up_reshape[axis] = 1;
+      axis--;
     }
   }
 
-  up = mx::expand_dims(std::move(up), std::move(upd_expand_dims));
+  up = mx::reshape(std::move(up), std::move(up_reshape));
   return {true,
           mx::slice_update(*a, std::move(up), std::move(starts),
                            std::move(stops), std::move(steps))};

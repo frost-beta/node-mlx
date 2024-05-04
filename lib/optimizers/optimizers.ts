@@ -886,3 +886,40 @@ export class Adafactor extends Optimizer {
                      mx.expandDims(cFactor, 0));
   }
 }
+
+/**
+ * Clips the global norm of the gradients.
+ *
+ * @remarks
+ *
+ * This function ensures that the global norm of the gradients does not exceed
+ * `maxNorm`. It scales down the gradients proportionally if their norm is
+ * greater than `maxNorm`.
+ *
+ * Example:
+ * ```typescript
+ * const grads = {'w1': mx.array([2, 3]), 'w2': mx.array([1])};
+ * const [clippedGrads, totalNorm] = clipGradNorm(grads, 2.0);
+ * console.log(clippedGrads);
+ * // {"w1": mx.array([...]), "w2": mx.array([...])}
+ * ```
+ *
+ * @param grads A dictionary containing the gradient arrays.
+ * @param maxNorm The maximum allowed global norm of the gradients.
+ * @returns The possibly rescaled gradients and the original gradient norm.
+ */
+export function clipGradNorm(grads: Nested<mx.array>,
+                             maxNorm: number): [Nested<mx.array>, mx.array] {
+  const normSquared = utils.treeReduce((acc: number | mx.array, g: mx.array) => {
+    return mx.add(acc, g.square().sum());
+  }, grads, 0);
+  const totalNorm = mx.sqrt(normSquared);
+  const normalizer = mx.divide(maxNorm, mx.add(totalNorm, 1e-6));
+
+  function clipper(g: mx.array) {
+    return mx.where(mx.less(totalNorm, maxNorm), g, mx.multiply(g, normalizer));
+  }
+
+  const clippedGrads = utils.treeMap(clipper, grads) as Nested<mx.array>;
+  return [clippedGrads, totalNorm];
+}
