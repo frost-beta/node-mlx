@@ -60,14 +60,18 @@ jobs:
             export CI=true
             yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
 
-      - name: Rename file for uploading
+      - name: Prepare .node file
         run: cp build/Release/mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
+
+      - name: Prepare .metallib file
+        if: matrix.os == 'mac' && matrix.arch == 'arm64'
+        run: cp build/deps/mlx/mlx/backend/metal/kernels/mlx.metallib mlx-${{ matrix.os }}-${{ matrix.arch }}.metallib
 
       - name: Upload Binary Files
         uses: actions/upload-artifact@v4
         with:
           name: mlx-${{ matrix.os }}-${{ matrix.arch }}
-          path: mlx-${{ matrix.os }}-${{ matrix.arch }}.node
+          path: mlx-${{ matrix.os }}-${{ matrix.arch }}.*
           retention-days: 1
 
   release:
@@ -85,7 +89,7 @@ jobs:
           merge-multiple: true
 
       - name: Compress files
-        run: gzip *.node
+        run: gzip *
 
       - name: Release
         uses: softprops/action-gh-release@v2
@@ -93,4 +97,4 @@ jobs:
           draft: true
           name: node-mlx ${{ github.ref_name }}
           body: '## Changelog'
-          files: '*.node.gz'
+          files: '*.gz'
