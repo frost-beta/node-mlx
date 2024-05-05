@@ -286,3 +286,11 @@ export function isDict(dict: object) {
   const {Module} = require('./nn/layers/base');
   return dict instanceof Module;
 }
+
+export function toCamelCase(e: string) {
+  return e.replace(/_([a-z])/g, (g) =>  g[1].toUpperCase());
+}
+
+export function toSnakeCase(e: string) {
+  return e.replace(/[A-Z]/g, (ch, i) => i ? '_' + ch.toLowerCase() : ch.toLowerCase());
+}

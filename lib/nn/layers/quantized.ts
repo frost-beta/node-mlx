@@ -1,4 +1,5 @@
-import {core as mx, utils} from '../../..';
+import {core as mx} from '../../..';
+import {toSnakeCase, treeMapWithPath} from '../../utils';
 import {Embedding} from './embedding';
 import {Linear} from './linear';
 import {Module} from './base';
@@ -16,15 +17,15 @@ import {Module} from './base';
  * @param bits - The number of bits per parameter. Default: `4`.
  * @param classPredicate - A function which receives the `Module` path and
  * `Module` itself and returns `true` if it should be quantized and `false`
- * otherwise. If `None`, then all linear and embedding layers are quantized.
- * Default: `None`.
+ * otherwise. If `null`, then all linear and embedding layers are quantized. The
+ * path is converted to snake_case for convenience. Default: `null`.
  */
 export function quantize(model: Module,
                          groupSize = 64,
                          bits = 4,
-                         classPredicate = (p, m) => m instanceof Linear || m instanceof Embedding): void {
+                         classPredicate = (p: string, m: Module) => m instanceof Linear || m instanceof Embedding): void {
   function maybeQuantize(path: string, m: Module): Module {
-    if (!classPredicate(path, m))
+    if (!classPredicate(toSnakeCase(path), m))
       return m;
     if (m instanceof Linear)
       return QuantizedLinear.fromLinear(m, groupSize, bits);
@@ -34,7 +35,7 @@ export function quantize(model: Module,
   }
 
   const leaves = model.leafModules();
-  const leavesWithPaths = utils.treeMapWithPath(maybeQuantize, leaves, undefined, Module.isModule);
+  const leavesWithPaths = treeMapWithPath(maybeQuantize, leaves, undefined, Module.isModule);
   model.updateModules(leavesWithPaths as {[key: string]: Module});
 }
 

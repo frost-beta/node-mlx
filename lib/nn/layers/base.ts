@@ -1,5 +1,13 @@
 import {core as mx} from '../../..';
-import {NestedDict, deepEqual, isDict, treeFlatten, treeUnflatten} from '../../utils';
+import {
+  NestedDict,
+  deepEqual,
+  isDict,
+  toCamelCase,
+  toSnakeCase,
+  treeFlatten,
+  treeUnflatten,
+} from '../../utils';
 
 /**
  * Base class for building neural networks with MLX.
@@ -598,14 +606,6 @@ function defaultIsLeafFn(m, k, v) {
   if (typeof v !== 'object')
     return true;
   return !Array.isArray(v) && !isDict(v);
-}
-
-function toCamelCase(e: string) {
-  return e.replace(/_([a-z])/g, (g) =>  g[1].toUpperCase());
-}
-
-function toSnakeCase(e: string) {
-  return e.replace(/[A-Z]/g, (ch, i) => i ? '_' + ch.toLowerCase() : ch.toLowerCase());
 }
 
 function unwrap(model: Module,
