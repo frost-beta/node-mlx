@@ -146,13 +146,13 @@ export function treeFlatten(tree: unknown,
     let flatTree: [string, unknown][] = [];
     if (Array.isArray(tree)) {
       for (let i = 0; i < tree.length; i++) {
-        flatTree = flatTree.concat(treeFlatten(tree[i], `${prefix}.${i}`, isLeaf));
+        flatTree = flatTree.concat(treeFlatten(tree[i], `${prefix}.${i}`, isLeaf, convertKey));
       }
       return flatTree;
     } else if (typeof tree === 'object' && isDict(tree)) {
       for (let k in tree) {
         const key = convertKey ? convertKey(k) : k;
-        flatTree = flatTree.concat(treeFlatten(tree[k], `${prefix}.${key}`, isLeaf));
+        flatTree = flatTree.concat(treeFlatten(tree[k], `${prefix}.${key}`, isLeaf, convertKey));
       }
       return flatTree;
     }
@@ -201,13 +201,13 @@ export function treeUnflatten(tree: [string, unknown][],
     const keys = Object.keys(children).sort().map((idx) => [ parseInt(idx), idx ]);
     const newList = [];
     for (const [i, k] of keys)
-      newList[i] = treeUnflatten(children[k]);
+      newList[i] = treeUnflatten(children[k], convertKey);
     return newList;
   } else {
     const newTree = {};
     for (let k in children) {
       const key = convertKey ? convertKey(k) : k;
-      newTree[key] = treeUnflatten(children[k]);
+      newTree[key] = treeUnflatten(children[k], convertKey);
     }
     return newTree;
   }

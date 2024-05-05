@@ -165,6 +165,21 @@ describe('base', () => {
     const m = new Model();
     m.loadWeights([ ['some_weight', mx.ones([2, 2])] ]);
     assertArrayAllTrue(mx.arrayEqual(m.someWeight, mx.ones([2, 2])));
+
+    class NestedModel extends nn.Module {
+      someChild: Model;
+
+      constructor() {
+        super();
+        this.someChild = new Model();
+      }
+
+      override forward() {}
+    }
+
+    const n = new NestedModel();
+    n.loadWeights([ ['some_child.some_weight', mx.ones([2, 2])] ]);
+    assertArrayAllTrue(mx.arrayEqual(n.someChild.someWeight, mx.ones([2, 2])));
   });
 
   it('moduleState', () => {

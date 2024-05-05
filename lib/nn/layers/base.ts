@@ -605,10 +605,8 @@ function toCamelCase(e: string) {
 }
 
 function toSnakeCase(e: string) {
-  return e.match(/([A-Z])/g)
-          ?.reduce((s, c) => s.replace(new RegExp(c), '_' + c.toLowerCase()), e)
-          .substring(e.slice(0, 1).match(/([A-Z])/g) ? 1 : 0) ?? e;
-};
+  return e.replace(/[A-Z]/g, (ch, i) => i ? '_' + ch.toLowerCase() : ch.toLowerCase());
+}
 
 function unwrap(model: Module,
                 valueKey: string,
