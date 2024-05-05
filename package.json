@@ -7,8 +7,8 @@
   "scripts": {
     "install": "node install.js",
     "prepack": "tsc",
-    "prebuild": "tsc",
     "build": "cmake-js build",
+    "pretest": "tsc",
     "test": "ts-node tests/run.ts"
   },
   "author": "zcbenz",

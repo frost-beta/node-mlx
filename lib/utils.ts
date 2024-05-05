@@ -123,6 +123,7 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
  * discarded.
  * @param isLeaf - An optional function that returns true if the passed object
  * is considered a leaf or false otherwise.
+ * @param convertKey - An optional function that converts the key of tree.
  *
  * @returns An array of objects with `key` and `value` properties.
  *
@@ -139,7 +140,8 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
  */
 export function treeFlatten(tree: unknown,
                             prefix: string = '',
-                            isLeaf?: (node: unknown) => boolean): [string, unknown][] {
+                            isLeaf?: (node: unknown) => boolean,
+                            convertKey?: (key: string) => string): [string, unknown][] {
   if (!isLeaf || !isLeaf(tree)) {
     let flatTree: [string, unknown][] = [];
     if (Array.isArray(tree)) {
@@ -149,7 +151,8 @@ export function treeFlatten(tree: unknown,
       return flatTree;
     } else if (typeof tree === 'object' && isDict(tree)) {
       for (let k in tree) {
-        flatTree = flatTree.concat(treeFlatten(tree[k], `${prefix}.${k}`, isLeaf));
+        const key = convertKey ? convertKey(k) : k;
+        flatTree = flatTree.concat(treeFlatten(tree[k], `${prefix}.${key}`, isLeaf));
       }
       return flatTree;
     }
@@ -162,6 +165,7 @@ export function treeFlatten(tree: unknown,
  *
  * @param tree - The flat representation of an Object. For instance as returned
  * by `treeFlatten`.
+ * @param convertKey - An optional function that converts the key of tree.
  *
  * @returns An Object.
  *
@@ -174,7 +178,8 @@ export function treeFlatten(tree: unknown,
  * // Outputs: {hello: {world: 42}}
  * ```
  */
-export function treeUnflatten(tree: [string, unknown][]): unknown {
+export function treeUnflatten(tree: [string, unknown][],
+                              convertKey?: (key: string) => string): unknown {
   if (tree.length === 1 && tree[0][0] === '') {
     return tree[0][1];
   }
@@ -200,8 +205,10 @@ export function treeUnflatten(tree: [string, unknown][]): unknown {
     return newList;
   } else {
     const newTree = {};
-    for (let k in children)
-      newTree[k] = treeUnflatten(children[k]);
+    for (let k in children) {
+      const key = convertKey ? convertKey(k) : k;
+      newTree[key] = treeUnflatten(children[k]);
+    }
     return newTree;
   }
 }

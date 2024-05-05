@@ -31,9 +31,9 @@ describe('base', () => {
     assert.equal(leaves[1][0], 'layers.1.layers.0');
     assert.equal(leaves[2][0], 'layers.1.layers.1');
     assert.equal(leaves[3][0], 'layers.2');
-    assert.isTrue(leaves[0][1] === (m.layers[0] as nn.Module).layers[0]);
-    assert.isTrue(leaves[1][1] === (m.layers[1] as nn.Module).layers[0]);
-    assert.isTrue(leaves[2][1] === (m.layers[1] as nn.Module).layers[1]);
+    assert.isTrue(leaves[0][1] === (m.layers[0] as nn.Sequential).layers[0]);
+    assert.isTrue(leaves[1][1] === (m.layers[1] as nn.Sequential).layers[0]);
+    assert.isTrue(leaves[2][1] === (m.layers[1] as nn.Sequential).layers[1]);
     assert.isTrue(leaves[3][1] === m.layers[2]);
 
     m.eval();
@@ -51,7 +51,7 @@ describe('base', () => {
 
   it('moduleAttributes', () => {
     class Model extends nn.Module {
-      val?: mx.array;
+      val: mx.array | null;
 
       constructor() {
         super();
@@ -68,7 +68,7 @@ describe('base', () => {
     }
 
     const model = new Model();
-    assert.equal(model.val.item(), mx.array(1.0).item());
+    assert.equal(model.val!.item(), mx.array(1.0).item());
   });
 
   it('modelWithDict', () => {
@@ -150,6 +150,23 @@ describe('base', () => {
     ]), Error);
   });
 
+  it('snakeWeights', () => {
+    class Model extends nn.Module {
+      someWeight: mx.array;
+
+      constructor() {
+        super();
+        this.someWeight = mx.zeros([2, 2]);
+      }
+
+      override forward() {}
+    }
+
+    const m = new Model();
+    m.loadWeights([ ['some_weight', mx.ones([2, 2])] ]);
+    assertArrayAllTrue(mx.arrayEqual(m.someWeight, mx.ones([2, 2])));
+  });
+
   it('moduleState', () => {
     const m = new nn.Linear(10, 1);
     m.state['hello'] = 'world';
@@ -225,8 +242,8 @@ describe('layers', function() {
                                    mx.onesLike(variances),
                                    undefined, 1e-6));
 
-    g.weight = mx.multiply(g.weight, 2);
-    g.bias = mx.add(g.bias, 3);
+    g.weight = mx.multiply(g.weight!, 2);
+    g.bias = mx.add(g.bias!, 3);
     y = g.forward(x);
     means = y.reshape(2, -1, 2).mean(1);
     variances = y.reshape(2, -1, 2).variance(1);
@@ -249,8 +266,8 @@ describe('layers', function() {
                                    mx.onesLike(variances),
                                    undefined, 1e-6));
 
-    g.weight = mx.multiply(g.weight, 2);
-    g.bias = mx.add(g.bias, 3);
+    g.weight = mx.multiply(g.weight!, 2);
+    g.bias = mx.add(g.bias!, 3);
     y = g.forward(x);
     means = y.reshape(2, -1, 2, 4).mean([1, -1]);
     variances = y.reshape(2, -1, 2, 4).variance([1, -1]);
@@ -385,8 +402,8 @@ describe('layers', function() {
 
     // Batch norm.
     let bn = new nn.BatchNorm(4, undefined, undefined, true);
-    assertArrayAllTrue(mx.equal(bn.runningMean, mx.zerosLike(bn.runningMean)));
-    assertArrayAllTrue(mx.equal(bn.runningVar, mx.onesLike(bn.runningVar)));
+    assertArrayAllTrue(mx.equal(bn.runningMean!, mx.zerosLike(bn.runningMean!)));
+    assertArrayAllTrue(mx.equal(bn.runningVar!, mx.onesLike(bn.runningVar!)));
     let y = bn.forward(x);
     let expectedY = mx.array([
       [-0.439520, 1.647328, -0.955515, 1.966031],
@@ -399,8 +416,8 @@ describe('layers', function() {
     let expectedVar = mx.array([0.928435, 1.00455, 1.04117, 0.94258]);
     assert.deepEqual(x.shape, y.shape);
     assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
-    assertArrayAllTrue(mx.allclose(bn.runningMean, expectedMean, undefined, 1e-5));
-    assertArrayAllTrue(mx.allclose(bn.runningVar, expectedVar, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningMean!, expectedMean, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningVar!, expectedVar, undefined, 1e-5));
 
     // test eval mode.
     bn.eval();
@@ -437,8 +454,8 @@ describe('layers', function() {
 
     // Batch norm.
     bn = new nn.BatchNorm(C, undefined, undefined, true);
-    assertArrayAllTrue(mx.equal(bn.runningMean, mx.zerosLike(bn.runningMean)));
-    assertArrayAllTrue(mx.equal(bn.runningVar, mx.onesLike(bn.runningVar)));
+    assertArrayAllTrue(mx.equal(bn.runningMean!, mx.zerosLike(bn.runningMean!)));
+    assertArrayAllTrue(mx.equal(bn.runningVar!, mx.onesLike(bn.runningVar!)));
     y = bn.forward(x);
     assert.deepEqual(x.shape, y.shape);
     expectedY = mx.array([
@@ -458,8 +475,8 @@ describe('layers', function() {
     assertArrayAllTrue(mx.allclose(y, expectedY, undefined, 1e-5));
     expectedMean = mx.array([[[0.00207845, -5.3259e-05, 0.04755, -0.0697296, 0.0236228]]]);
     expectedVar = mx.array([[[0.968415, 1.05322, 0.96913, 0.932305, 0.967224]]]);
-    assertArrayAllTrue(mx.allclose(bn.runningMean, expectedMean, undefined, 1e-5));
-    assertArrayAllTrue(mx.allclose(bn.runningVar, expectedVar, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningMean!, expectedMean, undefined, 1e-5));
+    assertArrayAllTrue(mx.allclose(bn.runningVar!, expectedVar, undefined, 1e-5));
 
     x = mx.random.normal([N, L, C, L, C]);
     assert.throws(() => { bn.forward(x) }, Error);
@@ -495,8 +512,8 @@ describe('layers', function() {
     let batchNorm = new nn.BatchNorm(numFeatures);
 
     batchNorm.train();
-    let runningMean = batchNorm.runningMean;
-    let runningVar = batchNorm.runningVar;
+    let runningMean = batchNorm.runningMean!;
+    let runningVar = batchNorm.runningVar!;
 
     let data = mx.random.normal([batchSize, numFeatures]);
     let normalizedData = batchNorm.forward(data);
@@ -504,13 +521,13 @@ describe('layers', function() {
     let variances = data.variance(0);
     runningMean = mx.add(mx.multiply(runningMean, (1 - momentum)), mx.multiply(means, momentum));
     runningVar = mx.add(mx.multiply(runningVar, (1 - momentum)), mx.multiply(variances, momentum));
-    assertArrayAllTrue(mx.allclose(batchNorm.runningMean, runningMean, 1e-5));
-    assertArrayAllTrue(mx.allclose(batchNorm.runningVar, runningVar, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningMean!, runningMean, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningVar!, runningVar, 1e-5));
 
     batchNorm = new nn.BatchNorm(numFeatures);
     batchNorm.train();
-    runningMean = batchNorm.runningMean;
-    runningVar = batchNorm.runningVar;
+    runningMean = batchNorm.runningMean!;
+    runningVar = batchNorm.runningVar!;
     data = mx.random.normal([batchSize, h, w, numFeatures]);
 
     normalizedData = batchNorm.forward(data);
@@ -518,11 +535,11 @@ describe('layers', function() {
     variances = data.variance([0, 1, 2]);
     runningMean = mx.add(mx.multiply(runningMean, (1 - momentum)), mx.multiply(means, momentum));
     runningVar = mx.add(mx.multiply(runningVar, (1 - momentum)), mx.multiply(variances, momentum));
-    assertArrayAllTrue(mx.allclose(batchNorm.runningMean, runningMean, 1e-5));
-    assertArrayAllTrue(mx.allclose(batchNorm.runningVar, runningVar, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningMean!, runningMean, 1e-5));
+    assertArrayAllTrue(mx.allclose(batchNorm.runningVar!, runningVar, 1e-5));
 
-    assert.deepEqual(batchNorm.runningMean.shape, runningMean.shape);
-    assert.deepEqual(batchNorm.runningVar.shape, runningVar.shape);
+    assert.deepEqual(batchNorm.runningMean!.shape, runningMean.shape);
+    assert.deepEqual(batchNorm.runningVar!.shape, runningVar.shape);
   });
 
   it('conv1d', () => {

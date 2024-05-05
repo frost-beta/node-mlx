@@ -199,8 +199,9 @@ export abstract class Module {
     }
 
     if (strict) {
+      const params = treeFlatten(this.parameters(), '', null, toSnakeCase);
       const newWeights = Object.fromEntries(weights);
-      const currentWeights = Object.fromEntries(treeFlatten(this.parameters())) as Record<string, mx.array>;
+      const currentWeights = Object.fromEntries(params) as Record<string, mx.array>;
       const extras = Object.keys(newWeights).filter(key => !(key in currentWeights));
       if (extras.length > 0) {
         throw Error(`Received parameters not in model: ${extras.join(' ')}.`);
@@ -221,7 +222,7 @@ export abstract class Module {
       });
     }
 
-    this.update(treeUnflatten(weights) as NestedDict<mx.array>);
+    this.update(treeUnflatten(weights, toCamelCase) as NestedDict<mx.array>);
     return this;
   }
 
@@ -237,11 +238,12 @@ export abstract class Module {
    * @param filepath - The name of the file to save the weights to.
    */
   saveWeights(filepath: string): void {
-    const params = Object.fromEntries(treeFlatten(this.parameters())) as Record<string, mx.array>;
+    const params = treeFlatten(this.parameters(), '', null, toSnakeCase);
+    const weights = Object.fromEntries(params) as Record<string, mx.array>;
     if (filepath.endsWith('.npz')) {
       throw Error('Support for .npz format has not been implemented yet.');
     } else if (filepath.endsWith('.safetensors')) {
-      mx.saveSafetensors(filepath, params);
+      mx.saveSafetensors(filepath, weights);
     } else {
       throw Error("Unsupported file extension. Use '.npz' or '.safetensors'.");
     }
@@ -331,14 +333,14 @@ export abstract class Module {
    * @returns The module instance after updating the parameters.
    */
   update(parameters: NestedDict<mx.array>): this {
-    const apply = (target, parameters) => {
+    const apply = (target: object, parameters: NestedDict<mx.array>) => {
       if (typeof parameters !== 'object')
         return;
       for (let k in parameters) {
         if (!(k in target))
           continue;
         const value = target[k];
-        const newValue = parameters[k];
+        const newValue = parameters[k] as NestedDict<mx.array>;
         if (value instanceof mx.array)
           target[k] = newValue;
         else if (value instanceof Module)
@@ -390,7 +392,7 @@ export abstract class Module {
    * @returns The module instance after updating the submodules.
    */
   updateModules(modules: NestedDict<Module>): this {
-    const apply = (target, modules) => {
+    const apply = (target: object, modules: object) => {
       if (typeof modules !== 'object')
         return;
       for (let k in modules) {
@@ -597,6 +599,16 @@ function defaultIsLeafFn(m, k, v) {
     return true;
   return !Array.isArray(v) && !isDict(v);
 }
+
+function toCamelCase(e: string) {
+  return e.replace(/_([a-z])/g, (g) =>  g[1].toUpperCase());
+}
+
+function toSnakeCase(e: string) {
+  return e.match(/([A-Z])/g)
+          ?.reduce((s, c) => s.replace(new RegExp(c), '_' + c.toLowerCase()), e)
+          .substring(e.slice(0, 1).match(/([A-Z])/g) ? 1 : 0) ?? e;
+};
 
 function unwrap(model: Module,
                 valueKey: string,

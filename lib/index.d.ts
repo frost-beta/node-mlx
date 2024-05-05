@@ -72,7 +72,7 @@ export namespace core {
     stop: number | null;
     step: number | null;
   }
-  function Slice(start?: number, stop?: number, step?: number): Slice;
+  function Slice(start?: number | null, stop?: number | null, step?: number | null): Slice;
 
   // Array helper types.
   type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
