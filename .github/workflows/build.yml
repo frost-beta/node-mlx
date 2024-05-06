@@ -44,7 +44,7 @@ jobs:
         if: matrix.os == 'linux' && matrix.arch != runner.arch
         uses: docker/setup-qemu-action@v3
         with:
-          platform: matrix.arch
+          platforms: matrix.arch
 
       - name: Enable multi-arch containers in QEMU
         if: matrix.os == 'linux' && matrix.arch != runner.arch
