@@ -21,6 +21,10 @@ Note that currently MLX does not have plans to support GPUs other than Apple
 Silicon, for computing with NVIDIA GPUs, you have to go with TensorFlow.js,
 or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
+## Examples
+
+* [llama3.js](https://github.com/frost-beta/llama3.js)
+
 ## Usage
 
 ```typescript
