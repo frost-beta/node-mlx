@@ -48,7 +48,7 @@ TypeScript definitions for available APIs, and [MLX's official website](https://
 for documentations.
 
 The JavaScript APIs basically duplicate the official Python APIs by converting
-the API names from snake_case to camcelCase. For example the `mx.not_equal`
+the API names from snake_case to camelCase. For example the `mx.not_equal`
 Python API is renamed to `mx.notEqual` in JavaScript.
 
 There are a few exceptions due to limitations of JavaScript:
