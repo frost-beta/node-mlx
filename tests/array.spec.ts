@@ -256,7 +256,7 @@ describe('array', () => {
   });
 
   it('dtypeJSScalarPromotion', () => {
-    const tests = [
+    const tests: [mx.Dtype, (a, b) => mx.array, any, mx.Dtype][] = [
       [mx.bool, mx.multiply, false, mx.bool],
       [mx.bool, mx.multiply, 0, mx.float32],
       [mx.bool, mx.multiply, 1.0, mx.float32],
@@ -288,13 +288,13 @@ describe('array', () => {
       [mx.float32, mx.multiply, 0, mx.float32],
       [mx.float32, mx.multiply, 1.0, mx.float32],
       [mx.float16, mx.multiply, false, mx.float16],
-      [mx.float16, mx.multiply, 0, mx.float32],
-      [mx.float16, mx.multiply, 1.0, mx.float32],
+      [mx.float16, mx.multiply, 0, mx.float16],
+      [mx.float16, mx.multiply, 1.0, mx.float16],
     ];
 
     for (const [dtypeIn, f, v, dtypeOut] of tests) {
-      const x = mx.array(0, dtypeIn as mx.Dtype);
-      const y = (f as (a, dtype) => mx.array)(x, v);
+      const x = mx.array(0, dtypeIn);
+      const y = f(x, v);
       assert.equal(y.dtype, dtypeOut);
     }
   });

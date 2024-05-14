@@ -1,6 +1,27 @@
 #include "src/array.h"
 #include "src/ops.h"
 
+// A template converter for binary ops.
+inline
+std::function<mx::array(ScalarOrArray a,
+                        ScalarOrArray b,
+                        mx::StreamOrDevice s)>
+BinOpWrapper(mx::array(*func)(const mx::array&,
+                              const mx::array&,
+                              mx::StreamOrDevice)) {
+  return [func](ScalarOrArray a, ScalarOrArray b, mx::StreamOrDevice s) {
+    auto dtype = [&a, &b]() -> std::optional<mx::Dtype> {
+      if (std::holds_alternative<mx::array>(a))
+        return std::get<mx::array>(a).dtype();
+      else if (std::holds_alternative<mx::array>(b))
+        return std::get<mx::array>(b).dtype();
+      else
+        return std::nullopt;
+    }();
+    return func(ToArray(std::move(a), dtype), ToArray(std::move(b), dtype), s);
+  };
+}
+
 // A template converter for ops that accept |k| and |axis|.
 inline
 std::function<mx::array(const mx::array& a,
@@ -608,19 +629,19 @@ void InitOps(napi_env env, napi_value exports) {
           "abs", &mx::abs,
           "sign", &mx::sign,
           "negative", &mx::negative,
-          "add", &mx::add,
-          "subtract", &mx::subtract,
-          "multiply", &mx::multiply,
-          "divide", &mx::divide,
+          "add", BinOpWrapper(&mx::add),
+          "subtract", BinOpWrapper(&mx::subtract),
+          "multiply", BinOpWrapper(&mx::multiply),
+          "divide", BinOpWrapper(&mx::divide),
           "divmod", &mx::divmod,
-          "floorDivide", &mx::floor_divide,
-          "remainder", &mx::remainder,
-          "equal", &mx::equal,
-          "notEqual", &mx::not_equal,
-          "less", &mx::less,
-          "lessEqual", &mx::less_equal,
-          "greater", &mx::greater,
-          "greaterEqual", &mx::greater_equal,
+          "floorDivide", BinOpWrapper(&mx::floor_divide),
+          "remainder", BinOpWrapper(&mx::remainder),
+          "equal", BinOpWrapper(&mx::equal),
+          "notEqual", BinOpWrapper(&mx::not_equal),
+          "less", BinOpWrapper(&mx::less),
+          "lessEqual", BinOpWrapper(&mx::less_equal),
+          "greater", BinOpWrapper(&mx::greater),
+          "greaterEqual", BinOpWrapper(&mx::greater_equal),
           "arrayEqual", &ops::ArrayEqual,
           "matmul", &mx::matmul,
           "square", &mx::square,
@@ -630,7 +651,7 @@ void InitOps(napi_env env, napi_value exports) {
           "logicalNot", &mx::logical_not,
           "logicalAnd", &mx::logical_and,
           "logicalOr", &mx::logical_or,
-          "logaddexp", &mx::logaddexp,
+          "logaddexp", BinOpWrapper(&mx::logaddexp),
           "exp", &mx::exp,
           "expm1", &mx::expm1,
           "erf", &mx::erf,
@@ -656,7 +677,7 @@ void InitOps(napi_env env, napi_value exports) {
           "log1p", &mx::log1p,
           "stopGradient", &mx::stop_gradient,
           "sigmoid", &mx::sigmoid,
-          "power", &mx::power,
+          "power", BinOpWrapper(&mx::power),
           "arange", &ops::ARange,
           "linspace", &ops::Linspace,
           "take", &ops::Take,
@@ -674,8 +695,8 @@ void InitOps(napi_env env, napi_value exports) {
           "isclose", &ops::IsClose,
           "all", DimOpWrapper(&mx::all),
           "any", DimOpWrapper(&mx::any),
-          "minimum", &mx::minimum,
-          "maximum", &mx::maximum,
+          "minimum", BinOpWrapper(&mx::minimum),
+          "maximum", BinOpWrapper(&mx::maximum),
           "floor", &mx::floor,
           "ceil", &mx::ceil,
           "isnan", &mx::isnan,
@@ -740,9 +761,9 @@ void InitOps(napi_env env, napi_value exports) {
           "atleast2d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_2d),
           "atleast3d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_3d),
           "issubdtype", &ops::IsSubDtype,
-          "bitwiseAnd", &mx::bitwise_and,
-          "bitwiseOr", &mx::bitwise_or,
-          "bitwiseXor", &mx::bitwise_xor,
-          "leftShift", &mx::left_shift,
-          "rightShift", &mx::right_shift);
+          "bitwiseAnd", BinOpWrapper(&mx::bitwise_and),
+          "bitwiseOr", BinOpWrapper(&mx::bitwise_or),
+          "bitwiseXor", BinOpWrapper(&mx::bitwise_xor),
+          "leftShift", BinOpWrapper(&mx::left_shift),
+          "rightShift", BinOpWrapper(&mx::right_shift));
 }

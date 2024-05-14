@@ -284,16 +284,12 @@ export class RMSprop extends Optimizer {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    // FIXME(zcbenz): Adding an array with scalar currently always result in
-    // a float32 result. The scalar should use the other operand's dtype.
-    const alpha = mx.array(this.alpha, gradient.dtype);
-    const eps = mx.array(this.eps, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
+    const alpha = this.alpha;
+    const eps = this.eps;
 
     let v = state['v'];
     v = mx.add(mx.multiply(alpha, v),
-               mx.multiply(mx.subtract(one, alpha),
-                           mx.square(gradient)));
+               mx.multiply(1 - alpha, mx.square(gradient)));
     state['v'] = v;
 
     return mx.subtract(parameter,
@@ -351,7 +347,7 @@ export class Adagrad extends Optimizer {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const eps = mx.array(this.eps, gradient.dtype);
+    const eps = this.eps;
 
     const v = mx.add(state['v'], mx.square(gradient));
     state['v'] = v;
@@ -418,22 +414,19 @@ export class AdaDelta extends Optimizer {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const rho = mx.array(this.rho, gradient.dtype);
-    const eps = mx.array(this.eps, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
+    const rho = this.rho;
+    const eps = this.eps;
 
     let v = state['v'];
     let u = state['u'];
 
     v = mx.add(mx.multiply(rho, v),
-                mx.multiply(mx.subtract(one, rho),
-                            mx.square(gradient)));
+               mx.multiply(1 - rho, mx.square(gradient)));
     const d = mx.multiply(mx.divide(mx.sqrt(mx.add(u, eps)),
                                     mx.sqrt(mx.add(v, eps))),
                           gradient);
     u = mx.add(mx.multiply(rho, u),
-               mx.multiply(mx.subtract(one, rho),
-                           mx.square(d)));
+               mx.multiply(1 - rho, mx.square(d)));
 
     state['v'] = v;
     state['u'] = u;
@@ -496,15 +489,13 @@ export class Adam extends Optimizer {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const b1 = mx.array(this.betas[0], gradient.dtype);
-    const b2 = mx.array(this.betas[1], gradient.dtype);
-    const eps = mx.array(this.eps, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
+    const [b1, b2] = this.betas;
+    const eps = this.eps;
 
     const m = mx.add(mx.multiply(b1, state['m']),
-                     mx.multiply(mx.subtract(one, b1), gradient));
+                     mx.multiply(1 - b1, gradient));
     const v = mx.add(mx.multiply(b2, state['v']),
-                     mx.multiply(mx.subtract(one, b2), mx.square(gradient)));
+                     mx.multiply(1 - b2, mx.square(gradient)));
     state['m'] = m;
     state['v'] = v;
 
@@ -559,11 +550,9 @@ export class AdamW extends Adam {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const wd = mx.array(this.weightDecay, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
     return super.applySingle(gradient,
                              mx.multiply(parameter,
-                                         mx.subtract(one, mx.multiply(lr, wd))),
+                                         mx.subtract(1, mx.multiply(lr, this.weightDecay))),
                              state);
   }
 }
@@ -617,13 +606,11 @@ export class Adamax extends Adam {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const b1 = mx.array(this.betas[0], gradient.dtype);
-    const b2 = mx.array(this.betas[1], gradient.dtype);
-    const eps = mx.array(this.eps, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
+    const [b1, b2] = this.betas;
+    const eps = this.eps;
 
     const m = mx.add(mx.multiply(b1, state['m']),
-                     mx.multiply(mx.subtract(one, b1), gradient));
+                     mx.multiply(1 - b1, gradient));
     const v = mx.maximum(mx.multiply(b2, state['v']),
                          gradient.abs());
     state['m'] = m;
@@ -689,18 +676,15 @@ export class Lion extends Optimizer {
                        parameter: mx.array,
                        state: Record<string, mx.array>) {
     const lr = this.learningRate.astype(gradient.dtype);
-    const b1 = mx.array(this.betas[0], gradient.dtype);
-    const b2 = mx.array(this.betas[1], gradient.dtype);
-    const wd = mx.array(this.weightDecay, gradient.dtype);
-    const one = mx.array(1, gradient.dtype);
+    const [b1, b2] = this.betas;
 
     const m = state['m'];
     const c = mx.add(mx.multiply(b1, m),
-                     mx.multiply(mx.subtract(one, b1), gradient));
+                     mx.multiply(1 - b1, gradient));
     state['m'] = mx.add(mx.multiply(b2, m),
-                        mx.multiply(mx.subtract(one, b2), gradient));
+                        mx.multiply(1 - b2, gradient));
     if (this.weightDecay > 0) {
-      parameter = mx.multiply(mx.subtract(one, mx.multiply(lr, wd)),
+      parameter = mx.multiply(mx.subtract(1, mx.multiply(lr, this.weightDecay)),
                               parameter);
     }
     return mx.subtract(parameter,
@@ -802,7 +786,6 @@ export class Adafactor extends Optimizer {
     const learningRate = this.computeLearningRate(step, parameterRMS);
     const beta2 = mx.subtract(1, mx.power(step, this.decayRate))
                     .astype(parameterRMS.dtype);
-    const one = mx.array(1, gradient.dtype);
 
     let update = mx.add(mx.square(gradient),
                         mx.array(this.eps[0], gradient.dtype));
@@ -811,10 +794,10 @@ export class Adafactor extends Optimizer {
       let expAvgSqRow = state['expAvgSqRow'];
       let expAvgSqCol = state['expAvgSqCol'];
       expAvgSqRow = mx.add(mx.multiply(beta2, expAvgSqRow),
-                           mx.multiply(mx.subtract(one, beta2),
+                           mx.multiply(mx.subtract(1, beta2),
                                        mx.mean(update, -1)));
       expAvgSqCol = mx.add(mx.multiply(beta2, expAvgSqCol),
-                           mx.multiply(mx.subtract(one, beta2),
+                           mx.multiply(mx.subtract(1, beta2),
                                        mx.mean(update, -2)));
       state['expAvgSqRow'] = expAvgSqRow;
       state['expAvgSqCol'] = expAvgSqCol;
@@ -823,32 +806,31 @@ export class Adafactor extends Optimizer {
     } else {
       let expAvgSq = state['expAvgSq'];
       expAvgSq = mx.add(mx.multiply(beta2, expAvgSq),
-                        mx.multiply(mx.subtract(one, beta2),
+                        mx.multiply(mx.subtract(1, beta2),
                                     update));
       state['expAvgSq'] = expAvgSq;
       update = mx.multiply(mx.rsqrt(expAvgSq), gradient);
     }
 
     update = mx.divide(update,
-                       mx.maximum(one,
+                       mx.maximum(1,
                                   mx.divide(this.computeRMS(update),
                                             mx.array(this.clipThreshold, update.dtype))));
     update = mx.multiply(learningRate, update);
 
     if (useFirstMoment) {
-      const b1 = mx.array(this.beta1, gradient.dtype);
       let expAvg = state['expAvg'];
-      expAvg = mx.add(mx.multiply(b1, expAvg),
-                      mx.multiply(mx.subtract(one, b1), update));
+      expAvg = mx.add(mx.multiply(this.beta1, expAvg),
+                      mx.multiply(1 - this.beta1, update));
       state['expAvg'] = expAvg;
       update = expAvg;
     }
 
     if (this.weightDecay != 0) {
-      const wd = mx.array(this.weightDecay, parameter.dtype);
       parameter = mx.add(parameter,
-                         mx.multiply(mx.multiply(parameter, mx.negative(wd)),
-                                     learningRate));
+                         mx.multiply(parameter,
+                                     mx.multiply(learningRate,
+                                                 -this.weightDecay)));
     }
 
     return mx.subtract(parameter, update);

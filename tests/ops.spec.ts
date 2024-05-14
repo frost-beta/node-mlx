@@ -211,11 +211,11 @@ describe('ops', () => {
 
     x = x.astype(mx.float16);
     z = mx.divide(x, 4.0);
-    assert.equal(z.dtype, mx.float32);
+    assert.equal(z.dtype, mx.float16);
 
     x = x.astype(mx.float16);
     z = mx.divide(4.0, x);
-    assert.equal(z.dtype, mx.float32);
+    assert.equal(z.dtype, mx.float16);
 
     x = mx.array(5);
     y = mx.array(2);

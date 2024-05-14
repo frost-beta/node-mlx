@@ -68,8 +68,6 @@ There are a few exceptions due to limitations of JavaScript:
 
 Some features are not supported yet and will be implemented in future:
 
-* Passing an array and a number to `mx.add`/`mx.multiply`/etc. would return an
-  array with dtype of `float32` instead of the array operand.
 * The function passed to `mx.vmap` must have all parameters being `mx.array`.
 * The captured `inputs`/`outputs` parameters of `mx.compile` has not been
   implemented.
