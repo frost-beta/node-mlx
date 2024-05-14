@@ -4,14 +4,13 @@ import {NestedDict} from '../utils';
 
 /**
  * Transform the passed function `func` to a function that computes the
- * gradients of `func` with respect to the model's trainable parameters and also its
- * value.
+ * gradients of `func` with respect to the model's trainable parameters and also
+ * its value.
  *
- * @param model The model whose trainable parameters to compute
- * gradients for
- * @param func The scalar function to compute gradients for
- * @returns A callable that returns the value of `func` and the gradients with respect to the
- * trainable parameters of `model`
+ * @param model The model whose trainable parameters to compute gradients for.
+ * @param func The scalar function to compute gradients for.
+ * @returns A callable that returns the value of `func` and the gradients with
+ * respect to the trainable parameters of `model`.
  */
 export function valueAndGrad<T extends any[], U>(model: Module,
                                                  func: (...args: T) => U) {
@@ -35,12 +34,11 @@ export function valueAndGrad<T extends any[], U>(model: Module,
  * with respect to the trainable parameters of the module (and the callable's
  * inputs).
  *
- * @param mod The module for whose parameters to perform gradient
- * checkpointing.
+ * @param mod The module for whose parameters to perform gradient checkpointing.
  * @param func The function to checkpoint. If not provided, it defaults to the
  * provided module.
- * @returns A function that saves the inputs and outputs during the forward
- * pass and recomputes all intermediate states during the backward pass.
+ * @returns A function that saves the inputs and outputs during the forward pass
+ * and recomputes all intermediate states during the backward pass.
  */
 export function checkpoint<M extends Module, T extends any[]>(
     mod: M,

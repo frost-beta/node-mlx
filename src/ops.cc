@@ -448,8 +448,38 @@ mx::array Conv2d(
   else if (auto p = std::get_if<std::pair<int, int>>(&dilation); p)
     dilation_pair = std::move(*p);
 
-  return conv2d(input, weight, stride_pair, padding_pair, dilation_pair,
-                groups.value_or(1), s);
+  return mx::conv2d(input, weight, stride_pair, padding_pair, dilation_pair,
+                    groups.value_or(1), s);
+}
+
+mx::array Conv3d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> stride,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> padding,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  std::tuple<int, int, int> stride_tuple = {1, 1, 1};
+  if (auto i = std::get_if<int>(&stride); i)
+    stride_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&stride); p)
+    stride_tuple = std::move(*p);
+
+  std::tuple<int, int, int> padding_tuple = {0, 0, 0};
+  if (auto i = std::get_if<int>(&padding); i)
+    padding_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&padding); p)
+    padding_tuple = std::move(*p);
+
+  std::tuple<int, int, int> dilation_tuple = {1, 1, 1};
+  if (auto i = std::get_if<int>(&dilation); i)
+    dilation_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&dilation); p)
+    dilation_tuple = std::move(*p);
+
+  return mx::conv3d(input, weight, stride_tuple, padding_tuple, dilation_tuple,
+                    groups.value_or(1), s);
 }
 
 mx::array ConvGeneral(
@@ -611,6 +641,7 @@ void InitOps(napi_env env, napi_value exports) {
           "arcsin", &mx::arcsin,
           "arccos", &mx::arccos,
           "arctan", &mx::arctan,
+          "arctan2", &mx::arctan2,
           "sinh", &mx::sinh,
           "cosh", &mx::cosh,
           "tanh", &mx::tanh,
@@ -684,9 +715,12 @@ void InitOps(napi_env env, napi_value exports) {
           "cumprod", CumOpWrapper(&mx::cumprod),
           "cummax", CumOpWrapper(&mx::cummax),
           "cummin", CumOpWrapper(&mx::cummin),
+          "conj", &mx::conjugate,
+          "conjugate", &mx::conjugate,
           "convolve", &ops::Convolve,
           "conv1d", &mx::conv1d,
           "conv2d", &ops::Conv2d,
+          "conv3d", &ops::Conv3d,
           "convGeneral", &ops::ConvGeneral,
           "where", &mx::where,
           "round", &ops::Round,

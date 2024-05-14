@@ -125,7 +125,8 @@ ValueAndGradImpl(const char* error_tag,
       ki::ThrowError(js_func.Env(),
                      error_tag, " Can't compute the gradient of argument "
                      "index ", argnums.back(), " because the function is "
-                     "called with only ", args.Length(), " arguments.");
+                     "called with only ", args.Length(),
+                     " positional arguments.");
       return {nullptr, nullptr};
     }
     // Collect the arrays located at |argnums|.

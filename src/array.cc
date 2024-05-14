@@ -520,6 +520,7 @@ void Type<mx::array>::Define(napi_env env,
       "round", MemberFunction(&ops::Round),
       "diagonal", MemberFunction(&ops::Diagonal),
       "diag", MemberFunction(&ops::Diag),
+      "conj", MemberFunction(&mx::conjugate),
       "index", MemberFunction(&Index),
       "indexPut_", MemberFunction(&IndexPut),
       SymbolIterator(env), MemberFunction(&CreateArrayIterator));

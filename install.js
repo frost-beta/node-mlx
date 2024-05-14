@@ -8,9 +8,9 @@ if (packageJson.version === '0.0.1-dev')
 
 const fs = require('node:fs');
 const path = require('node:path');
-const stream = require('node:stream');
 const util = require('node:util');
 const zlib = require('node:zlib');
+const {pipeline} = require('node:stream/promises');
 
 const urlPrefix = 'https://github.com/frost-beta/node-mlx/releases/download';
 
@@ -39,7 +39,6 @@ async function download(url, filename) {
   if (!response.ok)
     throw new Error(`Failed to download ${url}, status: ${response.status}`);
 
-  const pipeline = util.promisify(stream.pipeline);
   const gunzip = zlib.createGunzip();
   await pipeline(response.body, gunzip, fs.createWriteStream(filename));
 }
