@@ -76,7 +76,7 @@ mx::array Reshape(const mx::array& a,
 }
 
 mx::array Squeeze(const mx::array& a,
-                  IntOrVector axis,
+                  OptionalAxes axis,
                   mx::StreamOrDevice s) {
   if (std::holds_alternative<std::monostate>(axis)) {
     return squeeze(a, s);
@@ -153,7 +153,7 @@ mx::array Full(std::variant<int, std::vector<int>> shape,
                ScalarOrArray vals,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
-  return mx::full(ToIntVector(std::move(shape)),
+  return mx::full(PutIntoVector(std::move(shape)),
                   ToArray(std::move(vals), std::move(dtype)),
                   s);
 }
@@ -161,13 +161,13 @@ mx::array Full(std::variant<int, std::vector<int>> shape,
 mx::array Zeros(std::variant<int, std::vector<int>> shape,
                 std::optional<mx::Dtype> dtype,
                 mx::StreamOrDevice s) {
-  return mx::zeros(ToIntVector(std::move(shape)), dtype.value_or(mx::float32), s);
+  return mx::zeros(PutIntoVector(std::move(shape)), dtype.value_or(mx::float32), s);
 }
 
 mx::array Ones(std::variant<int, std::vector<int>> shape,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
-  return mx::ones(ToIntVector(std::move(shape)), dtype.value_or(mx::float32), s);
+  return mx::ones(PutIntoVector(std::move(shape)), dtype.value_or(mx::float32), s);
 }
 
 mx::array Eye(int n,
@@ -241,7 +241,7 @@ mx::array Transpose(const mx::array& a,
 }
 
 mx::array Var(const mx::array& a,
-              IntOrVector axis,
+              OptionalAxes axis,
               std::optional<bool> keepdims,
               std::optional<int> ddof,
               mx::StreamOrDevice s) {
@@ -250,7 +250,7 @@ mx::array Var(const mx::array& a,
 }
 
 mx::array Std(const mx::array& a,
-              IntOrVector axis,
+              OptionalAxes axis,
               std::optional<bool> keepdims,
               std::optional<int> ddof,
               mx::StreamOrDevice s) {
@@ -309,7 +309,7 @@ mx::array ArgSort(const mx::array& a,
 }
 
 mx::array Softmax(const mx::array& a,
-                  IntOrVector axis,
+                  OptionalAxes axis,
                   std::optional<bool> precise,
                   mx::StreamOrDevice s) {
   return mx::softmax(a, GetReduceAxes(std::move(axis), a.ndim()),
@@ -512,11 +512,11 @@ mx::array ConvGeneral(
 
   return mx::conv_general(std::move(input),
                           std::move(weight),
-                          ToIntVector(std::move(stride.value_or(1))),
+                          PutIntoVector(std::move(stride.value_or(1))),
                           std::move(padding_lo_vec),
                           std::move(padding_hi_vec),
-                          ToIntVector(std::move(kernel_dilation.value_or(1))),
-                          ToIntVector(std::move(input_dilation.value_or(1))),
+                          PutIntoVector(std::move(kernel_dilation.value_or(1))),
+                          PutIntoVector(std::move(input_dilation.value_or(1))),
                           groups.value_or(1),
                           flip.value_or(false),
                           s);

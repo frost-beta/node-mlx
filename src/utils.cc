@@ -1,7 +1,13 @@
 #include "src/array.h"
 #include "src/utils.h"
 
-std::vector<int> GetReduceAxes(IntOrVector value, int dims) {
+std::vector<int> PutIntoVector(std::variant<int, std::vector<int>> shape) {
+  if (auto i = std::get_if<int>(&shape); i)
+    return {*i};
+  return std::move(std::get<std::vector<int>>(shape));
+}
+
+std::vector<int> GetReduceAxes(OptionalAxes value, int dims) {
   // Try vector first.
   if (auto v = std::get_if<std::vector<int>>(&value); v)
     return std::move(*v);

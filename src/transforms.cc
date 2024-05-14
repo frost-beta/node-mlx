@@ -102,7 +102,7 @@ ValueAndGradImpl(const char* error_tag,
                  ki::Persistent js_func,
                  std::optional<std::variant<int, std::vector<int>>> arg) {
   // Sanitize |argnums|.
-  std::vector<int> argnums = ToIntVector(std::move(arg.value_or(0)));
+  std::vector<int> argnums = PutIntoVector(std::move(arg.value_or(0)));
   if (argnums.size() > 0) {
     std::sort(argnums.begin(), argnums.end());
     if (argnums[0] < 0) {
@@ -268,8 +268,8 @@ VMap(ki::Persistent js_func,
       [js_func = std::move(js_func)](const std::vector<mx::array>& primals) {
         return ExecuteWithPrimals(js_func.Env(), js_func.Value(), primals);
       },
-      ToIntVector(std::move(in_axes.value_or(std::vector<int>()))),
-      ToIntVector(std::move(out_axes.value_or(std::vector<int>()))));
+      PutIntoVector(std::move(in_axes.value_or(std::vector<int>()))),
+      PutIntoVector(std::move(out_axes.value_or(std::vector<int>()))));
   // Return a JS function that converts JS args into primals.
   return [func = std::move(func)](ki::Arguments* args) -> napi_value {
     std::vector<mx::array> arrays;

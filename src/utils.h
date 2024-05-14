@@ -8,15 +8,8 @@
 
 namespace mx = mlx::core;
 
-using IntOrVector = std::variant<std::monostate, int, std::vector<int>>;
+using OptionalAxes = std::variant<std::monostate, int, std::vector<int>>;
 using ScalarOrArray = std::variant<bool, float, mx::array>;
-
-// Convert a int or vector into vector.
-inline std::vector<int> ToIntVector(std::variant<int, std::vector<int>> shape) {
-  if (auto i = std::get_if<int>(&shape); i)
-    return {*i};
-  return std::move(std::get<std::vector<int>>(shape));
-}
 
 // Read args into a vector of types.
 template<typename T>
@@ -49,8 +42,11 @@ void DefineToString(napi_env env, napi_value prototype) {
           symbol, ki::MemberFunction(&ToString<T>));
 }
 
+// If input is one int, put it into a vector, otherwise just return the vector.
+std::vector<int> PutIntoVector(std::variant<int, std::vector<int>> shape);
+
 // Get axis arg from js value.
-std::vector<int> GetReduceAxes(IntOrVector value, int dims);
+std::vector<int> GetReduceAxes(OptionalAxes value, int dims);
 
 // Convert a ScalarOrArray arg to array.
 mx::array ToArray(ScalarOrArray value,

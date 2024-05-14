@@ -10,7 +10,7 @@ mx::array Norm(const mx::array& a,
                mx::StreamOrDevice s) {
   std::optional<std::vector<int>> axis;
   if (optional_axis)
-    axis = ToIntVector(std::move(*optional_axis));
+    axis = PutIntoVector(std::move(*optional_axis));
   bool keepdims = optional_keepdims.value_or(false);
 
   if (!ord) {
