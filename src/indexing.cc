@@ -417,11 +417,14 @@ ScatterResult ScatterArgsSlice(const mx::array* a,
   ReadSlice(slice, stop, &start, &stop, &step);
 
   if (step == 1) {
+    std::vector<int> up_shape = GetUpShape(update);
+    mx::array up = mx::reshape(std::move(update), std::move(up_shape));
+
     std::vector<int> up_shape_broadcast = {1, stop - start};
     up_shape_broadcast.insert(up_shape_broadcast.end(),
                               a->shape().begin() + 1, a->shape().end());
     return {{mx::array({start}, {1}, mx::uint32)},
-            mx::broadcast_to(std::move(update), std::move(up_shape_broadcast)),
+            mx::broadcast_to(std::move(up), std::move(up_shape_broadcast)),
             {0}};
   }
 

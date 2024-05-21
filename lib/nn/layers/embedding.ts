@@ -1,5 +1,6 @@
 import {core as mx} from '../../..';
 import {Module} from './base';
+import {QuantizedEmbedding} from './quantized';
 
 /**
  * Implements a simple lookup table that maps each input integer to a
@@ -41,5 +42,12 @@ export class Embedding extends Module {
    */
   asLinear(x: mx.array): mx.array {
     return mx.matmul(x, this.weight.T);
+  }
+
+  /**
+   * Return a `QuantizedEmbedding` layer that approximates this embedding layer.
+   */
+  toQuantized(groupSize = 64, bits = 4): QuantizedEmbedding {
+    return QuantizedEmbedding.fromEmbedding(this, groupSize, bits);
   }
 }

@@ -33,5 +33,6 @@ void InitLinalg(napi_env env, napi_value exports) {
           "norm", &linalg::Norm,
           "qr", &mx::linalg::qr,
           "svd", &mx::linalg::svd,
-          "inv", &mx::linalg::inv);
+          "inv", &mx::linalg::inv,
+          "cholesky", &mx::linalg::cholesky);
 }

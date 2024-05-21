@@ -53,7 +53,7 @@ export function stepDecay(init: number, decayRate: number, stepSize: number) {
  * @param init Initial value.
  * @param decaySteps Number of steps to decay over. The decayed
  * value is constant for steps beyond `decaySteps`.
- * @param minimum Minimal value to decay to. Default: `0`.
+ * @param end Final value to decay to. Default: `0`.
  *
  * @example
  * ```typescript
@@ -65,14 +65,14 @@ export function stepDecay(init: number, decayRate: number, stepSize: number) {
  * console.log(optimizer.learningRate); // 0.0999961
  * ```
  */
-export function cosineDecay(init: number, decaySteps: number, minimum = 0) {
+export function cosineDecay(init: number, decaySteps: number, end = 0) {
   return (step: number | mx.array) => {
     let s = mx.minimum(step, decaySteps);
     let decay = mx.multiply(0.5,
                             mx.add(1, mx.cos(mx.multiply(mx.divide(Math.PI,
                                                                    decaySteps),
                                                          s))));
-    return mx.maximum(mx.multiply(init, decay), minimum);
+    return mx.add(end, mx.multiply(decay, init - end));
   };
 }
 

@@ -11,26 +11,28 @@ import {Module} from './base';
  *
  * By default all `Linear` and `Embedding` layers will be quantized. Note also,
  * the module is updated in-place.
+ * By default all layers that define a `toQuantized(group_size, bits)` method
+ * will be quantized. Both `Linear` and `Embedding` layers will be quantized.
+ * Note also, the module is updated in-place.
  *
  * @param model - The model whose leaf modules may be quantized.
  * @param groupSize - The quantization group size. Default: `64`.
  * @param bits - The number of bits per parameter. Default: `4`.
  * @param classPredicate - A function which receives the `Module` path and
  * `Module` itself and returns `true` if it should be quantized and `false`
- * otherwise. If `null`, then all linear and embedding layers are quantized. The
- * path is converted to snake_case for convenience. Default: `null`.
+ * otherwise. If `null`, then all layers that define a
+ * `toQuantized(group_size, bits)` method are quantized. The path is converted
+ * to snake_case for convenience. Default: `null`.
  */
 export function quantize(model: Module,
                          groupSize = 64,
                          bits = 4,
-                         classPredicate = (p: string, m: Module) => m instanceof Linear || m instanceof Embedding): void {
+                         classPredicate = (p: string, m: Module) => 'toQuantized' in m && typeof m.toQuantized === 'function'): void {
   function maybeQuantize(path: string, m: Module): Module {
     if (!classPredicate(toSnakeCase(path), m))
       return m;
-    if (m instanceof Linear)
-      return QuantizedLinear.fromLinear(m, groupSize, bits);
-    if (m instanceof Embedding)
-      return QuantizedEmbedding.fromEmbedding(m, groupSize, bits);
+    if ('toQuantized' in m && typeof m.toQuantized === 'function')
+      return m.toQuantized(groupSize, bits);
     throw Error(`Unable to quantize model of type ${typeof m}`);
   }
 

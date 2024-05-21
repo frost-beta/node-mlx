@@ -638,6 +638,10 @@ describe('array', () => {
       a = mx.zeros([2, 3, 4, 5, 3]);
       a.indexPut_([mx.Slice(), 0], 1);
       assert.deepEqual(a.index(mx.Slice(), 0).tolist(), mx.ones([2, 4, 5, 3]).tolist());
+
+      a = mx.zeros([2, 2, 2, 2, 2, 2]);
+      a.indexPut_([0, 0], 1);
+      assert.deepEqual(a.index(0, 0).tolist(), mx.ones([2, 2, 2, 2]).tolist());
     });
   });
 
@@ -688,6 +692,11 @@ describe('array', () => {
     a.indexPut_(index, 5);
     a = a.at(...index).minimum(update);
     assertArrayAllTrue(mx.arrayEqual(a.index(...index), mx.minimum(a.index(...index), update)));
+
+    update = mx.array([1, 2]).index(null, null, null);
+    let src = mx.array([1, 2]).index(null, mx.Slice());
+    src = src.at(mx.Slice(0, 1)).add(update);
+    assertArrayAllTrue(mx.arrayEqual(src, [[2, 4]]));
   });
 
   it('sliceNegativeStep', () => {

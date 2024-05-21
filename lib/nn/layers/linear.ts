@@ -1,5 +1,6 @@
 import {core as mx} from '../../..';
 import {Module} from './base';
+import {QuantizedLinear} from './quantized';
 
 /**
  * A placeholder identity operator that is argument-insensitive.
@@ -59,6 +60,13 @@ export class Linear extends Module {
       return mx.addmm(this.bias, x, this.weight.T);
     else
       return mx.matmul(x, this.weight.T);
+  }
+
+  /**
+   * Return a `QuantizedLinear` layer that approximates this layer.
+   */
+  toQuantized(groupSize = 64, bits = 4): QuantizedLinear {
+    return QuantizedLinear.fromLinear(this, groupSize, bits);
   }
 }
 

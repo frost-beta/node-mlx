@@ -301,9 +301,11 @@ describe('schedulers', () => {
     assert.closeTo(lr.item() as number, expectedLr, 1e-7);
 
     lrSchedule = opt.cosineDecay(0.1, 10, 0.05);
+    lr = lrSchedule(9);
+    const expectedEndLr = 0.05;
+    assert.isAbove(lr.item() as number, expectedEndLr);
     lr = lrSchedule(20);
-    expectedLr = 0.05;
-    assert.closeTo(lr.item() as number, expectedLr, 1e-7);
+    assert.closeTo(lr.item() as number, expectedEndLr, 1e-7);
   });
 
   it('scheduleJoiner', () => {

@@ -386,6 +386,7 @@ export namespace core {
     function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function inv(array: ScalarOrArray, s?: StreamOrDevice): array;
+    function cholesky(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
   }
 
   // Fast operations.

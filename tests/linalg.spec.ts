@@ -36,4 +36,23 @@ describe('linalg', () => {
     const expected = mx.array([[0.6, -0.7], [-0.2, 0.4]]);
     assertArrayAllTrue(mx.isclose(result, expected));
   });
+
+  it('cholesky', () => {
+    const sqrtA = mx.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], mx.float32);
+    const A = mx.divide(mx.matmul(sqrtA.T, sqrtA), 81);
+    const L = mx.linalg.cholesky(A, false, mx.cpu);
+    const U = mx.linalg.cholesky(A, true, mx.cpu);
+    assertArrayAllTrue(mx.allclose(mx.matmul(L, L.T), A, 1e-5, 1e-7));
+    assertArrayAllTrue(mx.allclose(mx.matmul(U.T, U), A, 1e-5, 1e-7));
+
+    // Multiple matrices
+    const B = mx.add(A, 1 / 9);
+    const AB = mx.stack([A, B]);
+    const Ls = mx.linalg.cholesky(AB, false, mx.cpu);
+    for (let i = 0; i < AB.length; i++) {
+      const M = AB.index(i);
+      const L = Ls.index(i);
+      assertArrayAllTrue(mx.allclose(mx.matmul(L, L.T), M, 1e-5, 1e-7));
+    }
+  });
 });
