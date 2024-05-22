@@ -87,7 +87,7 @@ export class MultiHeadAttention extends Module {
     values = values.reshape(B, S, numHeads, -1).transpose(0, 2, 1, 3);
 
     // Dimensions are [batch x numHeads x sequence x hiddenDim].
-    const scale = mx.array(Math.sqrt(1 / queries.shape[-1]), queries.dtype);
+    const scale = Math.sqrt(1 / queries.shape[queries.shape.length - 1]);
     let scores = mx.matmul(mx.multiply(queries, scale), keys);
     if (mask)
       scores = mx.add(scores, mask.astype(scores.dtype));
