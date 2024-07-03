@@ -521,6 +521,7 @@ void Type<mx::array>::Define(napi_env env,
       "diagonal", MemberFunction(&ops::Diagonal),
       "diag", MemberFunction(&ops::Diag),
       "conj", MemberFunction(&mx::conjugate),
+      "view", MemberFunction(&mx::view),
       "index", MemberFunction(&Index),
       "indexPut_", MemberFunction(&IndexPut),
       SymbolIterator(env), MemberFunction(&CreateArrayIterator));

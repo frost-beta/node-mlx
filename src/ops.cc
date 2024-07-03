@@ -779,5 +779,6 @@ void InitOps(napi_env env, napi_value exports) {
           "bitwiseOr", BinOpWrapper(&mx::bitwise_or),
           "bitwiseXor", BinOpWrapper(&mx::bitwise_xor),
           "leftShift", BinOpWrapper(&mx::left_shift),
-          "rightShift", BinOpWrapper(&mx::right_shift));
+          "rightShift", BinOpWrapper(&mx::right_shift),
+          "view", &mx::view);
 }

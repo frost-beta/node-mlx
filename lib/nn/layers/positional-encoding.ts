@@ -57,7 +57,7 @@ export class RoPE extends Module {
  * @param minFreq - The minimum frequency expected. Default: `0.0001`.
  * @param maxFreq - The maximum frequency expected. Default: `1`.
  * @param scale - A multiplicative scale for the embeddings.
- * Default: `sqrt(dims//2)`.
+ * Default: `sqrt(2/dims)`.
  * @param cosFirst - If `true` embed using `[cos(x); sin(x)]`
  * instead of the reverse. Default: `false`.
  * @param fullTurns - If `true` multiply the frequencies with

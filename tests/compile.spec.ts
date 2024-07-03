@@ -587,4 +587,11 @@ describe('compile', function() {
     assert.equal(y1.item(), y2.item());
     assert.equal(y1.item(), 6);
   });
+
+  it('infConstant', () => {
+    const fn = (x) => mx.where(mx.isinf(x), 0, 1);
+
+    const x = mx.array([0, Number.POSITIVE_INFINITY, 1], mx.bfloat16);
+    assertArrayAllTrue(mx.arrayEqual(mx.compile(fn)(x), fn(x)));
+  });
 });

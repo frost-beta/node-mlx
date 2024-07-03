@@ -1184,6 +1184,11 @@ describe('ops', () => {
       const b = mx.array([1, 2]);
       mx.concatenate([a, b], 0);
     }, Error);
+
+    const a = mx.zeros([2, 0, 2]);
+    const b = mx.zeros([2, 2, 2]);
+    const out = mx.concatenate([a, b], 1);
+    assertArrayAllTrue(mx.equal(out, b));
   });
 
   describe('meshgrid', () => {
@@ -1504,6 +1509,24 @@ describe('ops', () => {
       const outMlx = mx[op](a, b);
       const outTf = tf[op](aTf, bTf);
       assert.deepEqual(outMlx.tolist(), outTf.arraySync());
+    }
+  });
+
+  it('view', () => {
+    let a = mx.random.randint(-100, 100, [2, 4]);
+    a = mx.broadcastTo(a, [4, 2, 4]);
+
+    for (const dtype of [mx.bool, mx.int16, mx.float32, mx.int64]) {
+      const out = a.view(dtype);
+      const aOut = out.view(mx.int32);
+      assertArrayAllTrue(mx.equal(aOut, a));
+    }
+
+    a = mx.random.randint(-100, 100, [4, 4]).T;
+    for (const dtype of [mx.bool, mx.int16, mx.float32, mx.int64]) {
+      const out = a.view(dtype);
+      const aOut = out.view(mx.int32);
+      assertArrayAllTrue(mx.equal(aOut, a));
     }
   });
 });

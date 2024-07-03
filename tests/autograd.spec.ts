@@ -394,4 +394,85 @@ describe('autograd', () => {
     const grad = mx.grad(fun)(mx.array(1.0), mx.array(1.0));
     assert.equal(grad.index().item(), 1.0);
   });
+
+  it('cumprodGrad', () => {
+    const funA = (y) => {
+      return mx.cumprod(y).sum();
+    };
+
+    let y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
+    let out = mx.grad(funA)(y);
+    let expected = mx.array([20.0, 38.0, 18.0, 16.0, 8.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 2.0, 3.0]);
+    out =  mx.grad(funA)(y);
+    expected = mx.array([1.0, 38.0, 0.0, 0.0, 0.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 0.0, 3.0]);
+    out = mx.grad(funA)(y);
+    expected = mx.array([1.0, 6.0, 0.0, 0.0, 0.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    const funB = (y) => {
+      return mx.cumprod(y, false, false).sum();
+    };
+
+    y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funB)(y);
+    expected = mx.array([8.0, 14.0, 6.0, 4.0, 0.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funB)(y);
+    expected = mx.array([1.0, 14.0, 0.0, 0.0, 0.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 0.0, 3.0]);
+    out = mx.grad(funB)(y);
+    expected = mx.array([1.0, 6.0, 0.0, 0.0, 0.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    // FIXME(zcbenz): Figure out why the tests are failing.
+    /*
+    const funC = (y) => {
+      return mx.cumprod(y, true, false).sum();
+    };
+
+    y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funC)(y);
+    expected = mx.array([0.0, 12.0, 12.0, 15.0, 11.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funC)(y);
+    expected = mx.array([0.0, 12.0, 6.0, 9.0, 7.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 0.0, 3.0]);
+    out = mx.grad(funC)(y);
+    expected = mx.array([0.0, 0.0, 0.0, 9.0, 1.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    const funD = (y) => {
+      return mx.cumprod(y, true).sum();
+    };
+
+    y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funD)(y);
+    expected = mx.array([12.0, 36.0, 24.0, 27.0, 19.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 2.0, 3.0]);
+    out = mx.grad(funD)(y);
+    expected = mx.array([0.0, 36.0, 6.0, 9.0, 7.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    y = mx.array([2.0, 0.0, 2.0, 0.0, 3.0]);
+    out = mx.grad(funD)(y);
+    expected = mx.array([0.0, 0.0, 0.0, 9.0, 1.0]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+    */
+  });
 });

@@ -68,6 +68,8 @@ There are a few exceptions due to limitations of JavaScript:
 
 Some features are not supported yet and will be implemented in future:
 
+* The `distributed` module has not been implemented.
+* It is not supported using JavaScript Array as index.
 * The function passed to `mx.vmap` must have all parameters being `mx.array`.
 * The captured `inputs`/`outputs` parameters of `mx.compile` has not been
   implemented.
