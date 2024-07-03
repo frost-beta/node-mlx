@@ -762,6 +762,16 @@ describe('layers', function() {
     assert.equal(y.dtype, mx.float32);
   });
 
+  it('softmin', () => {
+    const x = mx.array([1.0, 2.0, 3.0]);
+    const y = nn.softmin(x);
+    const epsilon = 1e-4;
+    const expectedY = mx.array([0.6652, 0.2447, 0.0900]);
+    assertArrayAllTrue(mx.less(mx.abs(mx.subtract(y, expectedY)), epsilon));
+    assert.deepEqual(y.shape, [3]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
   it('softplus', () => {
     const x = mx.array([1.0, -1.0, 0.0]);
     const y = nn.softplus(x);
@@ -862,6 +872,30 @@ describe('layers', function() {
     const y = mx.array([[[0.952574, 1.96403]]], mx.float32);
     const out = nn.glu(x);
     assertArrayAllTrue(mx.isclose(out, y));
+  });
+
+  it('hardTanh', () => {
+    const x = mx.array([1.0, -2.0, 0.0, 0.5, 2.0]);
+    const y = nn.hardTanh(x);
+    const expectedY = mx.array([1.0, -1.0, 0.0, 0.5, 1.0]);
+    assertArrayAllTrue(mx.arrayEqual(y, expectedY));
+    assert.deepEqual(y.shape, [5]);
+    assert.equal(y.dtype, mx.float32);
+  });
+
+  it('hardShrink', () => {
+    let x = mx.array([1.0, -0.5, 0.0, 0.5, -1.5]);
+    let y = nn.hardShrink(x);
+    let expectedY = mx.array([1.0, 0.0, 0.0, 0.0, -1.5]);
+    assertArrayAllTrue(mx.arrayEqual(y, expectedY));
+    assert.deepEqual(y.shape, [5]);
+    assert.equal(y.dtype, mx.float32);
+
+    y = nn.hardShrink(x, 0.1);
+    expectedY = mx.array([1.0, -0.5, 0.0, 0.5, -1.5]);
+    assertArrayAllTrue(mx.arrayEqual(y, expectedY));
+    assert.deepEqual(y.shape, [5]);
+    assert.equal(y.dtype, mx.float32);
   });
 
   it('rope', () => {

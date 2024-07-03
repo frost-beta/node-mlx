@@ -326,6 +326,45 @@ export const hardswish = mx.compile((x: mx.array) => {
 }, true);
 
 /**
+ * Applies the HardTanh function.
+ *
+ * @remarks
+ *
+ * Applies `\max(\min(x, \text{max_val}), \text{min_val})` element-wise.
+ */
+export const hardTanh = mx.compile((x: mx.array, minVal: number = -1, maxVal: number = 1) => {
+  return mx.minimum(mx.maximum(x, minVal), maxVal);
+}, true);
+
+/**
+ * Applies the HardShrink activation function.
+ *
+ * @remarks
+ *
+ * ```math
+ * \text{hardshrink}(x) = \begin{cases}
+ * x & \text{if } x > \lambda \\
+ * x & \text{if } x < -\lambda \\
+ * 0 & \text{otherwise}
+ * \end{cases}
+ * ```
+ */
+export const hardShrink = mx.compile((x: mx.array, lambda: number = 0.5) => {
+  return mx.where(mx.greater(mx.abs(x), lambda), x, 0);
+}, true);
+
+/**
+ * Applies the Softmin function.
+ *
+ * @remarks
+ *
+ * Applies `\frac{e^{-x_i}}{\sum_j e^{-x_j}}` element-wise.
+ */
+export const softmin = mx.compile((x: mx.array, axis: number = -1) => {
+  return mx.softmax(mx.negative(x), axis);
+}, true);
+
+/**
  * Applies the hyperbolic tangent function.
  *
  * @remarks
@@ -674,5 +713,47 @@ export class Step extends Module {
 export class SELU extends Module {
   override forward(x: mx.array): mx.array {
     return selu(x);
+  }
+}
+
+/**
+ * Applies the HardTanh function.
+ *
+ * See `hardTanh` for the functional equivalent.
+ */
+export class HardTanh extends Module {
+  override forward(x: mx.array): mx.array {
+    return hardTanh(x);
+  }
+}
+
+/**
+ * Applies the HardShrink function.
+ *
+ * See `hardShrink` for the functional equivalent.
+ *
+ * @param lambda The `\lambda` value for HardShrink. Default: ``0.5``
+ */
+export class HardShrink extends Module {
+  lambda: number;
+
+  constructor(lambda: number = 0.5) {
+    super();
+    this.lambda = lambda;
+  }
+
+  override forward(x: mx.array): mx.array {
+    return hardShrink(x, this.lambda);
+  }
+}
+
+/**
+ * Applies the Softmin function.
+ *
+ * See `softmin` for the functional equivalent.
+ */
+export class Softmin extends Module {
+  override forward(x: mx.array): mx.array {
+    return softmin(x);
   }
 }

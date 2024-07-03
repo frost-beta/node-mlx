@@ -594,4 +594,18 @@ describe('compile', function() {
     const x = mx.array([0, Number.POSITIVE_INFINITY, 1], mx.bfloat16);
     assertArrayAllTrue(mx.arrayEqual(mx.compile(fn)(x), fn(x)));
   });
+
+  it('maxIntoEqual', () => {
+    const x = mx.random.uniform(0, 1, [1, 2, 2]);
+    mx.eval(x);
+
+    const fn = () => {
+      const maxes = mx.max(x, [1, 2], true);
+      return mx.equal(x, maxes);
+    }
+
+    const out = mx.compile(fn)();
+    const expected = fn();
+    assertArrayAllTrue(mx.arrayEqual(expected, out));
+  });
 });
