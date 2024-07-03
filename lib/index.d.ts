@@ -197,7 +197,8 @@ export namespace core {
   function bitwiseXor(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function broadcastTo(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
   function blockMaskedMM(a: ScalarOrArray, b: ScalarOrArray, blockSize: number, maskOut?: ScalarOrArray, maskLhs?: ScalarOrArray, maskRhs?: ScalarOrArray, s?: StreamOrDevice): array;
-  function blockSparseMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, s?: StreamOrDevice): array;
+  function gatherMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, s?: StreamOrDevice): array;
+  function gatherQMM(x: ScalarOrArray, w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, indicesLhs: ScalarOrArray, indicesRhs: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
   function concatenate(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
@@ -311,6 +312,7 @@ export namespace core {
   function tensordot(a: ScalarOrArray, b: ScalarOrArray, axes?: number | [number | number[], number | number[]], s?: StreamOrDevice): array;
   function tile(array: ScalarOrArray, reps?: number[], s?: StreamOrDevice): array;
   function topk(array: ScalarOrArray, k: number, axis?: number, s?: StreamOrDevice): [array, array];
+  function trace(array: ScalarOrArray, offset: number, axis1: number, axis2: number, dtype?: Dtype, s?: StreamOrDevice): [array, array];
   function transpose(array: ScalarOrArray, ...axes: (number | number[])[]): array;
   function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
   function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;

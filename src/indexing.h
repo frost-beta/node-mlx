@@ -11,6 +11,8 @@ struct Slice {
 
 struct Ellipsis {};
 
+// TODO(zcbenz): Accept int[] as index.
+// https://github.com/ml-explore/mlx/pull/1150
 using ArrayIndex = std::variant<std::monostate,  // null/newaxis
                                 Ellipsis,  // ...
                                 Slice,  // start:stop:step

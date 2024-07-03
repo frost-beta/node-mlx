@@ -602,6 +602,18 @@ mx::array Diag(const mx::array& a,
   return mx::diag(a, k.value_or(0), s);
 }
 
+mx::array Trace(const mx::array& a,
+                int offset,
+                int axis1,
+                int axis2,
+                std::optional<mx::Dtype> dtype,
+                mx::StreamOrDevice s) {
+  if (dtype)
+    return mx::trace(a, offset, axis1, axis2, dtype.value(), s);
+  else
+    return mx::trace(a, offset, axis1, axis2, s);
+}
+
 bool IsSubDtype(std::variant<mx::Dtype, mx::Dtype::Category> dtype,
                 std::variant<mx::Dtype, mx::Dtype::Category> category) {
   if (auto d = std::get_if<mx::Dtype>(&dtype); d) {
@@ -724,6 +736,8 @@ void InitOps(napi_env env, napi_value exports) {
           "topk", KthOpWrapper(&mx::topk, &mx::topk),
           "broadcastTo", &mx::broadcast_to,
           "blockMaskedMM", &mx::block_masked_mm,
+          "gatherMM", &mx::gather_mm,
+          "gatherQMM", &mx::gather_qmm,
           "softmax", &ops::Softmax,
           "concatenate", &ops::Concatenate,
           "stack", &ops::Stack,
@@ -754,10 +768,9 @@ void InitOps(napi_env env, napi_value exports) {
           "tile", &ops::Tile,
           "addmm", &ops::AddMM,
           "blockMaskedMM", &mx::block_masked_mm,
-          "blockSparseMM", &mx::block_sparse_mm,
-          "blockSparseQMM", &mx::block_sparse_qmm,
           "diagonal", &ops::Diagonal,
           "diag", &ops::Diag,
+          "trace", &ops::Trace,
           "atleast1d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_1d),
           "atleast2d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_2d),
           "atleast3d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_3d),

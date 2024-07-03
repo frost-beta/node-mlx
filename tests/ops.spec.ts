@@ -1482,6 +1482,18 @@ describe('ops', () => {
     assertArrayAllTrue(mx.arrayEqual(result, expected));
   });
 
+  it('diag', () => {
+    let x = mx.array([1, 2, 3, 4]);
+    let expected = mx.array([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4]]);
+    let result = mx.diag(x, 0, 0, 1);
+    assertArrayAllTrue(mx.equal(result, expected));
+
+    x = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
+    expected = mx.array([1, 5, 9]);
+    result = mx.diag(x, 0, 0, 1);
+    assertArrayAllTrue(mx.equal(result, expected));
+  });
+
   it('bitwiseOps', () => {
     let a = mx.random.uniform(0, 256, [10]).astype(mx.int32);
     let b = mx.random.uniform(0, 256, [10]).astype(mx.int32);
