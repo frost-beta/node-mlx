@@ -336,6 +336,9 @@ export namespace core {
   function enableCompile(): void;
   function checkpoint<T extends any[], U>(func: (...args: T) => U): (...args: T) => U;
 
+  // Memory management.
+  function tidy<U>(func: () => U): U;
+
   // Metal.
   namespace metal {
     function isAvailable(): boolean;

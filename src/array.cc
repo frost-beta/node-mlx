@@ -1,7 +1,13 @@
+#include <set>
+#include <stack>
+
 #include "src/array.h"
 #include "src/complex.h"
 #include "src/indexing.h"
 #include "src/ops.h"
+#include "src/trees.h"
+
+namespace {
 
 // Implementation of the iterator.
 class ArrayIterator {
@@ -34,10 +40,6 @@ class ArrayIterator {
   size_t index_ = 0;
 };
 
-namespace ki {
-
-namespace {
-
 // Create on heap if T is pointer, otherwise create on stack.
 template<typename T, typename... Args>
 inline T CreateInstance(Args&&... args) {
@@ -58,9 +60,9 @@ bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
   napi_value el;
   if (napi_get_element(env, value, 0, &el) != napi_ok)
     return false;
-  if (IsArray(env, el))
+  if (ki::IsArray(env, el))
     return GetShape(env, el, shape);
-  if (auto a = FromNodeTo<mx::array*>(env, el); a) {
+  if (auto a = ki::FromNodeTo<mx::array*>(env, el); a) {
     for (int i = 0; i < a.value()->ndim(); ++i)
       shape->push_back(a.value()->shape(i));
     return true;
@@ -105,7 +107,7 @@ bool ValidateInputArray(napi_env env,
     napi_value el;
     if (napi_get_element(env, value, i, &el) != napi_ok)
       return false;
-    if (IsArray(env, el)) {
+    if (ki::IsArray(env, el)) {
       // Look into nested array.
       if (ValidateInputArray(env, el, shape, input_type, dim + 1))
         continue;
@@ -138,10 +140,10 @@ bool FlattenArray(napi_env env, napi_value value, std::vector<T>* result) {
     napi_value el;
     if (napi_get_element(env, value, i, &el) != napi_ok)
       return false;
-    if (IsArray(env, el)) {
+    if (ki::IsArray(env, el)) {
       FlattenArray(env, el, result);
     } else {
-      std::optional<T> out = FromNodeTo<T>(env, el);
+      std::optional<T> out = ki::FromNodeTo<T>(env, el);
       if (!out)
         return false;
       result->push_back(std::move(*out));
@@ -158,13 +160,13 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
     return T();
   switch (type) {
     case napi_number:
-      return CreateInstance<T>(FromNodeTo<float>(env, value).value(),
+      return CreateInstance<T>(ki::FromNodeTo<float>(env, value).value(),
                                dtype.value_or(mx::float32));
     case napi_boolean:
-      return CreateInstance<T>(FromNodeTo<bool>(env, value).value(),
+      return CreateInstance<T>(ki::FromNodeTo<bool>(env, value).value(),
                                dtype.value_or(mx::bool_));
     case napi_object: {
-      if (IsArray(env, value)) {
+      if (ki::IsArray(env, value)) {
         // When JS array is passed, first get its shape, then validate it and
         // decide a proper dtype for it.
         std::vector<int> shape;
@@ -203,13 +205,13 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
         }
       } else {
         // Test if it is an mx.array instance.
-        auto a = FromNodeTo<mx::array*>(env, value);
+        auto a = ki::FromNodeTo<mx::array*>(env, value);
         if (a) {
           return CreateInstance<T>(mx::astype(*a.value(),
                                    dtype.value_or(a.value()->dtype())));
         }
         // Test complex number.
-        auto c = FromNodeTo<std::complex<float>>(env, value);
+        auto c = ki::FromNodeTo<std::complex<float>>(env, value);
         if (c) {
           return CreateInstance<T>(*c, dtype.value_or(mx::complex64));
         }
@@ -253,31 +255,31 @@ napi_value Item(mx::array* a, napi_env env) {
   a->eval();
   switch (a->dtype()) {
     case mx::bool_:
-      return ToNodeValue(env, a->item<bool>());
+      return ki::ToNodeValue(env, a->item<bool>());
     case mx::uint8:
-      return ToNodeValue(env, a->item<uint8_t>());
+      return ki::ToNodeValue(env, a->item<uint8_t>());
     case mx::uint16:
-      return ToNodeValue(env, a->item<uint16_t>());
+      return ki::ToNodeValue(env, a->item<uint16_t>());
     case mx::uint32:
-      return ToNodeValue(env, a->item<uint32_t>());
+      return ki::ToNodeValue(env, a->item<uint32_t>());
     case mx::uint64:
-      return ToNodeValue(env, a->item<uint64_t>());
+      return ki::ToNodeValue(env, a->item<uint64_t>());
     case mx::int8:
-      return ToNodeValue(env, a->item<int8_t>());
+      return ki::ToNodeValue(env, a->item<int8_t>());
     case mx::int16:
-      return ToNodeValue(env, a->item<int16_t>());
+      return ki::ToNodeValue(env, a->item<int16_t>());
     case mx::int32:
-      return ToNodeValue(env, a->item<int32_t>());
+      return ki::ToNodeValue(env, a->item<int32_t>());
     case mx::int64:
-      return ToNodeValue(env, a->item<int64_t>());
+      return ki::ToNodeValue(env, a->item<int64_t>());
     case mx::float16:
-      return ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
+      return ki::ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
     case mx::float32:
-      return ToNodeValue(env, a->item<float>());
+      return ki::ToNodeValue(env, a->item<float>());
     case mx::bfloat16:
-      return ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
+      return ki::ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
     case mx::complex64:
-      return ToNodeValue(env, a->item<std::complex<float>>());
+      return ki::ToNodeValue(env, a->item<std::complex<float>>());
   }
 }
 
@@ -295,7 +297,7 @@ napi_value ArrayToNodeValue(napi_env env,
     if (dim == a.ndim() - 1) {
       // The last dimension only has scalars.
       napi_set_element(env, ret, i,
-                       ToNodeValue(env, static_cast<U>(a.data<T>()[index])));
+                       ki::ToNodeValue(env, static_cast<U>(a.data<T>()[index])));
     } else {
       napi_set_element(env, ret, i,
                        ArrayToNodeValue<T, U>(env, a, index, dim + 1));
@@ -343,8 +345,8 @@ napi_value ToList(mx::array* a, napi_env env) {
 // Get the Symbol.iterator.
 napi_value SymbolIterator(napi_env env) {
   napi_value result;
-  if (Get(env, ki::Global(env), "Symbol", &result) &&
-      Get(env, result, "iterator", &result)) {
+  if (ki::Get(env, ki::Global(env), "Symbol", &result) &&
+      ki::Get(env, result, "iterator", &result)) {
     return result;
   }
   return nullptr;
@@ -355,7 +357,39 @@ ArrayIterator* CreateArrayIterator(mx::array* a) {
   return new ArrayIterator(*a);
 }
 
+// Store array pointers allocated during a tidy call.
+std::stack<std::set<mx::array*>> g_tidy_arrays;
+
+// Release all array pointers allocated during the call.
+napi_value Tidy(napi_env env, std::function<napi_value()> func) {
+  // Push a new set to stack.
+  g_tidy_arrays.push(std::set<mx::array*>());
+  auto& top = g_tidy_arrays.top();
+  // Execute the function and exclude the arrays in results from the stack.
+  napi_value result = func();
+  TreeVisit(env, result, [&top](napi_env env, napi_value value) {
+    if (auto a = ki::FromNodeTo<mx::array*>(env, value); a)
+      top.erase(*a);
+    return napi_value();
+  });
+  // Clear the arrays in the stack.
+  for (mx::array* a : top) {
+    napi_value obj;
+    // Get the JS wrapper from the pointer and unbind it.
+    if (ki::InstanceData::Get(env)->GetWeakRef<mx::array>(a, &obj) &&
+        napi_remove_wrap(env, obj, reinterpret_cast<void**>(&a)) == napi_ok) {
+      // The finalizer won't run after removing wrap.
+      ki::InstanceData::Get(env)->DeleteWeakRef<mx::array>(a);
+      delete a;
+    }
+  }
+  g_tidy_arrays.pop();
+  return result;
+}
+
 }  // namespace
+
+namespace ki {
 
 // Allow passing Dtype to JS directly, no memory management involved as they are
 // static globals.
@@ -448,6 +482,21 @@ std::optional<mx::Dtype::Category> Type<mx::Dtype::Category>::FromNode(
     return mx::Dtype::Category::generic;
   return std::nullopt;
 }
+
+template<>
+struct TypeBridge<mx::array> {
+  static inline mx::array* Wrap(mx::array* ptr) {
+    if (!g_tidy_arrays.empty())
+      g_tidy_arrays.top().insert(ptr);
+    return ptr;
+  }
+  static inline void Finalize(mx::array* ptr) {
+    if (!g_tidy_arrays.empty())
+      g_tidy_arrays.top().erase(ptr);
+    // Every array pointer passed to JS is managed by us.
+    delete ptr;
+  }
+};
 
 // static
 mx::array* Type<mx::array>::Constructor(napi_env env,
@@ -620,4 +669,7 @@ void InitArray(napi_env env, napi_value exports) {
 
   ki::Set(env, exports,
           "array", ki::Class<mx::array>());
+
+  ki::Set(env, exports,
+          "tidy", &Tidy);
 }

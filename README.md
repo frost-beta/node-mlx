@@ -79,6 +79,23 @@ Some features are not supported yet and will be implemented in future:
   parameter calls like `mx.uniform({shape: [2, 2]})` has not been implemented.
 * The `.npz` tensor format is not supported yet.
 
+### JavaScript-only APIs
+
+There are a few new APIs in node-mlx, for solving
+[JavaScript-only problems](https://github.com/frost-beta/node-mlx/issues/2).
+
+#### `mx.tidy`
+
+This is very similar to the [`tf.tidy`](https://js.tensorflow.org/api/latest/#tidy)
+API of TensorFlow.js, which cleans up all intermediate tensors allocated in the
+passed functions except for the returned ones.
+
+```typescript
+let result = mx.tidy(() => {
+  return model.forward(x);
+});
+```
+
 ### Complex numbers
 
 There is no built-in complex numbers in JavaScript, and we use objects to

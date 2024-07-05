@@ -27,9 +27,12 @@ bool ReadArgs(ki::Arguments* args, std::vector<T>* results) {
 
 // Convert the type to string.
 template<typename T>
-std::string ToString(const T* value) {
+std::string ToString(napi_env env, napi_value value) {
+  std::optional<T*> self = ki::FromNodeTo<T*>(env, value);
+  if (!self)
+    return std::string("The object has been destroyed.");
   std::ostringstream ss;
-  ss << *value;
+  ss << *self.value();
   return ss.str();
 }
 
