@@ -1,7 +1,13 @@
 import {core as mx} from '..';
 import {assert} from 'chai';
 
-describe('memory', () => {
+describe('js', () => {
+  describe('toString', () => {
+    it('array', () => {
+      assert.equal(mx.array([1, 2, 3, 4]), 'array([1, 2, 3, 4], dtype=float32)');
+    });
+  });
+
   describe('tidy', () => {
     it('unwrapObjects', () => {
       let objects = [];
