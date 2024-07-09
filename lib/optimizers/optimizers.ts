@@ -111,7 +111,9 @@ export abstract class Optimizer {
     }
 
     // Increment the step.
-    this.state['step'] = mx.add(this.step, 1);
+    const step = mx.add(this.step, 1);
+    mx.dispose(this.state['step']);
+    this.state['step'] = step;
 
     // Apply the update.
     return utils.treeMap(this.applySingle.bind(this), gradients, [parameters, this.state]) as Nested<mx.array>;
