@@ -48,4 +48,12 @@ describe('js', () => {
       assert.equal(objects[99].item(), 8964);
     });
   });
+
+  describe('dispose', () => {
+    it('nested', () => {
+      const obj = {a: mx.array([1, 2, 3, 4])};
+      mx.dispose(obj);
+      assert.throws(() => obj.a.size, 'Error converting "this" to array.');
+    });
+  });
 });

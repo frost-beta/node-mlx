@@ -38,6 +38,9 @@ struct Type<mx::array> : public AllowPassByValue<mx::array> {
   static void Define(napi_env env,
                      napi_value constructor,
                      napi_value prototype);
+  // The default FromNode method only accepts array instance, with the custom
+  // FromNode converter we can pass scalars to ops directly, making calls like
+  // mx.equal(1, 2) possible.
   static std::optional<mx::array> FromNode(napi_env env,
                                            napi_value value);
 };

@@ -86,7 +86,7 @@ There are a few new APIs in node-mlx, for solving
 
 #### `mx.tidy`
 
-This is very similar to the [`tf.tidy`](https://js.tensorflow.org/api/latest/#tidy)
+This is the same with [`tf.tidy`](https://js.tensorflow.org/api/latest/#tidy)
 API of TensorFlow.js, which cleans up all intermediate tensors allocated in the
 passed functions except for the returned ones.
 
@@ -94,6 +94,15 @@ passed functions except for the returned ones.
 let result = mx.tidy(() => {
   return model.forward(x);
 });
+```
+
+### `mx.dispose`
+
+This is the same with [`tf.dispose`](https://js.tensorflow.org/api/latest/#dispose)
+API of TensorFlow.js, which cleans up all the tensors found in the object.
+
+```typescript
+mx.dispose({ a: mx.array([1, 2, 3, 4]) })
 ```
 
 ### Complex numbers

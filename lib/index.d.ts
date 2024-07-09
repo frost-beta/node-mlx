@@ -338,6 +338,7 @@ export namespace core {
 
   // Memory management.
   function tidy<U>(func: () => U): U;
+  function dispose(tree: object);
 
   // Metal.
   namespace metal {

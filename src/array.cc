@@ -207,8 +207,8 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
         // Test if it is an mx.array instance.
         auto a = ki::FromNodeTo<mx::array*>(env, value);
         if (a) {
-          return CreateInstance<T>(mx::astype(*a.value(),
-                                   dtype.value_or(a.value()->dtype())));
+          return CreateInstance<T>(
+              mx::astype(*a.value(), dtype.value_or(a.value()->dtype())));
         }
         // Test complex number.
         auto c = ki::FromNodeTo<std::complex<float>>(env, value);
@@ -360,6 +360,19 @@ ArrayIterator* CreateArrayIterator(mx::array* a) {
 // Store array pointers allocated during a tidy call.
 std::stack<std::set<mx::array*>> g_tidy_arrays;
 
+// Delete the array bound to JS object.
+void DeleteBoundArray(napi_env env, mx::array* a) {
+  if (ki::InstanceData::Get(env)->DeleteWeakRef<mx::array>(a))
+    delete a;
+}
+
+// Detach the mx::array from its wrapper object and delete it.
+void DetachAndDeleteBoundArray(napi_env env, napi_value value) {
+  mx::array* a;
+  if (napi_remove_wrap(env, value, reinterpret_cast<void**>(&a)) == napi_ok)
+    DeleteBoundArray(env, a);
+}
+
 // Release all array pointers allocated during the call.
 napi_value Tidy(napi_env env, std::function<napi_value()> func) {
   // Push a new set to stack.
@@ -374,17 +387,29 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
   });
   // Clear the arrays in the stack.
   for (mx::array* a : top) {
+    // Get the JS object bound to the array.
     napi_value obj;
-    // Get the JS wrapper from the pointer and unbind it.
-    if (ki::InstanceData::Get(env)->GetWeakRef<mx::array>(a, &obj) &&
-        napi_remove_wrap(env, obj, reinterpret_cast<void**>(&a)) == napi_ok) {
-      // The finalizer won't run after removing wrap.
-      ki::InstanceData::Get(env)->DeleteWeakRef<mx::array>(a);
-      delete a;
+    if (ki::InstanceData::Get(env)->GetWeakRef<mx::array>(a, &obj)) {
+      // Unwrap it and delete the pointer.
+      DetachAndDeleteBoundArray(env, obj);
+    } else {
+      // If we failed to get the weak ref, it means the object is between GC
+      // phase 1 and 2: the JS object has been collected but the finalizer for
+      // the native object has not run. In this case we free the native object
+      // directly.
+      DeleteBoundArray(env, a);
     }
   }
   g_tidy_arrays.pop();
   return result;
+}
+
+// Dispose all arrays found in the tree.
+void Dispose(napi_env env, napi_value tree) {
+  TreeVisit(env, tree, [](napi_env env, napi_value value) {
+    DetachAndDeleteBoundArray(env, value);
+    return napi_value();
+  });
 }
 
 }  // namespace
@@ -580,13 +605,12 @@ void Type<mx::array>::Define(napi_env env,
 // static
 std::optional<mx::array> Type<mx::array>::FromNode(napi_env env,
                                                    napi_value value) {
-  // The default FromNode method only accepts array instance, with the custom
-  // FromNode converter we can pass scalars to ops directly, making calls like
-  // mx.equal(1, 2) possible.
-  auto a = CreateArray<std::optional<mx::array>>(env, value, std::nullopt);
+  // First try to get the array instance directly.
+  auto a = AllowPassByValue<mx::array>::FromNode(env, value);
   if (a)
     return a;
-  return AllowPassByValue<mx::array>::FromNode(env, value);
+  // Fallback to creating an array.
+  return CreateArray<std::optional<mx::array>>(env, value, std::nullopt);
 }
 
 template<>
@@ -671,5 +695,6 @@ void InitArray(napi_env env, napi_value exports) {
           "array", ki::Class<mx::array>());
 
   ki::Set(env, exports,
-          "tidy", &Tidy);
+          "tidy", &Tidy,
+          "dispose", &Dispose);
 }
