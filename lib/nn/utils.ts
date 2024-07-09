@@ -22,7 +22,11 @@ export function valueAndGrad<T extends any[], U>(model: Module,
   const valueGradFn = mx.valueAndGrad(innerFn);
 
   function wrappedValueGradFn(...args: T) {
-    let [value, grad] = valueGradFn(model.trainableParameters(), ...args);
+    const params = model.trainableParameters();
+    let [value, grad] = valueGradFn(params, ...args);
+    // The mx.valueAndGrad API replaces the params with tracers and they got
+    // updated into the model, so we can dispose the old params.
+    mx.dispose(params);
     return [value, grad];
   }
 
