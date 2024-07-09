@@ -105,8 +105,10 @@ export abstract class Optimizer {
       this.init(gradients);
 
     // Update any scheduled variables.
-    for (let param in this.#schedulers)
+    for (let param in this.#schedulers) {
+      mx.dispose(this.state[param]);
       this.state[param] = this.#schedulers[param](this.step);
+    }
 
     // Increment the step.
     this.state['step'] = mx.add(this.step, 1);
@@ -290,6 +292,8 @@ export class RMSprop extends Optimizer {
     let v = state['v'];
     v = mx.add(mx.multiply(alpha, v),
                mx.multiply(1 - alpha, mx.square(gradient)));
+
+    mx.dispose(state['v']);
     state['v'] = v;
 
     return mx.subtract(parameter,
@@ -350,6 +354,7 @@ export class Adagrad extends Optimizer {
     const eps = this.eps;
 
     const v = mx.add(state['v'], mx.square(gradient));
+    mx.dispose(state['v']);
     state['v'] = v;
 
     return mx.subtract(parameter,
@@ -428,6 +433,8 @@ export class AdaDelta extends Optimizer {
     u = mx.add(mx.multiply(rho, u),
                mx.multiply(1 - rho, mx.square(d)));
 
+    mx.dispose(state['v']);
+    mx.dispose(state['u']);
     state['v'] = v;
     state['u'] = u;
 
@@ -496,6 +503,9 @@ export class Adam extends Optimizer {
                      mx.multiply(1 - b1, gradient));
     const v = mx.add(mx.multiply(b2, state['v']),
                      mx.multiply(1 - b2, mx.square(gradient)));
+
+    mx.dispose(state['m']);
+    mx.dispose(state['v']);
     state['m'] = m;
     state['v'] = v;
 
@@ -613,6 +623,9 @@ export class Adamax extends Adam {
                      mx.multiply(1 - b1, gradient));
     const v = mx.maximum(mx.multiply(b2, state['v']),
                          gradient.abs());
+
+    mx.dispose(state['m']);
+    mx.dispose(state['v']);
     state['m'] = m;
     state['v'] = v;
 
@@ -681,8 +694,10 @@ export class Lion extends Optimizer {
     const m = state['m'];
     const c = mx.add(mx.multiply(b1, m),
                      mx.multiply(1 - b1, gradient));
-    state['m'] = mx.add(mx.multiply(b2, m),
-                        mx.multiply(1 - b2, gradient));
+    const d = mx.add(mx.multiply(b2, m),
+                     mx.multiply(1 - b2, gradient));
+    mx.dispose(state['m']);
+    state['m'] = d;
     if (this.weightDecay > 0) {
       parameter = mx.multiply(mx.subtract(1, mx.multiply(lr, this.weightDecay)),
                               parameter);
@@ -799,6 +814,8 @@ export class Adafactor extends Optimizer {
       expAvgSqCol = mx.add(mx.multiply(beta2, expAvgSqCol),
                            mx.multiply(mx.subtract(1, beta2),
                                        mx.mean(update, -2)));
+      mx.dispose(state['expAvgSqRow']);
+      mx.dispose(state['expAvgSqCol']);
       state['expAvgSqRow'] = expAvgSqRow;
       state['expAvgSqCol'] = expAvgSqCol;
       update = this.approximateExpMovingAvg(expAvgSqRow, expAvgSqCol);
@@ -808,6 +825,7 @@ export class Adafactor extends Optimizer {
       expAvgSq = mx.add(mx.multiply(beta2, expAvgSq),
                         mx.multiply(mx.subtract(1, beta2),
                                     update));
+      mx.dispose(state['expAvgSq']);
       state['expAvgSq'] = expAvgSq;
       update = mx.multiply(mx.rsqrt(expAvgSq), gradient);
     }
@@ -822,6 +840,7 @@ export class Adafactor extends Optimizer {
       let expAvg = state['expAvg'];
       expAvg = mx.add(mx.multiply(this.beta1, expAvg),
                       mx.multiply(1 - this.beta1, update));
+      mx.dispose(state['expAvg']);
       state['expAvg'] = expAvg;
       update = expAvg;
     }
