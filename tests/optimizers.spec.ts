@@ -190,7 +190,7 @@ describe('optimizers', () => {
 
     // Uncompiled version
     function step(x: mx.array) {
-      const [_, grad] = nn.valueAndGrad(model, loss)(model, x);
+      const [_, grad] = nn.valueAndGrad(model, loss, {noAutoDispose: true})(model, x);
       optim.update(model, grad);
     }
 

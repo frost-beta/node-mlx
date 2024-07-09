@@ -13,7 +13,8 @@ import {NestedDict} from '../utils';
  * respect to the trainable parameters of `model`.
  */
 export function valueAndGrad<T extends any[], U>(model: Module,
-                                                 func: (...args: T) => U) {
+                                                 func: (...args: T) => U,
+                                                 options?: {noAutoDispose: boolean}) {
   const innerFn = (params: NestedDict<mx.array>, ...args: T) => {
     model.update(params);
     return func(...args);
@@ -26,7 +27,8 @@ export function valueAndGrad<T extends any[], U>(model: Module,
     let [value, grad] = valueGradFn(params, ...args);
     // The mx.valueAndGrad API replaces the params with tracers and they got
     // updated into the model, so we can dispose the old params.
-    mx.dispose(params);
+    if (!options.noAutoDispose)
+      mx.dispose(params);
     return [value, grad];
   }
 
