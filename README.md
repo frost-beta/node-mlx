@@ -23,7 +23,10 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
 ## Examples
 
-* [llama3.js](https://github.com/frost-beta/llama3.js)
+* [llama3.js](https://github.com/frost-beta/llama3.js) - A JavaScript
+  implementation of Llama 3.
+* [train-model-with-js](https://github.com/frost-beta/train-model-with-js) -
+  Train a simple text generation model with JavaScript.
 
 ## Usage
 
