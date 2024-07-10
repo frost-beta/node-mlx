@@ -27,7 +27,7 @@ export function valueAndGrad<T extends any[], U>(model: Module,
     let [value, grad] = valueGradFn(params, ...args);
     // The mx.valueAndGrad API replaces the params with tracers and they got
     // updated into the model, so we can dispose the old params.
-    if (!options.noAutoDispose)
+    if (!options?.noAutoDispose)
       mx.dispose(params);
     return [value, grad];
   }
