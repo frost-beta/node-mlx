@@ -399,6 +399,21 @@ describe('array', () => {
     });
   });
 
+  it('indexingGrad', () => {
+    let x = mx.array([[1, 2], [3, 4]], mx.float32);
+    let ind = mx.array([0, 1, 0], mx.float32);
+
+    function indexFn(x, ind) {
+      return mx.sum(x.index(ind.astype(mx.int32)));
+    }
+
+    let [gradX, gradInd] = mx.grad(indexFn, [0, 1])(x, ind);
+    const expected = mx.array([[2, 2], [1, 1]]);
+
+    assertArrayAllTrue(mx.arrayEqual(gradX, expected));
+    assertArrayAllTrue(mx.arrayEqual(gradInd, mx.zeros(ind.shape)));
+  });
+
   describe('multiDimentionalIndexing', () => {
     const a = mx.arange(64, mx.int32).reshape([8, 8]);
 
