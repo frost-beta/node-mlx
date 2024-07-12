@@ -339,6 +339,7 @@ export namespace core {
   // Memory management.
   function tidy<U>(func: () => U): U;
   function dispose(tree: unknown);
+  function getWrappersCount(): number;
 
   // Metal.
   namespace metal {

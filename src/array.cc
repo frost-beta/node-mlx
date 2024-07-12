@@ -375,11 +375,16 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
   // Clear the arrays in the stack.
   ki::InstanceData* instance_data = ki::InstanceData::Get(env);
   for (mx::array* a : top) {
+    // The arary might be in 3 states:
+    // 1. Its JS object is well alive.
+    // 2. The JS object has been fully GCed.
+    // 3. The JS object is marked as dead, but the finalizer has not run.
+    // We have to unbind the JS object in 1, and only delete array in 1 and 3.
     napi_value value;
     if (instance_data->GetWrapper<mx::array>(a, &value))
       napi_remove_wrap(env, value, nullptr);
-    instance_data->DeleteWrapper<mx::array>(a);
-    delete a;
+    if (instance_data->DeleteWrapper<mx::array>(a))
+      delete a;
   }
   g_tidy_arrays.pop();
   return result;
@@ -396,6 +401,11 @@ void Dispose(napi_env env, napi_value tree) {
     }
     return napi_value();
   });
+}
+
+// Return how many wrappers are there, used for debugging leaks.
+size_t GetWrappersCount(napi_env env) {
+  return ki::InstanceData::Get(env)->GetWrappersCount();
 }
 
 }  // namespace
@@ -502,8 +512,6 @@ struct TypeBridge<mx::array> {
     return ptr;
   }
   static inline void Finalize(mx::array* ptr) {
-    if (!g_tidy_arrays.empty())
-      g_tidy_arrays.top().erase(ptr);
     // Every array pointer passed to JS is managed by us.
     delete ptr;
   }
@@ -682,5 +690,6 @@ void InitArray(napi_env env, napi_value exports) {
 
   ki::Set(env, exports,
           "tidy", &Tidy,
-          "dispose", &Dispose);
+          "dispose", &Dispose,
+          "getWrappersCount", &GetWrappersCount);
 }
