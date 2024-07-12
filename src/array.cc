@@ -360,19 +360,6 @@ ArrayIterator* CreateArrayIterator(mx::array* a) {
 // Store array pointers allocated during a tidy call.
 std::stack<std::set<mx::array*>> g_tidy_arrays;
 
-// Delete the array bound to JS object.
-void DeleteBoundArray(napi_env env, mx::array* a) {
-  if (ki::InstanceData::Get(env)->DeleteWeakRef<mx::array>(a))
-    delete a;
-}
-
-// Detach the mx::array from its wrapper object and delete it.
-void DetachAndDeleteBoundArray(napi_env env, napi_value value) {
-  mx::array* a;
-  if (napi_remove_wrap(env, value, reinterpret_cast<void**>(&a)) == napi_ok)
-    DeleteBoundArray(env, a);
-}
-
 // Release all array pointers allocated during the call.
 napi_value Tidy(napi_env env, std::function<napi_value()> func) {
   // Push a new set to stack.
@@ -386,19 +373,13 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
     return napi_value();
   });
   // Clear the arrays in the stack.
+  ki::InstanceData* instance_data = ki::InstanceData::Get(env);
   for (mx::array* a : top) {
-    // Get the JS object bound to the array.
-    napi_value obj;
-    if (ki::InstanceData::Get(env)->GetWeakRef<mx::array>(a, &obj)) {
-      // Unwrap it and delete the pointer.
-      DetachAndDeleteBoundArray(env, obj);
-    } else {
-      // If we failed to get the weak ref, it means the object is between GC
-      // phase 1 and 2: the JS object has been collected but the finalizer for
-      // the native object has not run. In this case we free the native object
-      // directly.
-      DeleteBoundArray(env, a);
-    }
+    napi_value value;
+    if (instance_data->GetWrapper<mx::array>(a, &value))
+      napi_remove_wrap(env, value, nullptr);
+    instance_data->DeleteWrapper<mx::array>(a);
+    delete a;
   }
   g_tidy_arrays.pop();
   return result;
@@ -406,8 +387,13 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
 
 // Dispose all arrays found in the tree.
 void Dispose(napi_env env, napi_value tree) {
-  TreeVisit(env, tree, [](napi_env env, napi_value value) {
-    DetachAndDeleteBoundArray(env, value);
+  ki::InstanceData* instance_data = ki::InstanceData::Get(env);
+  TreeVisit(env, tree, [instance_data](napi_env env, napi_value value) {
+    if (auto a = ki::FromNodeTo<mx::array*>(env, value); a) {
+      napi_remove_wrap(env, value, nullptr);
+      instance_data->DeleteWrapper<mx::array>(a.value());
+      delete a.value();
+    }
     return napi_value();
   });
 }
