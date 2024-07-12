@@ -1327,7 +1327,9 @@ describe('ops', () => {
     assert.deepEqual(sortedX.tolist(), [1, 2, 3]);
   });
 
-  it('largeBinary', () => {
+  it('largeBinary', function () {
+    this.timeout(10 * 1000);  // slow in QEMU
+
     const a = mx.ones([1000, 214748], mx.int8);
     const b = mx.ones([214748], mx.int8);
     assert.equal(mx.add(a, b).index(0, 0).item(), 2);
