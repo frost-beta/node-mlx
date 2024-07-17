@@ -29,6 +29,8 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
   Train a simple text generation model with JavaScript.
 * [train-llama3-js](https://github.com/frost-beta/train-llama3-js) - Train a
   tiny Llama3 model with parquet datasets.
+* [train-japanese-llama3-js](https://github.com/frost-beta/train-japanese-llama3-js) -
+  Train a Japanese language model.
 
 ## Usage
 
