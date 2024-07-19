@@ -52,29 +52,27 @@ napi_value ListVisit(napi_env env,
                      napi_value value,
                      const ListVisitCallback& visit) {
   // Iterate arrays.
-  if (ki::IsArray(env, value)) {
-    uint32_t length = 0;
-    napi_get_array_length(env, value, &length);
-    for (uint32_t i = 0; i < length; ++i) {
-      napi_value item;
-      if (napi_get_element(env, value, i, &item) != napi_ok)
-        break;
-      napi_value result = visit(env, item, false);
-      if (result)
-        napi_set_element(env, value, i, result);
-    }
+  if (ki::IterateArray<napi_value>(
+          env, value,
+          [&env, &value, &visit](uint32_t i, napi_value item) {
+            napi_value result = visit(env, item, false);
+            if (result)
+              napi_set_element(env, value, i, result);
+             return true;
+          })) {
     return nullptr;
   }
   // Only iterate objects when they do not wrap a native instance.
   void* ptr;
   if (napi_unwrap(env, value, &ptr) != napi_ok) {
-    auto m = ki::FromNodeTo<std::map<napi_value, napi_value>>(env, value);
-    if (m) {
-      for (auto [key, item] : *m) {
-        napi_value result = visit(env, item, false);
-        if (result)
-          napi_set_property(env, value, key, result);
-      }
+    if (ki::IterateObject<napi_value, napi_value>(
+            env, value,
+            [&env, &value, &visit](napi_value key, napi_value item) {
+              napi_value result = visit(env, item, false);
+              if (result)
+                napi_set_property(env, value, key, result);
+              return true;
+            })) {
       return nullptr;
     }
   }
@@ -103,12 +101,16 @@ napi_value TreeMap(napi_env env,
     // Only iterate objects when they do not wrap a native instance.
     void* ptr;
     if (napi_unwrap(env, value, &ptr) != napi_ok) {
-      auto m = ki::FromNodeTo<std::map<napi_value, napi_value>>(env, value);
-      if (m) {
-        napi_value new_dict = nullptr;
-        napi_create_object(env, &new_dict);
-        for (auto [key, item] : *m)
-          napi_set_property(env, new_dict, key, TreeMap(env, item, recurse));
+      napi_value new_dict = nullptr;
+      napi_create_object(env, &new_dict);
+      if (ki::IterateObject<napi_value, napi_value>(
+              env, value,
+              [&env, &value, &visit, &recurse, &new_dict](napi_value key,
+                                                          napi_value item) {
+                napi_set_property(env, new_dict, key,
+                                  TreeMap(env, item, recurse));
+                return true;
+              })) {
         return new_dict;
       }
     }
