@@ -25,6 +25,8 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
 * [llama3.js](https://github.com/frost-beta/llama3.js) - A JavaScript
   implementation of Llama 3.
+* [llm.js](https://github.com/frost-beta/llm.js) - Load language models
+  locally with JavaScript.
 * [train-model-with-js](https://github.com/frost-beta/train-model-with-js) -
   Train a simple text generation model with JavaScript.
 * [train-llama3-js](https://github.com/frost-beta/train-llama3-js) - Train a
