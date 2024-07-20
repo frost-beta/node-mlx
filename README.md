@@ -33,6 +33,8 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
   tiny Llama3 model with parquet datasets.
 * [train-japanese-llama3-js](https://github.com/frost-beta/train-japanese-llama3-js) -
   Train a Japanese language model.
+* [fine-tune-decoder-js](https://github.com/frost-beta/fine-tune-decoder-js) -
+  Fine-tune a decoder-only model.
 
 ## Usage
 
