@@ -127,6 +127,7 @@ export abstract class Optimizer {
   }
 
   set state(state: Record<string, unknown>) {
+    this.#initialized = true;
     this.#state = state;
   }
 

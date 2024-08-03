@@ -111,6 +111,18 @@ mx::array Categorical(
   return mx::random::categorical(logits, axis, key, s);
 }
 
+mx::array Laplace(std::optional<std::vector<int>> shape,
+                  std::optional<mx::Dtype> dtype,
+                  std::optional<float> loc,
+                  std::optional<float> scale,
+                  std::optional<mx::array> key,
+                  mx::StreamOrDevice s) {
+  return mx::random::normal(
+      std::move(shape.value_or(std::vector<int>())),
+      dtype.value_or(mx::float32), loc.value_or(0), scale.value_or(1),
+      std::move(key), s);
+}
+
 }  // namespace random_ops
 
 void InitRandom(napi_env env, napi_value exports) {
@@ -128,5 +140,6 @@ void InitRandom(napi_env env, napi_value exports) {
           "bernoulli", &random_ops::Bernoulli,
           "truncatedNormal", &random_ops::TruncatedNormal,
           "gumbel", &random_ops::Gumbel,
-          "categorical", &random_ops::Categorical);
+          "categorical", &random_ops::Categorical,
+          "laplace", &random_ops::Laplace);
 }

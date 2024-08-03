@@ -85,6 +85,32 @@ describe('losses', () => {
       const expectedSum = expectedNone.sum();
       assertArrayAllTrue(mx.allclose(lossesSum, expectedSum));
     });
+
+    it('tinyProbsAsInputs', () => {
+      const TINY_PROB = 1e-59;
+      const probs = mx.array([0, TINY_PROB, 1 - TINY_PROB, 1]);
+      const targets = mx.array([0, 0, 1, 1]);
+
+      const lossesNone = nn.losses.binaryCrossEntropy(
+        probs, targets, undefined, false, 'none'
+      );
+      const expectedNone = mx.array([0.0, TINY_PROB, TINY_PROB, 0.0]);
+      assertArrayAllTrue(mx.allclose(lossesNone, expectedNone));
+
+      // Test with reduction 'mean'
+      const lossesMean = nn.losses.binaryCrossEntropy(
+        probs, targets, undefined, false, 'mean'
+      );
+      const expectedMean = mx.mean(expectedNone);
+      assertArrayAllTrue(mx.allclose(lossesMean, expectedMean));
+
+      // Test with reduction 'sum'
+      const lossesSum = nn.losses.binaryCrossEntropy(
+        probs, targets, undefined, false, 'sum'
+      );
+      const expectedSum = mx.sum(expectedNone);
+      assertArrayAllTrue(mx.allclose(lossesSum, expectedSum));
+    });
   });
 
   it('l1Loss', () => {

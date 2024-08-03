@@ -47,40 +47,42 @@ describe('random', () => {
     assert.equal(a.dtype, mx.bfloat16);
   });
 
-  it('normal', () => {
-    let key = mx.random.key(0);
-    let a = mx.random.normal([], mx.float32, 0, 1, key);
-    assert.equal(a.shape.length, 0);
-    assert.equal(a.dtype, mx.float32);
+  it('normalAndLaplace', () => {
+    for (const distributionSampler of [mx.random.normal, mx.random.laplace]) {
+      let key = mx.random.key(0);
+      let a = distributionSampler([], mx.float32, 0, 1, key);
+      assert.equal(a.shape.length, 0);
+      assert.equal(a.dtype, mx.float32);
 
-    let b = mx.random.normal([], mx.float32, 0, 1, key);
-    assert.equal(a.item(), b.item());
+      let b = distributionSampler([], mx.float32, 0, 1, key);
+      assert.equal(a.item(), b.item());
 
-    a = mx.random.normal([2, 3]);
-    assert.deepEqual(a.shape, [2, 3]);
+      a = distributionSampler([2, 3]);
+      assert.deepEqual(a.shape, [2, 3]);
 
-    [mx.float16, mx.bfloat16].forEach(t => {
-      a = mx.random.normal([], t);
-      assert.equal(a.dtype, t);
-    });
+      [mx.float16, mx.bfloat16].forEach(t => {
+        a = distributionSampler([], t);
+        assert.equal(a.dtype, t);
+      });
 
-    const loc = 1.0;
-    const scale = 2.0;
+      const loc = 1.0;
+      const scale = 2.0;
 
-    a = mx.random.normal([3, 2], mx.float32, loc, scale, key);
-    b = mx.add(mx.multiply(scale, mx.random.normal([3, 2], mx.float32, 0, 1, key)), loc);
-    assertArrayAllTrue(mx.allclose(a, b));
+      a = distributionSampler([3, 2], mx.float32, loc, scale, key);
+      b = mx.add(mx.multiply(scale, distributionSampler([3, 2], mx.float32, 0, 1, key)), loc);
+      assertArrayAllTrue(mx.allclose(a, b));
 
-    a = mx.random.normal([3, 2], mx.float16, loc, scale, key);
-    b = mx.add(mx.multiply(scale, mx.random.normal([3, 2], mx.float16, 0, 1, key)), loc);
-    assertArrayAllTrue(mx.allclose(a, b));
+      a = distributionSampler([3, 2], mx.float16, loc, scale, key);
+      b = mx.add(mx.multiply(scale, distributionSampler([3, 2], mx.float16, 0, 1, key)), loc);
+      assertArrayAllTrue(mx.allclose(a, b));
 
-    assert.equal(mx.random.normal().dtype, mx.random.normal().dtype);
+      assert.equal(distributionSampler().dtype, distributionSampler().dtype);
 
-    [mx.float16, mx.bfloat16].forEach(hp => {
-      a = mx.abs(mx.random.normal([10000], hp, 0, 1));
-      assertArrayAllTrue(mx.less(a, Infinity));
-    });
+      [mx.float16, mx.bfloat16].forEach(hp => {
+        a = mx.abs(distributionSampler([10000], hp, 0, 1));
+        assertArrayAllTrue(mx.less(a, Infinity));
+      });
+    }
   });
 
   it('multivariateNormal', () => {

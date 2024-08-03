@@ -107,4 +107,24 @@ describe('eval', () => {
     z = mx.add(y, x, mx.cpu);
     assertArrayAllTrue(mx.allclose(z, mx.full([8000], 22.0)));
   });
+
+  it('multiOutputEvalDuringTransform', () => {
+    const x = mx.random.uniform(0, 1, [1024]);
+    const y = mx.ones([1024]);
+    mx.eval(x, y);
+
+    const fn = (x: mx.array) => {
+      const [a, b] = mx.divmod(x, x);
+      mx.eval(a);
+      return a;
+    };
+
+    let out = mx.vjp(fn, [x], [y]);
+    out = mx.vjp(fn, [x], [y]);
+    if (mx.metal.isAvailable()) {
+      const peakMem = mx.metal.getPeakMemory();
+      out = mx.vjp(fn, [x], [y]);
+      assert.equal(peakMem, mx.metal.getPeakMemory());
+    }
+  });
 });

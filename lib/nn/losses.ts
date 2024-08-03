@@ -101,6 +101,13 @@ export function crossEntropy(logits: mx.array,
 /**
  * Computes the binary cross entropy loss.
  *
+ * @remarks
+ *
+ * By default, this function takes the pre-sigmoid logits, which results in a
+ * faster and more precise loss. For improved numerical stability when
+ * `withLogits: false`, the loss calculation clips the input probabilities
+ * (in log-space) to a minimum value of ``-100``.
+ *
  * @param inputs - The predicted values. If `withLogits` is `true`, then
  * `inputs` are unnormalized logits. Otherwise, `inputs` are probabilities.
  * @param targets - The binary target values in {0, 1}.
@@ -140,10 +147,10 @@ export function binaryCrossEntropy(inputs: mx.array,
     loss = mx.subtract(mx.logaddexp(0.0, inputs),
                        mx.multiply(inputs, targets));
   } else {
-    loss = mx.negative(mx.add(mx.multiply(targets,
-                                          mx.log(inputs)),
-                              mx.multiply(mx.subtract(1, targets),
-                                          mx.log(mx.subtract(1, inputs)))));
+    const logInputsClip = mx.clip(mx.log(inputs), -100, undefined);
+    const logInputsInvClip = mx.clip(mx.log(mx.subtract(1, inputs)), -100, undefined);
+    loss = mx.negative(mx.add(mx.multiply(targets, logInputsClip),
+                              mx.multiply(mx.subtract(1, targets), logInputsInvClip)));
   }
 
   // Apply weights if provided.
