@@ -202,6 +202,7 @@ export namespace core {
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
   function concatenate(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
+  function concat(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
   function convolve(input: ScalarOrArray, weight: ScalarOrArray, mode?: string, s?: StreamOrDevice): array;
   function conv1d(input: ScalarOrArray, weight: ScalarOrArray, stride: number, padding: number, dilation: number, groups: number, s?: StreamOrDevice): array;
   function conv2d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
@@ -219,6 +220,8 @@ export namespace core {
   function diagonal(array: ScalarOrArray, offset?: number, axis1?: number, axis2?: number, s?: StreamOrDevice): array;
   function divide(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function divmod(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): [array, array];
+  function einsumPath(subscripts: string[], operands: array[], s?: StreamOrDevice): [[number, number][], string];
+  function einsum(subscripts: string[], operands: array[], s?: StreamOrDevice): array;
   function equal(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function notEqual(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function erf(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -266,6 +269,7 @@ export namespace core {
   function minimum(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function moveaxis(array: ScalarOrArray, source: number | number[], destination: number | number[], s?: StreamOrDevice): array;
   function multiply(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+  function nanToNum(a: array, nan: number, posinf?: number, neginf?: number, s?: StreamOrDevice): array;
   function negative(array: ScalarOrArray, s?: StreamOrDevice): array;
   function ones(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
   function onesLike(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -314,6 +318,7 @@ export namespace core {
   function topk(array: ScalarOrArray, k: number, axis?: number, s?: StreamOrDevice): [array, array];
   function trace(array: ScalarOrArray, offset: number, axis1: number, axis2: number, dtype?: Dtype, s?: StreamOrDevice): [array, array];
   function transpose(array: ScalarOrArray, ...axes: (number | number[])[]): array;
+  function permuteDims(array: ScalarOrArray, ...axes: (number | number[])[]): array;
   function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
   function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
   function triu(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
@@ -403,6 +408,7 @@ export namespace core {
     function layerNorm(array: ScalarOrArray, weights: ScalarOrArray | null, bias: ScalarOrArray | null, eps: number, s?: StreamOrDevice): array;
     function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number, scale: number, offset: number, s?: StreamOrDevice): array;
     function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, s?: StreamOrDevice): array;
+    function affineQuantize(w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, groupSize?: number, bits?: number, s?: StreamOrDevice): array;
   }
 
   // Constants.

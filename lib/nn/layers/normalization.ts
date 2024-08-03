@@ -225,19 +225,17 @@ export class GroupNorm extends Module {
   private pyTorchCompatibleGroupNorm(x: mx.array) {
     const [dims] = x.shape.slice(-1);
     const [batch, ...rest] = x.shape.slice(0, -1);
+    const groupSize = Math.floor(dims / this.numGroups);
 
     // Split into groups.
-    x = x.reshape(batch, -1, this.numGroups, dims / this.numGroups);
-    x = x.transpose(0, 1, 3, 2).reshape(batch, -1, this.numGroups);
+    x = x.reshape(batch, -1, this.numGroups, groupSize);
+    x = x.transpose(0, 2, 1, 3).reshape(batch, this.numGroups, -1);
 
     // Normalize.
-    const means = mx.mean(x, 1, true);
-    const variance = mx.variance(x, 1, true);
-    x = mx.multiply(mx.subtract(x, means),
-                    mx.rsqrt(mx.add(variance, this.eps)));
-    x = x.reshape(batch, -1, dims / this.numGroups, this.numGroups);
-    x = x.transpose(0, 1, 3, 2).reshape(batch, ...rest, dims);
+    x = mx.fast.layerNorm(x, null, null, this.eps);
 
+    x = x.reshape(batch, this.numGroups, -1, groupSize);
+    x = x.transpose(0, 2, 1, 3).reshape(batch, ...rest, dims);
     return x;
   }
 

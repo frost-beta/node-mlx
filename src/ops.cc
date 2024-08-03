@@ -242,7 +242,7 @@ mx::array Transpose(const mx::array& a,
     // Both a.transpose(1) and a.transpose([1]) should work.
     if (auto v = args->GetNext<std::vector<int>>(); v) {
       axes = std::move(*v);
-    } else if (auto i = args->GetNext<std::vector<int>>(); v) {
+    } else if (auto i = args->GetNext<int>(); v) {
       axes = {*i};
     } else {
       args->ThrowError("Axes");
@@ -718,6 +718,7 @@ void InitOps(napi_env env, napi_value exports) {
           "moveaxis", &mx::moveaxis,
           "swapaxes", &mx::swapaxes,
           "transpose", &ops::Transpose,
+          "permuteDims", &ops::Transpose,
           "sum", DimOpWrapper(&mx::sum),
           "prod", DimOpWrapper(&mx::prod),
           "min", DimOpWrapper(&mx::min),
@@ -740,6 +741,7 @@ void InitOps(napi_env env, napi_value exports) {
           "gatherQMM", &mx::gather_qmm,
           "softmax", &ops::Softmax,
           "concatenate", &ops::Concatenate,
+          "concat", &ops::Concatenate,
           "stack", &ops::Stack,
           "meshgrid", &ops::Meshgrid,
           "repeat", KthOpWrapper(&mx::repeat, &mx::repeat),
@@ -758,6 +760,7 @@ void InitOps(napi_env env, napi_value exports) {
           "conv3d", &ops::Conv3d,
           "convGeneral", &ops::ConvGeneral,
           "where", &mx::where,
+          "nanToNum", &mx::nan_to_num,
           "round", &ops::Round,
           "quantizedMatmul", &mx::quantized_matmul,
           "quantize", &mx::quantize,
@@ -781,5 +784,7 @@ void InitOps(napi_env env, napi_value exports) {
           "leftShift", BinOpWrapper(&mx::left_shift),
           "rightShift", BinOpWrapper(&mx::right_shift),
           "view", &mx::view,
-          "hadamardTransform", &mx::hadamard_transform);
+          "hadamardTransform", &mx::hadamard_transform,
+          "einsumPath", &mx::einsum_path,
+          "einsum", &mx::einsum);
 }

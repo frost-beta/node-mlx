@@ -626,7 +626,7 @@ export class PReLU extends Module {
  *
  * ```math
  * GELUApprox(x) = 0.5 * x * (1 + Tanh((sqrt(2 / \pi) * (x + 0.044715 * x^3)))
- * GELUFast(x) = x * \sigma(1.773 * x)
+ * GELUFast(x) = x * \sigma(1.702 * x)
  * ```
  *
  * respectively.
@@ -636,20 +636,21 @@ export class PReLU extends Module {
 export class GELU extends Module {
   private act: (x: mx.array) => mx.array;
 
-  constructor(approx: 'none' | 'precise' | 'fast' = 'none') {
+  constructor(approx: 'none' | 'precise' | 'tanh' | 'fast' = 'none') {
     super();
     switch (approx) {
       case 'none':
         this.act = gelu;
         break;
       case 'precise':
+      case 'tanh':
         this.act = geluApprox;
         break;
       case 'fast':
         this.act = geluFastApprox;
         break;
       default:
-        throw new Error(`The approximation should be in ['none', 'precise', 'fast'] but '${approx}' was given`);
+        throw new Error(`The approximation should be in ['none', 'precise', 'tanh', 'fast'] but '${approx}' was given`);
     }
   }
 

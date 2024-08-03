@@ -183,7 +183,7 @@ mx::array IndexNDimensional(const mx::array* a,
                                                     std::move(entries));
   if (non_none_indices > a->ndim()) {
     std::ostringstream msg;
-    msg << "Too many indices for array with " << a->ndim() << "dimensions.";
+    msg << "Too many indices for array with " << a->ndim() << " dimensions.";
     throw std::invalid_argument(msg.str());
   }
 
@@ -440,7 +440,7 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
                                                     std::move(entries));
   if (non_none_indices > a->ndim()) {
     std::ostringstream msg;
-    msg << "Too many indices for array with " << a->ndim() << "dimensions.";
+    msg << "Too many indices for array with " << a->ndim() << " dimensions.";
     throw std::invalid_argument(msg.str());
   }
 
@@ -652,7 +652,7 @@ std::pair<bool, mx::array> SliceUpdate(
   // Dimension check.
   if (non_none_indices > a->ndim()) {
     std::ostringstream msg;
-    msg << "Too many indices for array with " << a->ndim() << "dimensions.";
+    msg << "Too many indices for array with " << a->ndim() << " dimensions.";
     throw std::invalid_argument(msg.str());
   }
   // If no non-None indices return the broadcasted update.

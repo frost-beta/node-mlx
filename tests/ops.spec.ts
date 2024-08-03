@@ -1290,6 +1290,25 @@ describe('ops', () => {
     assert.deepEqual(rMlx3.tolist(), rTf3.arraySync());
   });
 
+  // FIXME(zcbenz): mx.allclose is not good at comparing Infinity.
+  it.skip('nanToNum', () => {
+    let a = mx.array([6, Infinity, 2, 0]);
+    let outMx = mx.nanToNum(a, 0);
+    assertArrayAllTrue(mx.allclose(outMx, [6, Infinity, 2, 0]));
+
+    [mx.float32, mx.float16].forEach((dtype) => {
+      a = mx.array([Infinity, 6.9, NaN, -Infinity]).astype(dtype);
+      outMx = mx.nanToNum(a, 0);
+      assertArrayAllTrue(mx.allclose(outMx, [Infinity, 6.9, 0, -Infinity]));
+
+      const nan = 0.0;
+      const posinf = 1000;
+      const neginf = -1000;
+      outMx = mx.nanToNum(a, nan, posinf, neginf);
+      assertArrayAllTrue(mx.allclose(outMx, [1000, 6.9, 0, -1000]));
+    });
+  });
+
   it('asStrided', () => {
     const x = mx.random.normal([128]).astype(mx.float32);
     const shapes = [[10, 10], [5, 5], [2, 20], [10]];
