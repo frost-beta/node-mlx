@@ -55,4 +55,20 @@ describe('linalg', () => {
       assertArrayAllTrue(mx.allclose(mx.matmul(L, L.T), M, 1e-5, 1e-7));
     }
   });
+
+  it('pseudoInverse', () => {
+    const A = mx.array([[1, 2, 3], [6, -5, 4], [-9, 8, 7]], mx.float32);
+    const APlus = mx.linalg.pinv(A, mx.cpu);
+    assertArrayAllTrue(mx.allclose(mx.matmul(mx.matmul(A, APlus), A), A, 0, 1e-5));
+
+    // Multiple matrices
+    const B = mx.subtract(A, 100);
+    const AB = mx.stack([A, B]);
+    const pinvs = mx.linalg.pinv(AB, mx.cpu);
+    for (let i = 0; i < AB.length; i++) {
+      const M = AB.index(i);
+      const MPlus = pinvs.index(i);
+      assertArrayAllTrue(mx.allclose(mx.matmul(mx.matmul(M, MPlus), M), M, 0, 1e-3));
+    }
+  });
 });

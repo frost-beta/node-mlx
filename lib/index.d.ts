@@ -403,6 +403,7 @@ export namespace core {
     function triInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function cholesky(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function choleskyInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
+    function pinv(array: ScalarOrArray, s?: StreamOrDevice): array;
   }
 
   // Fast operations.

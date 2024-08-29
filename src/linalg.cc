@@ -36,5 +36,6 @@ void InitLinalg(napi_env env, napi_value exports) {
           "inv", &mx::linalg::inv,
           "triInv", &mx::linalg::tri_inv,
           "cholesky", &mx::linalg::cholesky,
-          "choleskyInv", &mx::linalg::cholesky_inv);
+          "choleskyInv", &mx::linalg::cholesky_inv,
+          "pinv", &mx::linalg::pinv);
 }
