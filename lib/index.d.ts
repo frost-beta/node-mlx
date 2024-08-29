@@ -409,7 +409,7 @@ export namespace core {
   namespace fast {
     function rmsNorm(array: ScalarOrArray, weights: ScalarOrArray, eps: number, s?: StreamOrDevice): array;
     function layerNorm(array: ScalarOrArray, weights: ScalarOrArray | null, bias: ScalarOrArray | null, eps: number, s?: StreamOrDevice): array;
-    function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number, scale: number, offset: number, s?: StreamOrDevice): array;
+    function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number | undefined, scale: number, offset: number, freqs?: array, s?: StreamOrDevice): array;
     function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, memoryEfficientThreshold?: number, s?: StreamOrDevice): array;
     function affineQuantize(w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, groupSize?: number, bits?: number, s?: StreamOrDevice): array;
   }

@@ -26,7 +26,7 @@ describe('fast', () => {
         const rx = ropeOrig(x, dims, traditional, base, scale, offset);
         const rxFast = mx.fast.rope(x, dims, traditional, base, scale, offset);
         assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                       tolerances.find(t => t.dtype === dtype).eps);
+                       tolerances.find(t => t.dtype === dtype)!.eps);
       }
 
       [dims, , base, scale, offset] = defaults;
@@ -35,7 +35,7 @@ describe('fast', () => {
         const rx = ropeOrig(x, dims, traditional, base, scale, offset);
         const rxFast = mx.fast.rope(x, dims, traditional, base, scale, offset);
         assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                       tolerances.find(t => t.dtype === dtype).eps);
+                       tolerances.find(t => t.dtype === dtype)!.eps);
       }
 
       [dims, dtype, base, scale] = defaults;
@@ -44,7 +44,7 @@ describe('fast', () => {
         const rx = ropeOrig(x, dims, traditional, base, scale, offset);
         const rxFast = mx.fast.rope(x, dims, traditional, base, scale, offset);
         assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                       tolerances.find(t => t.dtype === dtype).eps);
+                       tolerances.find(t => t.dtype === dtype)!.eps);
       }
 
       [dims, dtype, base, , offset] = defaults;
@@ -53,9 +53,61 @@ describe('fast', () => {
         const rx = ropeOrig(x, dims, traditional, base, scale, offset);
         const rxFast =  mx.fast.rope(x, dims, traditional, base, scale, offset);
         assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                       tolerances.find(t => t.dtype === dtype).eps);
+                       tolerances.find(t => t.dtype === dtype)!.eps);
       }
+
+      [dims, , base, scale, offset, traditional] = defaults;
+      const x = mx.random.uniform(0, 1, [1, 1, 4, dims]).swapaxes(1, 2);
+      const rx = ropeOrig(x, dims, traditional, base, scale, offset);
+      const rxFast = mx.fast.rope(
+        mx.multiply(1.0, x),  // multiply here to allow donation
+        dims,
+        traditional,
+        base,
+        scale,
+        offset,
+      );
+     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, tolerances.find(t => t.dtype === mx.float32)!.eps);
     }
+  });
+
+  it('ropeWithFreqs', () => {
+    // Check throws
+    const T = 4;
+    const dims = 8;
+    let x = mx.random.uniform(0, 1, [2, T, dims]);
+
+    assert.throws(() => {
+      const freqs = mx.random.uniform(0, 1, [dims - 1]);
+      mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
+    });
+
+    assert.throws(() => {
+      const freqs = mx.random.uniform(0, 1, [1, dims]);
+      mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
+    });
+
+    const freqs = mx.random.uniform(0, 1, [dims / 2]);
+
+    let rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
+    let rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-5);
+
+    // Test single vector
+    x = mx.random.uniform(0, 1, [1, 1, dims]);
+    rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
+    rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-5);
+
+    // Test grad with freqs
+    const f1 = (x, y) => mx.multiply(ropeOrig(x, dims, false, undefined, 1.0, 0, freqs), y).sum();
+    const f2 = (x, y) => mx.multiply(mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs), y).sum();
+
+    x = mx.random.uniform(0, 1, [2, 4, dims]);
+    const y = mx.random.uniform(0, 1, [2, 4, dims]);
+    const g1 = mx.grad(f1)(x, y);
+    const g2 = mx.grad(f2)(x, y);
+    assert.isBelow(mx.abs(mx.subtract(g1, g2)).max().item() as number, 1e-5);
   });
 
   it('ropeGrad', () => {
@@ -93,7 +145,7 @@ describe('fast', () => {
       const rx = rmsNorm(x, weight, eps);
       const rxFast = mx.fast.rmsNorm(x, weight, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     for (const eps of epss) {
@@ -103,7 +155,7 @@ describe('fast', () => {
       const rx = rmsNorm(x, weight, eps);
       const rxFast = mx.fast.rmsNorm(x, weight, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     for (const dims of dimss) {
@@ -113,7 +165,7 @@ describe('fast', () => {
       const rx = rmsNorm(x, weight, eps);
       const rxFast = mx.fast.rmsNorm(x, weight, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     const [dims, dtype, eps] = [4099, mx.float32, 1e-5];
@@ -177,22 +229,22 @@ describe('fast', () => {
       let rx = layerNorm(x, weight, bias, eps);
       let rxFast = mx.fast.layerNorm(x, weight, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, weight, null, eps);
       rxFast = mx.fast.layerNorm(x, weight, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, bias, eps);
       rxFast = mx.fast.layerNorm(x, null, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, null, eps);
       rxFast = mx.fast.layerNorm(x, null, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     for (const eps of epss) {
@@ -204,22 +256,22 @@ describe('fast', () => {
       let rx = layerNorm(x, weight, bias, eps);
       let rxFast = mx.fast.layerNorm(x, weight, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, weight, null, eps);
       rxFast = mx.fast.layerNorm(x, weight, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, bias, eps);
       rxFast = mx.fast.layerNorm(x, null, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, null, eps);
       rxFast = mx.fast.layerNorm(x, null, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     for (const dims of dimss) {
@@ -231,22 +283,22 @@ describe('fast', () => {
       let rx = layerNorm(x, weight, bias, eps);
       let rxFast = mx.fast.layerNorm(x, weight, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, weight, null, eps);
       rxFast = mx.fast.layerNorm(x, weight, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, bias, eps);
       rxFast = mx.fast.layerNorm(x, null, bias, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
 
       rx = layerNorm(x, null, null, eps);
       rxFast = mx.fast.layerNorm(x, null, null, eps);
       assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                     tolerances.find(t => t.dtype === dtype).eps);
+                     tolerances.find(t => t.dtype === dtype)!.eps);
     }
 
     const [dims, dtype, eps] = [4099, mx.float32, 1e-5];
@@ -257,22 +309,22 @@ describe('fast', () => {
     let rx = layerNorm(x, weight, bias, eps);
     let rxFast = mx.fast.layerNorm(x, weight, bias, eps);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                   tolerances.find(t => t.dtype === dtype).eps);
+                   tolerances.find(t => t.dtype === dtype)!.eps);
 
     rx = layerNorm(x, weight, null, eps);
     rxFast = mx.fast.layerNorm(x, weight, null, eps);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                   tolerances.find(t => t.dtype === dtype).eps);
+                   tolerances.find(t => t.dtype === dtype)!.eps);
 
     rx = layerNorm(x, null, bias, eps);
     rxFast = mx.fast.layerNorm(x, null, bias, eps);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                   tolerances.find(t => t.dtype === dtype).eps);
+                   tolerances.find(t => t.dtype === dtype)!.eps);
 
     rx = layerNorm(x, null, null, eps);
     rxFast = mx.fast.layerNorm(x, null, null, eps);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
-                   tolerances.find(t => t.dtype === dtype).eps);
+                   tolerances.find(t => t.dtype === dtype)!.eps);
   });
 
   it('layerNormGrad', function() {
@@ -383,15 +435,16 @@ describe('fast', () => {
   });
 });
 
-function ropeOrig(x, dims, traditional, base, scale, offset) {
-  const N = x.shape[1] + offset;
+function ropeOrig(x, dims, traditional, base, scale, offset, freqs?: mx.array) {
+  const N = x.shape[x.shape.length - 2] + offset;
   const dtype = x.dtype;
   const halfD = Math.floor(dims / 2);
   const positions = mx.multiply(mx.arange(offset, N, dtype), scale);
-  const freqs = mx.exp(mx.multiply(mx.negative(mx.arange(0, halfD, dtype)),
-                                   Math.log(base) / halfD));
+  const invFreqs = freqs ? mx.divide(1, freqs)
+                         : mx.exp(mx.multiply(mx.negative(mx.arange(0, halfD, dtype)),
+                                              Math.log(base) / halfD));
   const theta = mx.multiply(mx.reshape(positions, [-1, 1]),
-                            mx.reshape(freqs, [1, -1]));
+                            mx.reshape(invFreqs, [1, -1]));
   const [costheta, sintheta] = [mx.cos(theta), mx.sin(theta)];
 
   if (traditional) {
@@ -426,7 +479,7 @@ function rmsNorm(x, weight, eps) {
   return mx.multiply(x.astype(weight.dtype), weight);
 }
 
-function layerNorm(x: mx.array, weight: mx.array, bias: mx.array, eps) {
+function layerNorm(x: mx.array, weight: mx.array | null, bias: mx.array | null, eps) {
   const ot = x.dtype;
   x = x.astype(mx.float32);
   const mean = x.mean(-1, true);
