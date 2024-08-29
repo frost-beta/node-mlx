@@ -583,7 +583,7 @@ describe('ops', () => {
   it('var', () => {
     let x = mx.array([[1, 2], [3, 4]]);
     assert.equal(mx.variance(x).item(), 1.25);
-    let y = mx.variance(x, null, true);
+    let y = mx.variance(x, undefined, true);
     assert.equal(y.item(), 1.25);
     assert.deepEqual(y.shape, [1, 1]);
 
@@ -591,11 +591,11 @@ describe('ops', () => {
     assert.deepEqual(mx.variance(x, 1).tolist(), [0.25, 0.25]);
 
     x = mx.array([1.0, 2.0]);
-    let out = mx.variance(x, null, false, 2);
+    let out = mx.variance(x, undefined, false, 2);
     assert.equal(out.item(), Infinity);
 
     x = mx.array([1.0, 2.0]);
-    out = mx.variance(x, null, false, 3);
+    out = mx.variance(x, undefined, false, 3);
     assert.equal(out.item(), Infinity);
   });
 
@@ -1246,8 +1246,8 @@ describe('ops', () => {
       const aNpy = tf.randomNormal([16, 16]);
       const aMlx = mx.array(aNpy.arraySync());
 
-      const bNpy = tf.pad(aNpy, pw, v);
-      const bMlx = mx.pad(aMlx, pw, v);
+      let bNpy = tf.pad(aNpy, pw, v);
+      let bMlx = mx.pad(aMlx, pw, v);
 
       assert.deepEqual(bNpy.shape, bMlx.shape);
       assertArrayAllTrue(mx.isclose(bNpy.arraySync(), bMlx));

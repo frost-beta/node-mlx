@@ -31,7 +31,7 @@ class Pool extends Module {
 
   override forward(x: mx.array): mx.array {
     if (this.#padding.some(v => v[0] > 0)) {
-      x = mx.pad(x, [[0, 0], ...this.#padding, [0, 0]], this.#paddingValue);
+      x = mx.pad(x, [[0, 0], ...this.#padding, [0, 0]], this.#paddingValue, 'constant');
     }
     x = slidingWindows(x, this.#kernelSize, this.#stride);
     return this.#poolingFunction(x, this.#axes);

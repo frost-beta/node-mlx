@@ -275,7 +275,7 @@ export namespace core {
   function onesLike(array: ScalarOrArray, s?: StreamOrDevice): array;
   function outer(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function partition(array: ScalarOrArray, kth: number, axis?: number, s?: StreamOrDevice): array;
-  function pad(array: ScalarOrArray, padWidth: number | [number] | [number, number] | [number, number][], constantValue?: ScalarOrArray, s?: StreamOrDevice): array;
+  function pad(array: ScalarOrArray, padWidth: number | [number] | [number, number] | [number, number][], constantValue?: ScalarOrArray, mode?: string, s?: StreamOrDevice): array;
   function power(array: ScalarOrArray, exponent: ScalarOrArray, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
@@ -399,7 +399,9 @@ export namespace core {
     function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function inv(array: ScalarOrArray, s?: StreamOrDevice): array;
+    function triInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function cholesky(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
+    function choleskyInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
   }
 
   // Fast operations.
@@ -407,7 +409,7 @@ export namespace core {
     function rmsNorm(array: ScalarOrArray, weights: ScalarOrArray, eps: number, s?: StreamOrDevice): array;
     function layerNorm(array: ScalarOrArray, weights: ScalarOrArray | null, bias: ScalarOrArray | null, eps: number, s?: StreamOrDevice): array;
     function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number, scale: number, offset: number, s?: StreamOrDevice): array;
-    function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, s?: StreamOrDevice): array;
+    function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, memoryEfficientThreshold?: number, s?: StreamOrDevice): array;
     function affineQuantize(w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, groupSize?: number, bits?: number, s?: StreamOrDevice): array;
   }
 

@@ -371,19 +371,21 @@ mx::array Pad(const mx::array& a,
                            std::pair<int, int>,
                            std::vector<std::pair<int, int>>> width,
               std::optional<mx::array> optional_constant,
+              std::optional<std::string> optional_mode,
               mx::StreamOrDevice s) {
   mx::array constant = std::move(optional_constant.value_or(mx::array(0)));
+  std::string mode = optional_mode.value_or("constant");
   if (auto i = std::get_if<int>(&width); i)
-    return mx::pad(a, *i, constant, s);
+    return mx::pad(a, *i, constant, mode, s);
   if (auto ti = std::get_if<std::tuple<int>>(&width); ti)
-    return mx::pad(a, std::get<0>(*ti), constant, s);
+    return mx::pad(a, std::get<0>(*ti), constant, mode, s);
   if (auto tii = std::get_if<std::pair<int, int>>(&width); tii)
-    return mx::pad(a, *tii, constant, s);
+    return mx::pad(a, *tii, constant, mode, s);
   auto v = std::get<std::vector<std::pair<int, int>>>(width);
   if (v.size() == 1)
-    return mx::pad(a, v[0], constant, s);
+    return mx::pad(a, v[0], constant, mode, s);
   else
-    return mx::pad(a, v, constant, s);
+    return mx::pad(a, v, constant, mode, s);
 }
 
 mx::array AsStrided(const mx::array& a,
@@ -432,7 +434,7 @@ mx::array Convolve(const mx::array& a,
     } else {
       int pad_l = wt.size() / 2;
       int pad_r = std::max(0, pad_l - 1);
-      in = mx::pad(in, {{0, 0}, {pad_l, pad_r}, {0, 0}}, mx::array(0), s);
+      in = mx::pad(in, {{0, 0}, {pad_l, pad_r}, {0, 0}}, mx::array(0), "constant", s);
     }
   } else {
     throw std::invalid_argument("[convolve] Invalid mode.");

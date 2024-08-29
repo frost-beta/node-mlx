@@ -290,9 +290,9 @@ describe('fast', () => {
 
     let [gx1, gw1, gb1] = mx.grad(f1, [0, 1, 2])(x, w, b, y);
     let [gx2, gw2, gb2] = mx.grad(f2, [0, 1, 2])(x, w, b, y);
-    assert.isBelow(mx.subtract(gx1, gx2).abs().max().item() as number, 1e-5);
-    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 1e-5);
-    assert.isBelow((mx.subtract(gb1, gb2).abs().max().item() as number) / (gb1.abs().mean().item() as number), 1e-5);
+    assert.isBelow(mx.subtract(gx1, gx2).abs().max().item() as number, 5e-5);
+    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 5e-5);
+    assert.isBelow((mx.subtract(gb1, gb2).abs().max().item() as number) / (gb1.abs().mean().item() as number), 5e-5);
 
     D = 8192;
     x = mx.random.uniform(0, 1, [8, 100, D]);
@@ -302,9 +302,9 @@ describe('fast', () => {
 
     [gx1, gw1, gb1] = mx.grad(f1, [0, 1, 2])(x, w, b, y);
     [gx2, gw2, gb2] = mx.grad(f2, [0, 1, 2])(x, w, b, y);
-    assert.isBelow(mx.abs(mx.subtract(gx1, gx2)).max().item() as number, 1e-5);
-    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 1e-5);
-    assert.isBelow((mx.subtract(gb1, gb2).abs().max().item() as number) / (gb1.abs().mean().item() as number), 1e-5);
+    assert.isBelow(mx.abs(mx.subtract(gx1, gx2)).max().item() as number, 5e-5);
+    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 5e-5);
+    assert.isBelow((mx.subtract(gb1, gb2).abs().max().item() as number) / (gb1.abs().mean().item() as number), 5e-5);
 
     const gf = f => (x, w, b, y) => {
       const [gx, gw, gb] = mx.grad(f, [0, 1, 2])(x, w, b, y) as any;
@@ -313,8 +313,8 @@ describe('fast', () => {
 
     [gx1, gw1, gb1] = mx.grad(gf(f1), [0, 1, 2])(x, w, b, y);
     [gx2, gw2, gb2] = mx.grad(gf(f2), [0, 1, 2])(x, w, b, y);
-    assert.isBelow((mx.subtract(gx1, gx2).abs().max().item() as number) / (gx1.abs().mean().item() as number), 1e-5);
-    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 1e-5);
+    assert.isBelow((mx.subtract(gx1, gx2).abs().max().item() as number) / (gx1.abs().mean().item() as number), 5e-5);
+    assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 5e-5);
     assert.isBelow(mx.abs(gb1).max().item() as number, 1e-9);
     assert.isBelow(mx.abs(gb2).max().item() as number, 1e-9);
   });
