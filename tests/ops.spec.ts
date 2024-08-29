@@ -348,6 +348,17 @@ describe('ops', () => {
     assert.deepEqual(result.tolist(), [false, false, false]);
   });
 
+  it('isfinite', () => {
+    let x = mx.array([0.0, Infinity, NaN]);
+    assert.deepEqual(mx.isfinite(x).tolist(), [true, false, false]);
+
+    x = x.astype(mx.float16);
+    assert.deepEqual(mx.isfinite(x).tolist(), [true, false, false]);
+
+    x = x.astype(mx.bfloat16);
+    assert.deepEqual(mx.isfinite(x).tolist(), [true, false, false]);
+  });
+
   it('minimum', () => {
     const x = mx.array([0.0, -5, 10.0]);
     const y = mx.array([1.0, -7.0, 3.0]);

@@ -1,5 +1,5 @@
 import {core as mx, nn, utils} from '../..';
-import {Nested, NestedDict} from '../utils';
+import {Nested, NestedDict, treeMap} from '../utils';
 
 /**
  * The base class for all optimizers. It allows us to implement an optimizer on
@@ -53,8 +53,25 @@ export abstract class Optimizer {
    * ```
    */
   init(parameters: Nested<mx.array>): void {
-    Object.assign(this.#state, utils.treeMap(() => ({}), parameters));
-    utils.treeMap(this.initSingle.bind(this), parameters, [ this.#state ]);
+    // Iniatilize the optimizer state to match the parameter state.
+    function updateState(params: Nested<mx.array>, state: Nested<unknown>) {
+      if (Array.isArray(params) && Array.isArray(state)) {
+        for (let i = 0; i < state.length; ++i)
+          state[i] = updateState(params[i], state[i]);
+        if (state.length !== params.length)
+          state.push(...<unknown[]>treeMap(x => ({}), params.slice(state.length)));
+      } else if (typeof params === 'object') {
+        for (const [k, v] of Object.entries(params)) {
+          if (!state.hasOwnProperty(k))
+            state[k] = treeMap(x => ({}), v);
+          else
+            state[k] = updateState(v, state[k]);
+        }
+      }
+      return state;
+    }
+    updateState(parameters, this.state);
+    treeMap((p, s) => Object.keys(s).length === 0 ? this.initSingle(p, s) : s, parameters, [ this.state ]);
     this.#initialized = true;
   }
 
@@ -127,7 +144,7 @@ export abstract class Optimizer {
   }
 
   set state(state: Record<string, unknown>) {
-    this.#initialized = true;
+    this.#initialized = false;
     this.#state = state;
   }
 

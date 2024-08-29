@@ -715,6 +715,7 @@ void InitOps(napi_env env, napi_value exports) {
           "ceil", &mx::ceil,
           "isnan", &mx::isnan,
           "isinf", &mx::isinf,
+          "isfinite", &mx::isfinite,
           "isposinf", &mx::isposinf,
           "isneginf", &mx::isneginf,
           "moveaxis", &mx::moveaxis,

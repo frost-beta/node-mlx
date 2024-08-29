@@ -165,9 +165,9 @@ export class TransformerEncoderLayer extends Module {
     } else {
       y = this.attention.forward(x, x, x, mask);
       y = this.dropout1.forward(y);
-      y = this.ln1.forward(mx.add(x, y));
+      x = this.ln1.forward(mx.add(x, y));
 
-      y = this.linear1.forward(y);
+      y = this.linear1.forward(x);
       y = this.activation(y);
       y = this.dropout2.forward(y);
       y = this.linear2.forward(y);

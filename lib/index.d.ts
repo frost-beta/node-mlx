@@ -240,6 +240,7 @@ export namespace core {
   function inner(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function isclose(a: ScalarOrArray, b: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): array;
   function isinf(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function isfinite(array: ScalarOrArray, s?: StreamOrDevice): array;
   function isnan(array: ScalarOrArray, s?: StreamOrDevice): array;
   function isneginf(array: ScalarOrArray, s?: StreamOrDevice): array;
   function isposinf(array: ScalarOrArray, s?: StreamOrDevice): array;

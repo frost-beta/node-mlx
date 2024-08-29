@@ -32,7 +32,7 @@ export class Dropout extends Module {
       return x;
     }
     const mask = mx.random.bernoulli(this.#p1, x.shape);
-    return mx.multiply(mx.array(1 / this.#p1, x.dtype), mx.multiply(mask, x));
+    return mx.multiply(mx.multiply(mask, x), mx.array(1 / this.#p1, x.dtype));
   }
 }
 
@@ -90,7 +90,7 @@ export class Dropout2d extends Module {
     maskShape[maskShape.length - 3] = 1;
 
     const mask = mx.random.bernoulli(this.#p1, maskShape);
-    return mx.multiply(mx.array(1 / this.#p1, x.dtype), mx.multiply(mask, x));
+    return mx.multiply(mx.multiply(mask, x), mx.array(1 / this.#p1, x.dtype));
   }
 }
 
@@ -143,6 +143,6 @@ export class Dropout3d extends Module {
     maskShape[maskShape.length - 4] = 1;
 
     const mask = mx.random.bernoulli(this.#p1, maskShape);
-    return mx.multiply(mx.array(1 / this.#p1, x.dtype), mx.multiply(mask, x));
+    return mx.multiply(mx.multiply(mask, x), mx.array(1 / this.#p1, x.dtype));
   }
 }

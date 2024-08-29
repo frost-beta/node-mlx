@@ -156,21 +156,23 @@ describe('optimizers', () => {
 
   it('adafactor', () => {
     let x = mx.zeros([5, 5]);
-    let grad = mx.onesLike(x);
+    let params = {x};
+    let grad = {x: mx.onesLike(x)};
     let optimizer = new opt.Adafactor();
     for (let i = 0; i < 2; i++) {
-      const xp = optimizer.applyGradients(grad, x) as mx.array;
-      assert.equal(xp.dtype, x.dtype);
-      assert.deepEqual(xp.shape, x.shape);
+      const xp = optimizer.applyGradients(grad, params) as {x: mx.array};
+      assert.equal(xp.x.dtype, x.dtype);
+      assert.deepEqual(xp.x.shape, x.shape);
     }
 
     x = mx.zeros([5, 5], mx.float16);
-    grad = mx.onesLike(x);
+    params = {x};
+    grad = {x: mx.onesLike(x)};
     optimizer = new opt.Adafactor();
     for (let i = 0; i < 2; i++) {
-      const xp = optimizer.applyGradients(grad, x) as mx.array;
-      assert.equal(xp.dtype, x.dtype);
-      assert.deepEqual(xp.shape, x.shape);
+      const xp = optimizer.applyGradients(grad, params) as {x: mx.array};
+      assert.equal(xp.x.dtype, x.dtype);
+      assert.deepEqual(xp.x.shape, x.shape);
     }
     assert.equal((optimizer.state['step'] as mx.array).item(), 2);
   });
@@ -342,6 +344,37 @@ describe('schedulers', () => {
   });
 
   // TODO(zcbenz): Add test_compile_with_schedule after implementing captures for mx.compile.
+
+  it('initFromState', () => {
+    class Model extends nn.Module {
+      constructor() {
+        super();
+        this.l1 = new nn.Linear(2, 2);
+        this.drop = new nn.Dropout(0.5);
+        this.l2 = new nn.Linear(2, 2);
+        this.vals = [new nn.Linear(2, 2), new nn.ReLU(), new nn.ReLU()];
+      }
+
+      override forward(x: mx.array) {
+        return x;
+      }
+    }
+
+    const model = new Model();
+    let optimizer = new opt.Adam(3e-4);
+    optimizer.init(model.trainableParameters());
+
+    // Flatten the state for serialization
+    const state = utils.treeFlatten(optimizer.state);
+
+    // Make a new optimizer and load the state
+    optimizer = new opt.Adam(3e-4);
+    optimizer.state = utils.treeUnflatten(state) as typeof optimizer.state;
+
+    // This should work without any errors
+    const grads = model.trainableParameters();
+    optimizer.update(model, grads);
+  });
 });
 
 function getAllOptimizers(): Record<string, any> {
