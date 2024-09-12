@@ -511,8 +511,8 @@ export function cosineSimilarityLoss(x1: mx.array,
                                      axis = 1,
                                      eps = 1e-8,
                                      reduction: Reduction = 'none'): mx.array {
-  const x1Norm = mx.linalg.norm(x1, axis);
-  const x2Norm = mx.linalg.norm(x2, axis);
+  const x1Norm = mx.linalg.norm(x1, undefined, axis);
+  const x2Norm = mx.linalg.norm(x2, undefined, axis);
 
   let loss = mx.divide(mx.sum(mx.multiply(x1, x2), axis),
                        mx.maximum(mx.multiply(x1Norm, x2Norm), eps));
