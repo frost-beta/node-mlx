@@ -201,8 +201,8 @@ export namespace core {
   function gatherQMM(x: ScalarOrArray, w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, indicesLhs: ScalarOrArray, indicesRhs: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
-  function concatenate(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
-  function concat(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
+  function concatenate(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
+  function concat(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
   function convolve(input: ScalarOrArray, weight: ScalarOrArray, mode?: string, s?: StreamOrDevice): array;
   function conv1d(input: ScalarOrArray, weight: ScalarOrArray, stride: number, padding: number, dilation: number, groups: number, s?: StreamOrDevice): array;
   function conv2d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
@@ -303,7 +303,7 @@ export namespace core {
   function sqrt(array: ScalarOrArray, s?: StreamOrDevice): array;
   function square(array: ScalarOrArray, s?: StreamOrDevice): array;
   function squeeze(array: ScalarOrArray, axis?: number | number[], s?: StreamOrDevice): array;
-  function stack(arrays?: array[], axis?: number, s?: StreamOrDevice): array;
+  function stack(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
   function std(array: ScalarOrArray, s?: StreamOrDevice): array;
   function stopGradient(array: ScalarOrArray, s?: StreamOrDevice): array;
   function subtract(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
