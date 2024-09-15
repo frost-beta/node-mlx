@@ -23,6 +23,9 @@ or wait for someone porting PyTorch to Node.js (which should not be too hard).
 
 ## Examples
 
+* [sisi](https://github.com/frost-beta/sisi) - Semantic Image Search CLI.
+* [clip](https://github.com/frost-beta/clip) - Node.js module for the CLIP
+  model.
 * [llama3.js](https://github.com/frost-beta/llama3.js) - A JavaScript
   implementation of Llama 3.
 * [llm.js](https://github.com/frost-beta/llm.js) - Load language models
