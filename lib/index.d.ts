@@ -152,9 +152,10 @@ export namespace core {
     sqrt(s?: StreamOrDevice): array;
     square(s?: StreamOrDevice): array;
     squeeze(axis?: number | number[], s?: StreamOrDevice): array;
-    swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
+    std(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
     sum(keepdims?: boolean, s?: StreamOrDevice): array;
     sum(axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+    swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
     transpose(...axes: (number | number[])[]): array;
     variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
 
@@ -304,7 +305,7 @@ export namespace core {
   function square(array: ScalarOrArray, s?: StreamOrDevice): array;
   function squeeze(array: ScalarOrArray, axis?: number | number[], s?: StreamOrDevice): array;
   function stack(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
-  function std(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function std(array: ScalarOrArray, indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
   function stopGradient(array: ScalarOrArray, s?: StreamOrDevice): array;
   function subtract(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function sum(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;

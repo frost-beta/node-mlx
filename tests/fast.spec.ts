@@ -327,6 +327,14 @@ describe('fast', () => {
                    tolerances.find(t => t.dtype === dtype)!.eps);
   });
 
+  it('sliceIntoLayerNorm', () => {
+    const eps = 1e-5;
+    const x = mx.random.uniform(0, 1, [8, 100, 128]).index(mx.Slice(), mx.Slice(99));
+    const rxFast = mx.fast.layerNorm(x, null, null, eps);
+    const rx = layerNorm(x, null, null, eps);
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-4);
+  });
+
   it('layerNormGrad', function() {
     this.timeout(10 * 1000);  // slow in QEMU
 

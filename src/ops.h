@@ -76,6 +76,11 @@ mx::array Squeeze(const mx::array& a,
                   mx::StreamOrDevice s);
 mx::array Transpose(const mx::array& a,
                     ki::Arguments* args);
+mx::array Std(const mx::array& a,
+              OptionalAxes axis,
+              std::optional<bool> keepdims,
+              std::optional<int> ddof,
+              mx::StreamOrDevice s);
 mx::array Var(const mx::array& a,
               OptionalAxes axis,
               std::optional<bool> keepdims,

@@ -608,4 +608,21 @@ describe('compile', function() {
     const expected = fn();
     assertArrayAllTrue(mx.arrayEqual(expected, out));
   });
+
+  it('dtypes', () => {
+    let x = mx.array([0, 1, 2, 3]);
+    const dtypes = [mx.bool, mx.int8, mx.uint8, mx.int16, mx.uint16];
+    for (const dtype of dtypes) {
+      x = x.astype(dtype);
+      mx.eval(x);
+
+      const fn = (x: mx.array) => {
+        return mx.add(mx.multiply(x, 1), 0);
+      }
+
+      const out = mx.compile(fn)(x);
+      const expected = fn(x);
+      assertArrayAllTrue(mx.arrayEqual(expected, out));
+    }
+  });
 });

@@ -261,21 +261,21 @@ mx::array Transpose(const mx::array& a,
     return mx::transpose(a, std::move(axes));
 }
 
-mx::array Var(const mx::array& a,
-              OptionalAxes axis,
-              std::optional<bool> keepdims,
-              std::optional<int> ddof,
-              mx::StreamOrDevice s) {
-  return mx::var(a, GetReduceAxes(std::move(axis), a.ndim()),
-                 keepdims.value_or(false), ddof.value_or(0), s);
-}
-
 mx::array Std(const mx::array& a,
               OptionalAxes axis,
               std::optional<bool> keepdims,
               std::optional<int> ddof,
               mx::StreamOrDevice s) {
   return mx::std(a, GetReduceAxes(std::move(axis), a.ndim()),
+                 keepdims.value_or(false), ddof.value_or(0), s);
+}
+
+mx::array Var(const mx::array& a,
+              OptionalAxes axis,
+              std::optional<bool> keepdims,
+              std::optional<int> ddof,
+              mx::StreamOrDevice s) {
+  return mx::var(a, GetReduceAxes(std::move(axis), a.ndim()),
                  keepdims.value_or(false), ddof.value_or(0), s);
 }
 
