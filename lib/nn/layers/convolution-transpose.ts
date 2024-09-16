@@ -2,7 +2,8 @@ import {core as mx} from '../../..';
 import {Module} from './base';
 
 /**
- * Applies a 1-dimensional convolution over the multi-channel input sequence.
+ * Applies a 1-dimensional transposed convolution over the multi-channel input
+ * sequence.
  *
  * @remarks
  *
@@ -20,7 +21,7 @@ import {Module} from './base';
  * @param dilation - The dilation of the convolution.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
-export class Conv1d extends Module {
+export class ConvTranspose1d extends Module {
   stride: number;
   padding: number;
   dilation: number;
@@ -54,7 +55,7 @@ export class Conv1d extends Module {
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.conv1d(x, this.weight, this.stride, this.padding, this.dilation, 1);
+    const y = mx.convTranspose1d(x, this.weight, this.stride, this.padding, this.dilation, 1);
     if (this.bias)
       return mx.add(y, this.bias);
     else
@@ -63,7 +64,8 @@ export class Conv1d extends Module {
 }
 
 /**
- * Applies a 2-dimensional convolution over the multi-channel input image.
+ * Applies a 2-dimensional transposed convolution over the multi-channel input
+ * image.
  *
  * @remarks
  *
@@ -82,7 +84,7 @@ export class Conv1d extends Module {
  * @param dilation - The dilation of the convolution.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
-export class Conv2d extends Module {
+export class ConvTranspose2d extends Module {
   stride: number[];
   padding: number[];
   dilation: number | number[];
@@ -117,7 +119,7 @@ export class Conv2d extends Module {
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.conv2d(x, this.weight, this.stride, this.padding, this.dilation);
+    const y = mx.convTranspose2d(x, this.weight, this.stride, this.padding, this.dilation);
     if (this.bias)
       return mx.add(y, this.bias);
     else
@@ -126,7 +128,8 @@ export class Conv2d extends Module {
 }
 
 /**
- * Applies a 3-dimensional convolution over the multi-channel input image.
+ * Applies a 3-dimensional transposed convolution over the multi-channel input
+ * image.
  *
  * @remarks
  *
@@ -145,7 +148,7 @@ export class Conv2d extends Module {
  * @param padding - How many positions to 0-pad the input with. Default: 0.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
-export class Conv3d extends Module {
+export class ConvTranspose3d extends Module {
   stride: number[];
   padding: number[];
   weight: mx.array;
@@ -176,7 +179,7 @@ export class Conv3d extends Module {
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.conv3d(x, this.weight, this.stride, this.padding);
+    const y = mx.convTranspose3d(x, this.weight, this.stride, this.padding);
     if (this.bias)
       return mx.add(y, this.bias);
     else

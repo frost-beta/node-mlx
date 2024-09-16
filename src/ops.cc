@@ -445,6 +445,18 @@ mx::array Convolve(const mx::array& a,
   return reshape(out, {-1}, s);
 }
 
+mx::array Conv1d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::optional<int> stride,
+    std::optional<int> padding,
+    std::optional<int> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  return mx::conv1d(input, weight, stride.value_or(1), padding.value_or(0),
+                    dilation.value_or(1), groups.value_or(1), s);
+}
+
 mx::array Conv2d(
     const mx::array& input,
     const mx::array& weight,
@@ -503,6 +515,79 @@ mx::array Conv3d(
 
   return mx::conv3d(input, weight, stride_tuple, padding_tuple, dilation_tuple,
                     groups.value_or(1), s);
+}
+
+mx::array ConvTranspose1d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::optional<int> stride,
+    std::optional<int> padding,
+    std::optional<int> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  return mx::conv_transpose1d(input, weight, stride.value_or(1),
+                              padding.value_or(0), dilation.value_or(1),
+                              groups.value_or(1), s);
+}
+
+mx::array ConvTranspose2d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::variant<std::monostate, int, std::pair<int, int>> stride,
+    std::variant<std::monostate, int, std::pair<int, int>> padding,
+    std::variant<std::monostate, int, std::pair<int, int>> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  std::pair<int, int> stride_pair(1, 1);
+  if (auto i = std::get_if<int>(&stride); i)
+    stride_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&stride); p)
+    stride_pair = std::move(*p);
+
+  std::pair<int, int> padding_pair(0, 0);
+  if (auto i = std::get_if<int>(&padding); i)
+    padding_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&padding); p)
+    padding_pair = std::move(*p);
+
+  std::pair<int, int> dilation_pair(1, 1);
+  if (auto i = std::get_if<int>(&dilation); i)
+    dilation_pair = std::pair<int, int>(*i, *i);
+  else if (auto p = std::get_if<std::pair<int, int>>(&dilation); p)
+    dilation_pair = std::move(*p);
+
+  return mx::conv_transpose2d(input, weight, stride_pair, padding_pair,
+                              dilation_pair, groups.value_or(1), s);
+}
+
+mx::array ConvTranspose3d(
+    const mx::array& input,
+    const mx::array& weight,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> stride,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> padding,
+    std::variant<std::monostate, int, std::tuple<int, int, int>> dilation,
+    std::optional<int> groups,
+    mx::StreamOrDevice s) {
+  std::tuple<int, int, int> stride_tuple = {1, 1, 1};
+  if (auto i = std::get_if<int>(&stride); i)
+    stride_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&stride); p)
+    stride_tuple = std::move(*p);
+
+  std::tuple<int, int, int> padding_tuple = {0, 0, 0};
+  if (auto i = std::get_if<int>(&padding); i)
+    padding_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&padding); p)
+    padding_tuple = std::move(*p);
+
+  std::tuple<int, int, int> dilation_tuple = {1, 1, 1};
+  if (auto i = std::get_if<int>(&dilation); i)
+    dilation_tuple = {*i, *i, *i};
+  else if (auto p = std::get_if<std::tuple<int, int, int>>(&dilation); p)
+    dilation_tuple = std::move(*p);
+
+  return mx::conv_transpose3d(input, weight, stride_tuple, padding_tuple,
+                              dilation_tuple, groups.value_or(1), s);
 }
 
 mx::array ConvGeneral(
@@ -758,9 +843,12 @@ void InitOps(napi_env env, napi_value exports) {
           "conj", &mx::conjugate,
           "conjugate", &mx::conjugate,
           "convolve", &ops::Convolve,
-          "conv1d", &mx::conv1d,
+          "conv1d", &ops::Conv1d,
           "conv2d", &ops::Conv2d,
           "conv3d", &ops::Conv3d,
+          "convTranspose1d", &ops::ConvTranspose1d,
+          "convTranspose2d", &ops::ConvTranspose2d,
+          "convTranspose3d", &ops::ConvTranspose3d,
           "convGeneral", &ops::ConvGeneral,
           "where", &mx::where,
           "nanToNum", &mx::nan_to_num,

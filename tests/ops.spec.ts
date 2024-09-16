@@ -869,9 +869,9 @@ describe('ops', () => {
     let aMlx = mx.array(mx.arange(8).reshape([2, 2, 2]));
     let idxMlx = mx.array([1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0], mx.int32);
 
-    [null, 0, 1, 2].forEach(ax => {
+    [undefined, 0, 1, 2].forEach(ax => {
       let shape;
-      if (ax === null) {
+      if (ax === undefined) {
         shape = [-1];
       } else {
         shape = [2, 2, 2];
@@ -879,7 +879,7 @@ describe('ops', () => {
       }
       let outMlx = mx.takeAlongAxis(aMlx, mx.reshape(idxMlx, shape), ax);
       let expected;
-      if (ax === null) {
+      if (ax === undefined) {
         expected = mx.array([1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0]).reshape([-1]);
       } else if (ax === 0) {
         expected = mx.array([[[2, 3], [0, 1]], [[4, 5], [0, 1]], [[4, 5], [4, 5]]]);
@@ -1205,7 +1205,7 @@ describe('ops', () => {
   describe('meshgrid', () => {
     it('singleInput', () => {
       const x = mx.array([1, 2, 3], mx.int32);
-      const y = tf.tensor([1, 2, 3], null, 'int32');
+      const y = tf.tensor([1, 2, 3], undefined, 'int32');
 
       const aMlx = mx.meshgrid(x);
       const aNp = tf.meshgrid(y);
@@ -1215,8 +1215,8 @@ describe('ops', () => {
     it('differentLengths', () => {
       let x = mx.array([1, 2], mx.int32);
       let y = mx.array([1, 2, 3], mx.int32);
-      let z = tf.tensor([1, 2], null, 'int32');
-      let w = tf.tensor([1, 2, 3], null, 'int32');
+      let z = tf.tensor([1, 2], undefined, 'int32');
+      let w = tf.tensor([1, 2, 3], undefined, 'int32');
       let [aMlx, bMlx] = mx.meshgrid(x, y);
       let [aNp, bNp] = tf.meshgrid(z, w);
       assert.deepEqual(aMlx.tolist(), aNp.arraySync());
@@ -1225,7 +1225,7 @@ describe('ops', () => {
 
     it('emptyInput', () => {
       let x = mx.array([], mx.int32);
-      let y = tf.tensor([], null, 'int32');
+      let y = tf.tensor([], undefined, 'int32');
       let aMlx = mx.meshgrid(x);
       let aNp = tf.meshgrid(y);
       assert.deepEqual(aMlx[0].tolist(), aNp[0].arraySync());
@@ -1233,7 +1233,7 @@ describe('ops', () => {
 
     it('float32Input', () => {
       let x = mx.array([1.1, 2.2, 3.3], mx.float32);
-      let y = tf.tensor([1.1, 2.2, 3.3], null, 'float32');
+      let y = tf.tensor([1.1, 2.2, 3.3], undefined, 'float32');
       let aMlx = mx.meshgrid(x, x);
       let aNp = tf.meshgrid(y, y);
       assert.deepEqual(aMlx[0].tolist(), aNp[0].arraySync());
@@ -1412,10 +1412,10 @@ describe('ops', () => {
     const x = mx.zeros([2, 3, 4]);
     assert.deepEqual(mx.flatten(x).shape, [2 * 3 * 4]);
     assert.deepEqual(mx.flatten(x, 1).shape, [2, 3 * 4]);
-    assert.deepEqual(mx.flatten(x, null, 1).shape, [2 * 3, 4]);
+    assert.deepEqual(mx.flatten(x, undefined, 1).shape, [2 * 3, 4]);
     assert.deepEqual(x.flatten().shape, [2 * 3 * 4]);
     assert.deepEqual(x.flatten(1).shape, [2, 3 * 4]);
-    assert.deepEqual(x.flatten(null, 1).shape, [2 * 3, 4]);
+    assert.deepEqual(x.flatten(undefined, 1).shape, [2 * 3, 4]);
   });
 
   it('clip', () => {
@@ -1522,12 +1522,12 @@ describe('ops', () => {
   it('diag', () => {
     let x = mx.array([1, 2, 3, 4]);
     let expected = mx.array([[1, 0, 0, 0], [0, 2, 0, 0], [0, 0, 3, 0], [0, 0, 0, 4]]);
-    let result = mx.diag(x, 0, 0, 1);
+    let result = mx.diag(x);
     assertArrayAllTrue(mx.equal(result, expected));
 
     x = mx.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]]);
     expected = mx.array([1, 5, 9]);
-    result = mx.diag(x, 0, 0, 1);
+    result = mx.diag(x);
     assertArrayAllTrue(mx.equal(result, expected));
   });
 

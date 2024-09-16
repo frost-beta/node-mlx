@@ -68,7 +68,13 @@ describe('base', () => {
     }
 
     const model = new Model();
-    assert.equal(model.val!.item(), mx.array(1.0).item());
+    assertArrayAllTrue(mx.arrayEqual(model.val!, mx.array(1.0)));
+
+    model.val = null;
+    assert.strictEqual(model.val, null)
+
+    model.val = mx.array([3])
+    assert.equal(model.val!.item(), 3);
   });
 
   it('modelWithDict', () => {

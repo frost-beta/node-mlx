@@ -158,6 +158,7 @@ export namespace core {
     swapaxes(axis1: number, axis2: number, s?: StreamOrDevice): array;
     transpose(...axes: (number | number[])[]): array;
     variance(indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
+    view(dtype: Dtype, s?: StreamOrDevice): array;
 
     index(...index: ArrayIndex[]): array;
     indexPut_(index: ArrayIndex | ArrayIndex[], value: ScalarOrArray): array;
@@ -205,9 +206,12 @@ export namespace core {
   function concatenate(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
   function concat(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
   function convolve(input: ScalarOrArray, weight: ScalarOrArray, mode?: string, s?: StreamOrDevice): array;
-  function conv1d(input: ScalarOrArray, weight: ScalarOrArray, stride: number, padding: number, dilation: number, groups: number, s?: StreamOrDevice): array;
+  function conv1d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number, padding?: number, dilation?: number, groups?: number, s?: StreamOrDevice): array;
   function conv2d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
   function conv3d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
+  function convTranspose1d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number, padding?: number, dilation?: number, groups?: number, s?: StreamOrDevice): array;
+  function convTranspose2d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
+  function convTranspose3d(input: ScalarOrArray, weight: ScalarOrArray, stride?: number | number[], padding?: number | number[], dilation?: number | number[], groups?: number, s?: StreamOrDevice): array;
   function convGeneral(input: ScalarOrArray, weight?: ScalarOrArray, stride?: number | number[], padding?: number | number[] | [number[], number[]], kernelDilation?: number | number[], inputDilation?: number | number[], groups?: number, flip?: boolean, s?: StreamOrDevice): array;
   function cos(array: ScalarOrArray, s?: StreamOrDevice): array;
   function cosh(array: ScalarOrArray, s?: StreamOrDevice): array;
