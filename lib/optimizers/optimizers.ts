@@ -54,7 +54,7 @@ export abstract class Optimizer {
    */
   init(parameters: Nested<mx.array>): void {
     // Iniatilize the optimizer state to match the parameter state.
-    function updateState(params: Nested<mx.array>, state: Nested<unknown>) {
+    function updateState(params: Nested<mx.array>, state: Record<string, any>) {
       if (Array.isArray(params) && Array.isArray(state)) {
         for (let i = 0; i < state.length; ++i)
           state[i] = updateState(params[i], state[i]);

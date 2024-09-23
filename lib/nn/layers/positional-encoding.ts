@@ -137,20 +137,20 @@ export class ALiBi extends Module {
     return ALiBi.mask;
   }
 
-  static createAlibiSlope(numHeads): mx.array {
+  static createAlibiSlope(numHeads: number): mx.array {
     const x = Math.pow(Math.pow(2, 8), 1 / numHeads);
     const out = mx.power(x, mx.negative(mx.arange(1, numHeads + 1)));
     return mx.expandDims(out, [-1, -2]);
   }
 
-  forward(attentionScores: mx.array, offset = 0, mask = null): mx.array {
+  forward(attentionScores: mx.array, offset = 0, mask?: mx.array): mx.array {
     let alibiMask = ALiBi.createAlibiMatrix(
       attentionScores.shape[attentionScores.shape.length - 2] + offset,
       attentionScores.shape[attentionScores.shape.length - 1],
       attentionScores.shape[1],
       offset,
       attentionScores.dtype);
-    if (mask !== null) {
+    if (mask) {
       alibiMask = mx.add(alibiMask, mask);
     }
     return mx.add(attentionScores, alibiMask);

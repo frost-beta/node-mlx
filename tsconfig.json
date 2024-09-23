@@ -3,6 +3,7 @@
     "outDir": "dist",
     "rootDir": "lib",
     "noImplicitOverride": true,
+    "noImplicitAny": true,
     "module": "commonjs",
     "esModuleInterop": true,
     "target": "es2022",

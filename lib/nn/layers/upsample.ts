@@ -216,7 +216,7 @@ export function upsampleNearest(x: mx.array,
 
 function interpolate(x: mx.array,
                      scaleFactor: number[],
-                     indicesFn,
+                     indicesFn: (N: number, scale: number, alignCorners: boolean, dim: number, ndims: number) => [mx.array, mx.array][],
                      alignCorners = false): mx.array {
   const dims = x.ndim - 2;
   if (dims !== scaleFactor.length) {

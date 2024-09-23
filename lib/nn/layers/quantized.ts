@@ -211,7 +211,7 @@ export class QuantizedLinear extends Module {
 
   // Wrap unfreeze so that we unfreeze any layers we might contain but
   // our parameters will remain frozen.
-  override unfreeze(...args): this {
+  override unfreeze(...args: any[]): this {
     super.unfreeze(...args);
     return this.freeze(false);
   }

@@ -322,7 +322,7 @@ export class BatchNorm extends Module {
     }
   }
 
-  override unfreeze(...args): this {
+  override unfreeze(...args: any[]): this {
     super.unfreeze(...args);
     this.freeze(false, ['runningMean', 'runningVar']);
     return this;

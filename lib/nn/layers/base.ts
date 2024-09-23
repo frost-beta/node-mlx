@@ -341,7 +341,7 @@ export abstract class Module {
    * @returns The module instance after updating the parameters.
    */
   update(parameters: NestedDict<mx.array>): this {
-    const apply = (target: object, parameters: NestedDict<mx.array>) => {
+    const apply = (target: Record<string, any>, parameters: NestedDict<mx.array>) => {
       if (typeof parameters !== 'object')
         return;
       for (let k in parameters) {
@@ -400,7 +400,7 @@ export abstract class Module {
    * @returns The module instance after updating the submodules.
    */
   updateModules(modules: NestedDict<Module>): this {
-    const apply = (target: object, modules: object) => {
+    const apply = (target: Record<string, any>, modules: Record<string, any>) => {
       if (typeof modules !== 'object')
         return;
       for (let k in modules) {
@@ -602,7 +602,7 @@ export abstract class Module {
 }
 
 // Helpers.
-function defaultIsLeafFn(m, k, v) {
+function defaultIsLeafFn(m: Module, k: string, v: unknown) {
   if (typeof v !== 'object')
     return true;
   return !Array.isArray(v) && !isDict(v);
@@ -643,9 +643,10 @@ function unwrap(model: Module,
   if (typeof value === 'object') {
     const newValue: Record<string, unknown> = {};
     for (let k in value) {
-      let key = `${valueKey}.${k}`;
-      if (filterFn(model, key, value[k])) {
-        newValue[k] = unwrap(model, key, value[k], filterFn, mapFn, isLeafFn);
+      const key = `${valueKey}.${k}`;
+      const v = value[k as keyof typeof value];
+      if (filterFn(model, key, v)) {
+        newValue[k] = unwrap(model, key, v, filterFn, mapFn, isLeafFn);
       } else {
         newValue[k] = {};
       }

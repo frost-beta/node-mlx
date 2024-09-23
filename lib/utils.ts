@@ -32,8 +32,8 @@
  * @returns An Object with the new values returned by `fn`.
  */
 export function treeMap(func: (...args: any[]) => unknown,
-                        tree: unknown,
-                        rest?: object[],
+                        tree: Record<string, any>,
+                        rest?: Record<string, any>[],
                         isLeaf?: (node: unknown) => boolean): unknown {
   if (isLeaf && isLeaf(tree)) {
     if (rest)
@@ -43,7 +43,7 @@ export function treeMap(func: (...args: any[]) => unknown,
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMap(func, child, rest?.map(r => r[i]), isLeaf));
   } else if (typeof tree === 'object' && isDict(tree)) {
-    const newTree = {};
+    const newTree: Record<string, any> = {};
     for (const k in tree) {
       newTree[k] = treeMap(func, tree[k], rest?.map(r => r[k]), isLeaf);
     }
@@ -84,8 +84,8 @@ export function treeMap(func: (...args: any[]) => unknown,
  * ```
  */
 export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unknown,
-                                tree: unknown,
-                                rest?: object[],
+                                tree: Record<string, any>,
+                                rest?: Record<string, any>[],
                                 isLeaf?: (node: unknown) => boolean,
                                 path?: string): unknown {
   if (isLeaf && isLeaf(tree)) {
@@ -96,7 +96,7 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
   } else if (Array.isArray(tree)) {
     return tree.map((child, i) => treeMapWithPath(fn, child, rest?.map(r => r[i]), isLeaf, path ? `${path}.${i}` : `${i}`));
   } else if (typeof tree === 'object' && isDict(tree)) {
-    const newTree = {};
+    const newTree: Record<string, any> = {};
     for (const k in tree) {
       newTree[k] = treeMapWithPath(fn, tree[k], rest?.map(r => r[k]), isLeaf, path ? `${path}.${k}` : `${k}`);
     }
@@ -138,7 +138,7 @@ export function treeMapWithPath(fn: (path?: string, ...args: unknown[]) => unkno
  * // Outputs: [['hello.0.0.0', 0]]
  * ```
  */
-export function treeFlatten(tree: unknown,
+export function treeFlatten(tree: Record<string, any>,
                             prefix: string = '',
                             isLeaf?: (node: unknown) => boolean,
                             convertKey?: (key: string) => string): [string, unknown][] {
@@ -199,12 +199,12 @@ export function treeUnflatten(tree: [string, unknown][],
   // Recursively map them to the original container.
   if (isList) {
     const keys = Object.keys(children).sort().map((idx) => [ parseInt(idx), idx ]);
-    const newList = [];
+    const newList: any[] = [];
     for (const [i, k] of keys)
-      newList[i] = treeUnflatten(children[k], convertKey);
+      newList[i as number] = treeUnflatten(children[k], convertKey);
     return newList;
   } else {
-    const newTree = {};
+    const newTree: Record<string, any> = {};
     for (let k in children) {
       const key = convertKey ? convertKey(k) : k;
       newTree[key] = treeUnflatten(children[k], convertKey);
