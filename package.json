@@ -7,7 +7,7 @@
   "scripts": {
     "install": "node install.js",
     "prepack": "tsc",
-    "build": "cmake-js build",
+    "build": "cmake-js build --prefer-make",
     "pretest": "tsc",
     "test": "tsx tests/run.ts"
   },
