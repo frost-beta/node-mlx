@@ -48,7 +48,7 @@ export class RNN extends Module {
 
     const scale = 1.0 / Math.sqrt(hiddenDims);
     this.hiddenDims = hiddenDims;
-    this.Wxh = mx.random.uniform(-scale, scale, [inputDims, hiddenDims]);
+    this.Wxh = mx.random.uniform(-scale, scale, [hiddenDims, inputDims]);
     this.Whh = mx.random.uniform(-scale, scale, [hiddenDims, hiddenDims]);
     if (bias) {
       this.bias = mx.random.uniform(-scale, scale, [hiddenDims]);
@@ -56,21 +56,20 @@ export class RNN extends Module {
   }
 
   override toStringExtra(): string {
-    return `inputDims=${this.Wxh.shape[0]}, hiddenDims=${this.hiddenDims}, ` +
+    return `inputDims=${this.Wxh.shape[1]}, hiddenDims=${this.hiddenDims}, ` +
            `nonlinearity=${this.nonlinearity}, bias=${!!this.bias}`;
   }
 
   override forward(x: mx.array, hidden?: mx.array): mx.array {
     if (this.bias)
-      x = mx.addmm(this.bias, x, this.Wxh);
+      x = mx.addmm(this.bias, x, this.Wxh.T);
     else
-      x = mx.matmul(x, this.Wxh);
+      x = mx.matmul(x, this.Wxh.T);
 
     const allHidden = [];
-    for (let i = 0; i < x.shape[x.shape.length - 2]; i++) {
+    for (let i = 0; i < x.shape.at(-2); i++) {
       if (hidden) {
-        hidden = mx.add(x.index('...', i, mx.Slice()),
-                        mx.matmul(hidden, this.Whh));
+        hidden = mx.addmm(x.index('...', i, mx.Slice()), hidden, this.Whh.T);
       } else {
         hidden = x.index('...', i, mx.Slice());
       }
@@ -123,8 +122,8 @@ export class GRU extends Module {
     this.hiddenDims = hiddenDims;
 
     const scale = 1.0 / Math.sqrt(hiddenDims);
-    this.Wx = mx.random.uniform(-scale, scale, [inputDims, 3 * hiddenDims]);
-    this.Wh = mx.random.uniform(-scale, scale, [hiddenDims, 3 * hiddenDims]);
+    this.Wx = mx.random.uniform(-scale, scale, [3 * hiddenDims, inputDims]);
+    this.Wh = mx.random.uniform(-scale, scale, [3 * hiddenDims, hiddenDims]);
     if (bias) {
       this.b = mx.random.uniform(-scale, scale, [3 * hiddenDims]);
       this.bhn = mx.random.uniform(-scale, scale, [hiddenDims]);
@@ -132,14 +131,14 @@ export class GRU extends Module {
   }
 
   override toStringExtra(): string {
-    return `inputDims=${this.Wx.shape[0]}, hiddenDims=${this.hiddenDims}, bias=${!!this.b}`;
+    return `inputDims=${this.Wx.shape[1]}, hiddenDims=${this.hiddenDims}, bias=${!!this.b}`;
   }
 
   override forward(x: mx.array, hidden?: mx.array): mx.array {
     if (this.b)
-      x = mx.addmm(this.b, x, this.Wx);
+      x = mx.addmm(this.b, x, this.Wx.T);
     else
-      x = mx.matmul(x, this.Wx);
+      x = mx.matmul(x, this.Wx.T);
 
     const xRz = x.index('...', mx.Slice(null, -this.hiddenDims));
     const xN = x.index('...', mx.Slice(-this.hiddenDims));
@@ -149,7 +148,7 @@ export class GRU extends Module {
       let rz = xRz.index('...', i, mx.Slice());
       let hProjN;
       if (hidden) {
-        const hProj = mx.matmul(hidden, this.Wh);
+        const hProj = mx.matmul(hidden, this.Wh.T);
         const hProjRz = hProj.index('...', mx.Slice(null, -this.hiddenDims));
         hProjN = hProj.index('...', mx.Slice(-this.hiddenDims));
         if (this.bhn)
@@ -224,29 +223,29 @@ export class LSTM extends Module {
     this.hiddenDims = hiddenDims;
 
     const scale = 1.0 / Math.sqrt(hiddenDims);
-    this.Wx = mx.random.uniform(-scale, scale, [inputDims, 4 * hiddenDims]);
-    this.Wh = mx.random.uniform(-scale, scale, [hiddenDims, 4 * hiddenDims]);
+    this.Wx = mx.random.uniform(-scale, scale, [4 * hiddenDims, inputDims]);
+    this.Wh = mx.random.uniform(-scale, scale, [4 * hiddenDims, hiddenDims]);
     if (bias) {
       this.bias = mx.random.uniform(-scale, scale, [4 * hiddenDims]);
     }
   }
 
   override toStringExtra(): string {
-    return `inputDims=${this.Wx.shape[0]}, hiddenDims=${this.hiddenDims}, bias=${!!this.bias}`;
+    return `inputDims=${this.Wx.shape[1]}, hiddenDims=${this.hiddenDims}, bias=${!!this.bias}`;
   }
 
   override forward(x: mx.array, hidden?: mx.array, cell?: mx.array): [mx.array, mx.array] {
     if (this.bias)
-      x = mx.addmm(this.bias, x, this.Wx);
+      x = mx.addmm(this.bias, x, this.Wx.T);
     else
-      x = mx.matmul(x, this.Wx);
+      x = mx.matmul(x, this.Wx.T);
 
     const allHidden: mx.array[] = [];
     const allCell: mx.array[] = [];
     for (let j = 0; j < x.shape[x.shape.length - 2]; j++) {
       let ifgo = x.index('...', j, mx.Slice());
       if (hidden)
-        ifgo = mx.add(ifgo, mx.matmul(hidden, this.Wh));
+        ifgo = mx.addmm(ifgo, hidden, this.Wh.T);
       const [si, sf, sg, so] = mx.split(ifgo, 4, -1);
 
       const i = mx.sigmoid(si);

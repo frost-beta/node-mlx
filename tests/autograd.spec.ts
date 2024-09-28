@@ -396,7 +396,7 @@ describe('autograd', () => {
   });
 
   it('cumprodGrad', () => {
-    const funA = (y) => {
+    const funA = (y: mx.array) => {
       return mx.cumprod(y).sum();
     };
 
@@ -415,8 +415,8 @@ describe('autograd', () => {
     expected = mx.array([1.0, 6.0, 0.0, 0.0, 0.0]);
     assertArrayAllTrue(mx.allclose(out, expected));
 
-    const funB = (y) => {
-      return mx.cumprod(y, false, false).sum();
+    const funB = (y: mx.array) => {
+      return mx.cumprod(y, undefined, undefined, false).sum();
     };
 
     y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
@@ -434,10 +434,8 @@ describe('autograd', () => {
     expected = mx.array([1.0, 6.0, 0.0, 0.0, 0.0]);
     assertArrayAllTrue(mx.allclose(out, expected));
 
-    // FIXME(zcbenz): Figure out why the tests are failing.
-    /*
-    const funC = (y) => {
-      return mx.cumprod(y, true, false).sum();
+    const funC = (y: mx.array) => {
+      return mx.cumprod(y, undefined, true, false).sum();
     };
 
     y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
@@ -455,8 +453,8 @@ describe('autograd', () => {
     expected = mx.array([0.0, 0.0, 0.0, 9.0, 1.0]);
     assertArrayAllTrue(mx.allclose(out, expected));
 
-    const funD = (y) => {
-      return mx.cumprod(y, true).sum();
+    const funD = (y: mx.array) => {
+      return mx.cumprod(y, undefined, true).sum();
     };
 
     y = mx.array([2.0, 1.0, 2.0, 2.0, 3.0]);
@@ -473,6 +471,18 @@ describe('autograd', () => {
     out = mx.grad(funD)(y);
     expected = mx.array([0.0, 0.0, 0.0, 9.0, 1.0]);
     assertArrayAllTrue(mx.allclose(out, expected));
-    */
+  });
+
+  // FIXME(zcbenz): Figure out why this test is failing.
+  it.skip('topkGrad', () => {
+    const a = mx.array([[1, 2, 6, 4, 5], [9, 5, 6, 7, 8]], mx.float32);
+
+    const fun = (x: mx.array) => {
+      return mx.topk(x, 2);
+    }
+
+    const out = mx.vjp(fun, [a], [mx.ones([2, 2])])[1][0];
+    const expected = mx.array([[0, 0, 1, 0, 1], [1, 0, 0, 0, 1]], mx.float32);
+    assertArrayAllTrue(mx.arrayEqual(out, expected));
   });
 });

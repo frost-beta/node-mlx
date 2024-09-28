@@ -54,7 +54,7 @@ CumOpWrapper(mx::array(*func)(const mx::array&,
                 std::optional<bool> inclusive,
                 mx::StreamOrDevice s) {
     bool r = reverse.value_or(false);
-    bool i = reverse.value_or(true);
+    bool i = inclusive.value_or(true);
     if (axis)
       return func(a, *axis, r, i, s);
     else

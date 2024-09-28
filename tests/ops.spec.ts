@@ -850,7 +850,7 @@ describe('ops', () => {
       [[1, -5], [3, -1], [2, 3]],
     ];
 
-    const a = mx.array(l);
+    let a = mx.array(l);
 
     let indices = [0, -1];
     let flattenTake = mx.take(a, mx.array(indices, mx.int32)).tolist();
@@ -863,6 +863,12 @@ describe('ops', () => {
       [[2, 3], [2, 4], [2, 1]],
       [[1, 3], [-2, -2], [-3, -2]],
     ]);
+
+    a = mx.arange(8).reshape(2, 4);
+    let out = mx.take(a, 1, 0);
+    assertArrayAllTrue(mx.equal(out, mx.array([4, 5, 6, 7])));
+    out = mx.take(a, 1, 1);
+    assertArrayAllTrue(mx.equal(out, mx.array([1, 5])));
   });
 
   it('takeAlongAxis', () => {

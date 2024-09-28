@@ -121,10 +121,10 @@ export namespace core {
     argmin(keepdims?: boolean, s?: StreamOrDevice): array;
     argmin(axis?: number, keepdims?: boolean, s?: StreamOrDevice): array;
     cos(s?: StreamOrDevice): array;
-    cummax(s?: StreamOrDevice): array;
-    cummin(s?: StreamOrDevice): array;
-    cumprod(s?: StreamOrDevice): array;
-    cumsum(s?: StreamOrDevice): array;
+    cummax(axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+    cummin(axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+    cumprod(axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+    cumsum(axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
     diag(k?: number, s?: StreamOrDevice): array;
     diagonal(offset?: number, axis1?: number, axis2?: number, s?: StreamOrDevice): array;
     exp(s?: StreamOrDevice): array;
@@ -215,10 +215,10 @@ export namespace core {
   function convGeneral(input: ScalarOrArray, weight?: ScalarOrArray, stride?: number | number[], padding?: number | number[] | [number[], number[]], kernelDilation?: number | number[], inputDilation?: number | number[], groups?: number, flip?: boolean, s?: StreamOrDevice): array;
   function cos(array: ScalarOrArray, s?: StreamOrDevice): array;
   function cosh(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function cummax(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function cummin(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function cumprod(array: ScalarOrArray, s?: StreamOrDevice): array;
-  function cumsum(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function cummax(array: ScalarOrArray, axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+  function cummin(array: ScalarOrArray, axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+  function cumprod(array: ScalarOrArray, axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
+  function cumsum(array: ScalarOrArray, axis?: number, reverse?: boolean, inclusive?: boolean, s?: StreamOrDevice): array;
   function degrees(array: ScalarOrArray, s?: StreamOrDevice): array;
   function dequantize(w: array, scales: ScalarOrArray, biases: ScalarOrArray, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function diag(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
@@ -285,6 +285,7 @@ export namespace core {
   function power(array: ScalarOrArray, exponent: ScalarOrArray, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
+  function putAlongAxis(a: ScalarOrArray, indices: ScalarOrArray, values: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
   function quantize(w: array, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function quantizedMatmul(w: array, x: array, scales: ScalarOrArray, biases: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function radians(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -409,6 +410,7 @@ export namespace core {
     function cholesky(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function choleskyInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function pinv(array: ScalarOrArray, s?: StreamOrDevice): array;
+    function cross(a: ScalarOrArray, b: ScalarOrArray, axis: number, s?: StreamOrDevice): array;
   }
 
   // Fast operations.

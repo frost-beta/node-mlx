@@ -149,14 +149,17 @@ mx::array Linspace(float start,
 }
 
 mx::array Take(const mx::array& a,
-               const mx::array& indices,
+               const std::variant<int, mx::array>& indices,
                ki::Arguments* args) {
   auto axis = args->TryGetNext<int>();
   auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
-  if (axis)
-    return mx::take(a, indices, *axis, s);
-  else
-    return mx::take(a, indices, s);
+  if (auto i = std::get_if<int>(&indices); i) {
+    return axis ? mx::take(a, *i, *axis, s) : mx::take(a, *i, s);
+  } else {
+    const mx::array& indicesArr = std::get<mx::array>(indices);
+    return axis ? mx::take(a, indicesArr, *axis, s)
+                : mx::take(a, indicesArr, s);
+  }
 }
 
 mx::array TakeAlongAxis(const mx::array& a,
@@ -167,7 +170,21 @@ mx::array TakeAlongAxis(const mx::array& a,
   if (axis)
     return mx::take_along_axis(a, indices, *axis, s);
   else
-    return mx::take_along_axis(reshape(a, {-1}, s), indices, 0, s);
+    return mx::take_along_axis(mx::reshape(a, {-1}, s), indices, 0, s);
+}
+
+mx::array PutAlongAxis(const mx::array& a,
+                       const mx::array& indices,
+                       const mx::array& values,
+                       ki::Arguments* args) {
+  auto axis = args->TryGetNext<int>();
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
+  if (axis)
+    return mx::put_along_axis(a, indices, values, *axis, s);
+  else
+    return mx::reshape(mx::put_along_axis(reshape(a, {-1}, s),
+                                          indices, values, 0, s),
+                       a.shape(), s);
 }
 
 mx::array Full(std::variant<int, std::vector<int>> shape,
@@ -781,6 +798,7 @@ void InitOps(napi_env env, napi_value exports) {
           "linspace", &ops::Linspace,
           "take", &ops::Take,
           "takeAlongAxis", &ops::TakeAlongAxis,
+          "putAlongAxis", &ops::PutAlongAxis,
           "full", &ops::Full,
           "zeros", &ops::Zeros,
           "zerosLike", &mx::zeros_like,
