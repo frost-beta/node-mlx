@@ -55,4 +55,11 @@ std::vector<int> GetReduceAxes(OptionalAxes value, int dims);
 mx::array ToArray(ScalarOrArray value,
                   std::optional<mx::Dtype> dtype = std::nullopt);
 
+// Execute the function and wait it to finish.
+napi_value AwaitFunction(
+    napi_env env,
+    std::function<napi_value()> func,
+    std::function<napi_value(napi_env, napi_value)> cpp_then,
+    std::function<void(napi_env)> cpp_finally);
+
 #endif  // SRC_UTILS_H_

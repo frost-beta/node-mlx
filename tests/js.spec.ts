@@ -4,13 +4,14 @@ import {assert} from 'chai';
 describe('js', () => {
   describe('toString', () => {
     it('array', () => {
-      assert.equal(mx.array([1, 2, 3, 4]), 'array([1, 2, 3, 4], dtype=float32)');
+      assert.equal(mx.array([1, 2, 3, 4]).toString(),
+                   'array([1, 2, 3, 4], dtype=float32)');
     });
   });
 
   describe('tidy', () => {
     it('unwrapObjects', () => {
-      let objects = [];
+      const objects: mx.array[] = [];
       mx.tidy(() => {
         for (let i = 0; i < 100; ++i) {
           objects.push(mx.array([8964]));
@@ -33,7 +34,7 @@ describe('js', () => {
     });
 
     it('keepNestedArray', () => {
-      let objects = [];
+      const objects: mx.array[] = [];
       mx.tidy(() => {
         for (let i = 0; i < 99; ++i) {
           objects.push(mx.array([8964]));
@@ -46,6 +47,45 @@ describe('js', () => {
         assert.throws(() => objects[i].size, 'Error converting "this" to array.');
       }
       assert.equal(objects[99].item(), 8964);
+    });
+
+    it('await', async () => {
+      const objects: mx.array[] = [];
+      await mx.tidy(async () => {
+        for (let i = 0; i < 100; ++i) {
+          objects.push(mx.array([8964]));
+          await new Promise(resolve => process.nextTick(resolve));
+        }
+      });
+      for (let i = 0; i < objects.length; ++i) {
+        assert.throws(() => objects[i].size, 'Error converting "this" to array.');
+      }
+    });
+
+    it('awaitReturnValue', async () => {
+      const b = await mx.tidy(() => {
+        const a = mx.array([8, 9, 6, 4]);
+        return new Promise<mx.array>(resolve => process.nextTick(() => resolve(a)));
+      });
+      assert.deepEqual(b.tolist(), [8, 9, 6, 4]);
+    });
+
+    it('awaitNested', async () => {
+      const intermediate: mx.array[] = [];
+      const b = await mx.tidy(async () => {
+        intermediate.push(mx.array([1]));
+        await new Promise(resolve => process.nextTick(resolve));
+        return await mx.tidy(() => {
+          intermediate.push(mx.array([2]));
+          const a = mx.array([8, 9, 6, 4]);
+          return new Promise<mx.array>(resolve => process.nextTick(() => resolve(a)));
+        });
+      });
+      assert.equal(intermediate.length, 2);
+      for (const i of intermediate) {
+        assert.throws(() => i.size, 'Error converting "this" to array.');
+      }
+      assert.deepEqual(b.tolist(), [8, 9, 6, 4]);
     });
   });
 

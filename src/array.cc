@@ -365,29 +365,36 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
   // Push a new set to stack.
   g_tidy_arrays.push(std::set<mx::array*>());
   auto& top = g_tidy_arrays.top();
-  // Execute the function and exclude the arrays in results from the stack.
-  napi_value result = func();
-  TreeVisit(env, result, [&top](napi_env env, napi_value value) {
-    if (auto a = ki::FromNodeTo<mx::array*>(env, value); a)
-      top.erase(*a);
-    return napi_value();
-  });
-  // Clear the arrays in the stack.
-  ki::InstanceData* instance_data = ki::InstanceData::Get(env);
-  for (mx::array* a : top) {
-    // The arary might be in 3 states:
-    // 1. Its JS object is well alive.
-    // 2. The JS object has been fully GCed.
-    // 3. The JS object is marked as dead, but the finalizer has not run.
-    // We have to unbind the JS object in 1, and only delete array in 1 and 3.
-    napi_value value;
-    if (instance_data->GetWrapper<mx::array>(a, &value))
-      napi_remove_wrap(env, value, nullptr);
-    if (instance_data->DeleteWrapper<mx::array>(a))
-      delete a;
-  }
-  g_tidy_arrays.pop();
-  return result;
+  return AwaitFunction(
+      env, std::move(func),
+      [&top](napi_env env, napi_value result) {
+        // Exclude the arrays in result from the stack.
+        TreeVisit(env, result, [&top](napi_env env, napi_value value) {
+          if (auto a = ki::FromNodeTo<mx::array*>(env, value); a)
+            top.erase(*a);
+          return napi_value();
+        });
+        // Clear the arrays in the stack.
+        ki::InstanceData* instance_data = ki::InstanceData::Get(env);
+        for (mx::array* a : top) {
+          // The arary might be in 3 states:
+          // 1. Its JS object is well alive.
+          // 2. The JS object has been fully GCed.
+          // 3. The JS object is marked as dead, but the finalizer has not run.
+          // We have to unbind the JS object in 1, and only delete array in 1
+          // and 3.
+          napi_value value;
+          if (instance_data->GetWrapper<mx::array>(a, &value))
+            napi_remove_wrap(env, value, nullptr);
+          if (instance_data->DeleteWrapper<mx::array>(a))
+            delete a;
+        }
+        return result;
+      },
+      [](napi_env env) {
+        // Always pop even when error happened.
+        g_tidy_arrays.pop();
+      });
 }
 
 // Dispose all arrays found in the tree.

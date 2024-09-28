@@ -32,3 +32,30 @@ mx::array ToArray(ScalarOrArray value, std::optional<mx::Dtype> dtype) {
   }
   throw std::invalid_argument("Invalid type passed to ToArray");
 }
+
+napi_value AwaitFunction(
+    napi_env env,
+    std::function<napi_value()> func,
+    std::function<napi_value(napi_env, napi_value)> cpp_then,
+    std::function<void(napi_env)> cpp_finally) {
+  napi_value result = func();
+  // Return immediately if the result is not promise.
+  bool is_promise = false;
+  napi_is_promise(env, result, &is_promise);
+  if (!is_promise) {
+    cpp_then(env, result);
+    cpp_finally(env);
+    return result;
+  }
+  // Pass the callbacks to promise.
+  napi_value then, finally;
+  if (!ki::Get(env, result, "then", &then, "finally", &finally)) {
+    ki::ThrowError(env, "No then and finally method in Promise.");
+    return nullptr;
+  }
+  napi_value js_then = ki::ToNodeValue(env, cpp_then);
+  napi_make_callback(env, nullptr, result, then, 1, &js_then, &result);
+  napi_value js_finally = ki::ToNodeValue(env, cpp_finally);
+  napi_make_callback(env, nullptr, result, finally, 1, &js_finally, &result);
+  return result;
+}
