@@ -350,7 +350,7 @@ export namespace core {
 
   // Memory management.
   function tidy<U>(func: () => U): U;
-  function dispose(tree: unknown): void;
+  function dispose(...args: unknown[]): void;
   function getWrappersCount(): number;
 
   // Metal.

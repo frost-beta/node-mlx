@@ -391,16 +391,19 @@ napi_value Tidy(napi_env env, std::function<napi_value()> func) {
 }
 
 // Dispose all arrays found in the tree.
-void Dispose(napi_env env, napi_value tree) {
-  ki::InstanceData* instance_data = ki::InstanceData::Get(env);
-  TreeVisit(env, tree, [instance_data](napi_env env, napi_value value) {
-    if (auto a = ki::FromNodeTo<mx::array*>(env, value); a) {
-      napi_remove_wrap(env, value, nullptr);
-      instance_data->DeleteWrapper<mx::array>(a.value());
-      delete a.value();
-    }
-    return napi_value();
-  });
+void Dispose(const ki::Arguments& args) {
+  ki::InstanceData* instance_data = ki::InstanceData::Get(args.Env());
+  for (size_t i = 0; i < args.Length(); ++i) {
+    TreeVisit(args.Env(), args[i],
+              [instance_data](napi_env env, napi_value value) {
+                if (auto a = ki::FromNodeTo<mx::array*>(env, value); a) {
+                  napi_remove_wrap(env, value, nullptr);
+                  instance_data->DeleteWrapper<mx::array>(a.value());
+                  delete a.value();
+                }
+                return napi_value();
+              });
+  }
 }
 
 // Return how many wrappers are there, used for debugging leaks.

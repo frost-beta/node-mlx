@@ -55,5 +55,13 @@ describe('js', () => {
       mx.dispose(obj);
       assert.throws(() => obj.a.size, 'Error converting "this" to array.');
     });
+
+    it('args', () => {
+      const a = mx.array([0]);
+      const b = mx.array([0]);
+      mx.dispose(a, b);
+      assert.throws(() => a.size, 'Error converting "this" to array.');
+      assert.throws(() => b.size, 'Error converting "this" to array.');
+    });
   });
 });
