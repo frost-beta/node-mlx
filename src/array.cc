@@ -161,12 +161,88 @@ bool FlattenArray(napi_env env, napi_value value, std::vector<T>* result) {
   return true;
 }
 
+// Convert JS Array to mx.array.
+template<typename T>
+T ArrayToArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
+  // Get array's shape, validate it and decide a proper dtype for it.
+  std::vector<int> shape;
+  if (!GetShape(env, value, &shape))
+    return T();
+  // FIXME(zcbenz): Currently we assume the input array only includes primitive
+  // types, we should support mx.array embedded in JS array.
+  std::optional<InputType> largest_type;
+  if (!ValidateInputArray(env, value, shape, &largest_type))
+    return T();
+  InputType element_type = largest_type.value_or(kNumber);
+  if (element_type == kNumber) {
+    std::vector<float> result;
+    if (!FlattenArray(env, value, &result))
+      return T();
+    return CreateInstance<T>(result.begin(),
+                             std::move(shape),
+                             dtype.value_or(mx::float32));
+  } else if (element_type == kBoolean) {
+    std::vector<bool> result;
+    if (!FlattenArray(env, value, &result))
+      return T();
+    return CreateInstance<T>(result.begin(),
+                             std::move(shape),
+                             dtype.value_or(mx::bool_));
+  } else if (element_type == kComplex) {
+    std::vector<std::complex<float>> result;
+    if (!FlattenArray(env, value, &result))
+      return T();
+    return CreateInstance<T>(reinterpret_cast<mx::complex64_t*>(result.data()),
+                             std::move(shape),
+                             dtype.value_or(mx::complex64));
+  } else if (element_type == kUndefined) {
+    // Sparse array is treated as zeros.
+    return CreateInstance<T>(mx::zeros(std::move(shape), mx::float32));
+  } else {
+    return T();
+  }
+}
+
+// Convert JS TypedArray to mx.array.
+template<typename T>
+T TypedArrayToArray(napi_env env, napi_value value) {
+  void* data;
+  size_t length;
+  napi_typedarray_type element_type;
+  if (napi_get_typedarray_info(env, value, &element_type, &length, &data,
+                               nullptr, nullptr) != napi_ok) {
+    return T();
+  }
+  std::vector<int>&& shape = { static_cast<int>(length) };
+  switch (element_type) {
+    case napi_int8_array:
+      return CreateInstance<T>(static_cast<int8_t*>(data), shape, mx::int8);
+    case napi_uint8_array:
+    case napi_uint8_clamped_array:
+      return CreateInstance<T>(static_cast<uint8_t*>(data), shape, mx::uint8);
+    case napi_int16_array:
+      return CreateInstance<T>(static_cast<int16_t*>(data), shape, mx::int16);
+    case napi_uint16_array:
+      return CreateInstance<T>(static_cast<uint16_t*>(data), shape, mx::uint16);
+    case napi_int32_array:
+      return CreateInstance<T>(static_cast<int32_t*>(data), shape, mx::int32);
+    case napi_uint32_array:
+      return CreateInstance<T>(static_cast<uint32_t*>(data), shape, mx::uint32);
+    case napi_float32_array:
+      return CreateInstance<T>(static_cast<float*>(data), shape, mx::float32);
+    default:
+      napi_throw_type_error(env, nullptr, "Unsupported TypedArray type.");
+      return T();
+  }
+}
+
 // Implements the constructor of array, which can create on stack or heap.
 template<typename T>
 T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
   napi_valuetype type;
-  if (napi_typeof(env, value, &type) != napi_ok)
+  if (napi_typeof(env, value, &type) != napi_ok) {
     return T();
+  }
   switch (type) {
     case napi_number:
       return CreateInstance<T>(ki::FromNodeTo<float>(env, value).value(),
@@ -175,63 +251,28 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
       return CreateInstance<T>(ki::FromNodeTo<bool>(env, value).value(),
                                dtype.value_or(mx::bool_));
     case napi_object: {
-      if (ki::IsArray(env, value)) {
-        // When JS array is passed, first get its shape, then validate it and
-        // decide a proper dtype for it.
-        std::vector<int> shape;
-        if (!GetShape(env, value, &shape))
-          return T();
-        // FIXME(zcbenz): Currently we assume the input array only includes
-        // primitive types, we should support mx.array embedded in JS array.
-        std::optional<InputType> largest_type;
-        if (!ValidateInputArray(env, value, shape, &largest_type))
-          return T();
-        InputType element_type = largest_type.value_or(kNumber);
-        if (element_type == kNumber) {
-          std::vector<float> result;
-          if (!FlattenArray(env, value, &result))
-            return T();
-          return CreateInstance<T>(result.begin(),
-                                   std::move(shape),
-                                   dtype.value_or(mx::float32));
-        } else if (element_type == kBoolean) {
-          std::vector<bool> result;
-          if (!FlattenArray(env, value, &result))
-            return T();
-          return CreateInstance<T>(result.begin(),
-                                   std::move(shape),
-                                   dtype.value_or(mx::bool_));
-        } else if (element_type == kComplex) {
-          std::vector<std::complex<float>> result;
-          if (!FlattenArray(env, value, &result))
-            return T();
-          return CreateInstance<T>(
-              reinterpret_cast<mx::complex64_t*>(result.data()),
-              std::move(shape),
-              dtype.value_or(mx::complex64));
-        } else if (element_type == kUndefined) {
-          // Sparse array is treated as zeros.
-          return CreateInstance<T>(mx::zeros(std::move(shape), mx::float32));
-        } else {
-          return T();
-        }
-      } else {
-        // Test if it is an mx.array instance.
-        auto a = ki::FromNodeTo<mx::array*>(env, value);
-        if (a) {
-          return CreateInstance<T>(
-              mx::astype(*a.value(), dtype.value_or(a.value()->dtype())));
-        }
-        // Test complex number.
-        auto c = ki::FromNodeTo<std::complex<float>>(env, value);
-        if (c) {
-          return CreateInstance<T>(*c, dtype.value_or(mx::complex64));
-        }
+      // Convert JS array to mx.array.
+      if (ki::IsArray(env, value))
+        return ArrayToArray<T>(env, value, dtype);
+      if (ki::IsTypedArray(env, value))
+        return TypedArrayToArray<T>(env, value);
+      // Test if it is an mx.array instance.
+      auto a = ki::FromNodeTo<mx::array*>(env, value);
+      if (a) {
+        return CreateInstance<T>(
+            mx::astype(*a.value(), dtype.value_or(a.value()->dtype())));
+      }
+      // Test complex number.
+      auto c = ki::FromNodeTo<std::complex<float>>(env, value);
+      if (c) {
+        return CreateInstance<T>(*c, dtype.value_or(mx::complex64));
       }
       [[fallthrough]];
     }
-    default:
+    default: {
+      napi_throw_type_error(env, nullptr, "Unsupported array type.");
       return T();
+    }
   }
 }
 

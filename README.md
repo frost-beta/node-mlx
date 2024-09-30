@@ -74,7 +74,7 @@ There are a few exceptions due to limitations of JavaScript:
 * Indexing via `[]` operator does not work, use `array.item` and
   `array.itemPut_` methods instead (the `_` suffix means inplace operation).
 * `delete array` does nothing, you must wait for garbage collection to get the
-  array's memory freed.
+  array's memory freed or use `mx.dispose`.
 * The `Module` instances can not be used as functions, the `forward` method must
   be used instead.
 
@@ -99,6 +99,16 @@ Some features are not supported yet and will be implemented in future:
 
 There are a few new APIs in node-mlx, for solving
 [JavaScript-only problems](https://github.com/frost-beta/node-mlx/issues/2).
+
+#### Constructor of `mx.array`
+
+You can pass following JavaScript types to `mx.array`:
+
+* `number`/`boolean`/`mx.Complex`
+* `Array<T>`
+* `new Array(length)` - Creates a 1D array filled with 0.
+* `Buffer` - Same with `UInt8Array`.
+* `Int8Array`/`Uint8Array`/`Int16Array`/`Uint16Array`/`Int32Array`/`Uint32Array`/`Float32Array`
 
 #### `mx.tidy`
 

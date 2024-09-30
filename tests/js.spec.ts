@@ -8,6 +8,23 @@ describe('js', () => {
       const zeros = mx.zeros([10]);
       assert.deepEqual(sparse.tolist(), zeros.tolist());
     });
+
+    it('buffer', () => {
+      const buffer = Buffer.from([8, 9, 6, 4]);
+      const array = mx.array(buffer);
+      assert.equal(array.dtype, mx.uint8);
+      assert.equal(array.size, buffer.length);
+      assert.deepEqual(array.tolist(), [...buffer]);
+    });
+
+    it('typedArray', () => {
+      const buffer = new Int8Array(new ArrayBuffer(10));
+      const array = mx.array(buffer);
+      assert.equal(array.dtype, mx.int8);
+      assert.equal(array.size, buffer.byteLength);
+      assert.deepEqual(array.tolist(), [...Array.from(buffer)]);
+    });
+
   });
 
   describe('toString', () => {
