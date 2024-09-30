@@ -73,6 +73,7 @@ bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
 // The possible type of the elements of JS Array.
 enum InputType {
   kBoolean,
+  kUndefined,
   kNumber,
   kComplex,
 };
@@ -105,8 +106,10 @@ bool ValidateInputArray(napi_env env,
   // Iterate the elements to determine the dtype.
   for (uint32_t i = 0; i < length; ++i) {
     napi_value el;
-    if (napi_get_element(env, value, i, &el) != napi_ok)
+    if (napi_get_element(env, value, i, &el) != napi_ok) {
+      napi_throw_type_error(env, nullptr, "Unable to get array element");
       return false;
+    }
     if (ki::IsArray(env, el)) {
       // Look into nested array.
       if (ValidateInputArray(env, el, shape, input_type, dim + 1))
@@ -116,16 +119,22 @@ bool ValidateInputArray(napi_env env,
     }
     // Check the type of each element.
     napi_valuetype type;
-    if (napi_typeof(env, el, &type) != napi_ok)
+    if (napi_typeof(env, el, &type) != napi_ok) {
+      napi_throw_type_error(env, nullptr, "Unable to get array element type");
       return false;
-    if (type == napi_boolean)
+    }
+    if (type == napi_boolean) {
       *input_type = std::max(input_type->value_or(kBoolean), kBoolean);
-    else if (type == napi_number)
+    } else if (type == napi_number) {
       *input_type = std::max(input_type->value_or(kBoolean), kNumber);
-    else if (type == napi_object && IsComplexNumber(env, el))
+    } else if (type == napi_object && IsComplexNumber(env, el)) {
       *input_type = std::max(input_type->value_or(kBoolean), kComplex);
-    else
+    } else if (type == napi_undefined) {
+      *input_type = std::max(input_type->value_or(kBoolean), kUndefined);
+    } else {
+      napi_throw_type_error(env, nullptr, "Unsupported array element type");
       return false;
+    }
   }
   return true;
 }
@@ -200,6 +209,9 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
               reinterpret_cast<mx::complex64_t*>(result.data()),
               std::move(shape),
               dtype.value_or(mx::complex64));
+        } else if (element_type == kUndefined) {
+          // Sparse array is treated as zeros.
+          return CreateInstance<T>(mx::zeros(std::move(shape), mx::float32));
         } else {
           return T();
         }

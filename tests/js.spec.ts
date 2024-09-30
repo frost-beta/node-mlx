@@ -2,6 +2,14 @@ import {core as mx} from '..';
 import {assert} from 'chai';
 
 describe('js', () => {
+  describe('constructor', () => {
+    it('sparseArray', () => {
+      const sparse = mx.array(new Array(10));
+      const zeros = mx.zeros([10]);
+      assert.deepEqual(sparse.tolist(), zeros.tolist());
+    });
+  });
+
   describe('toString', () => {
     it('array', () => {
       assert.equal(mx.array([1, 2, 3, 4]).toString(),
