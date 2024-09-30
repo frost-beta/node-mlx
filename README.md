@@ -15,21 +15,13 @@ CPU support:
 - x64 Macs
 - x64/arm64 Linux
 
-(No support for Windows yet, but I'll try to make MLX work on it in future)
-
-Note that currently MLX does not have plans to support GPUs other than Apple
-Silicon, for computing with NVIDIA GPUs, you have to go with TensorFlow.js,
-or wait for someone porting PyTorch to Node.js (which should not be too hard).
-
 ## Examples
 
+* [llm.js](https://github.com/frost-beta/llm.js) - Large language models
+  implemented with JavaScript, vision models included.
 * [sisi](https://github.com/frost-beta/sisi) - Semantic Image Search CLI.
 * [clip](https://github.com/frost-beta/clip) - Node.js module for the CLIP
   model.
-* [llama3.js](https://github.com/frost-beta/llama3.js) - A JavaScript
-  implementation of Llama 3.
-* [llm.js](https://github.com/frost-beta/llm.js) - Load language models
-  locally with JavaScript.
 * [train-model-with-js](https://github.com/frost-beta/train-model-with-js) -
   Train a simple text generation model with JavaScript.
 * [train-llama3-js](https://github.com/frost-beta/train-llama3-js) - Train a
@@ -122,6 +114,23 @@ copying.
 
 ```typescript
 const buffer: Uint8Array = mx.array([1, 2, 3, 4], mx.uint8);
+```
+
+#### `mx.evalInWorker`
+
+The `mx.eval` API is synchronous that the main thread would be blocked waiting
+for the result, which breaks the assumption of Node.js that nothing should block
+in main thread, and results in a hanging process that not responding to
+anything, including tries to end the process with Ctrl+C.
+
+The JavaScript-only `mx.evalInWorker` API runs `mx.eval` in a worker thread and
+returns a promise that resolves when the call ends. It is useful when the
+program runs a large model and you want to make the app alive to user
+interactions while doing computations.
+
+```typescript
+const y = model.forward(x);
+await mx.evalInWorker(y);
 ```
 
 #### `mx.tidy`

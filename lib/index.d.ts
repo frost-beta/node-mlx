@@ -340,6 +340,7 @@ export namespace core {
   // @ts-ignore: eval is a special function in JS and this fails type check.
   function eval(...args: unknown[]): void;
   function asyncEval(...args: unknown[]): void;
+  function evalInWorker(...args: unknown[]): Promise<void>;
   function jvp(func: (...args: array[]) => array | array[], primals: array[], tangents: array[]): [array[], array[]];
   function vjp(func: (...args: array[]) => array | array[], primals: array[], cotangents: array[]): [array[], array[]];
   function valueAndGrad<T extends any[], U>(func: (...args: T) => U, argnums?: number | number[]): (...args: T) => [U, array];

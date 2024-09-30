@@ -7,11 +7,29 @@
 
 namespace {
 
-// Use large prime numbers to represent non-constant JS elements. The numbers
+// Use large prime numbers to represent non-constant JS elements.
 constexpr uint64_t kArrayIdentifier = 18446744073709551557UL;
 constexpr uint64_t kListIdentifier = 18446744073709551533UL;
 constexpr uint64_t kDictIdentifier = 18446744073709551521UL;
 constexpr uint64_t kArgIdentifier = 18446744073709551437UL;
+
+// Shares data between workers.
+struct WorkerData {
+  napi_env env = nullptr;
+  napi_async_work work = nullptr;
+  napi_deferred deffered = nullptr;
+  std::vector<mx::array> arrays;
+
+  ~WorkerData() {
+    if (deffered) {
+      napi_reject_deferred(env, deffered,
+                           ki::ToNodeValue(env, "Worker failed."));
+    }
+    if (work) {
+      napi_delete_async_work(env, work);
+    }
+  }
+};
 
 // Used by compiled function to transfer JS results to callers.
 auto& CompiledFunctionRelay() {
@@ -243,6 +261,49 @@ ValueAndGradImpl(const char* error_tag,
 
 namespace transforms_ops {
 
+napi_value EvalInWorker(ki::Arguments* args) {
+  std::unique_ptr<WorkerData> data = std::make_unique<WorkerData>();
+  data->env = args->Env();
+  if (napi_create_async_work(
+      data->env,
+      nullptr,
+      ki::ToNodeValue(data->env, "evalInWorker"),
+      [](napi_env env, void* hint) {
+        auto* data = static_cast<WorkerData*>(hint);
+        // Call actual eval, do not move the arrays otherwise the underlying
+        // data might end up getting freed in worker, which causes race
+        // conditions.
+        mx::eval(data->arrays);
+      },
+      [](napi_env env, napi_status status, void* hint) {
+        auto* data = static_cast<WorkerData*>(hint);
+        // Resolve promise and release everything on complete.
+        napi_resolve_deferred(env, data->deffered, ki::Undefined(env));
+        data->deffered = nullptr;
+        delete data;
+      },
+      data.get(),
+      &data->work) != napi_ok) {
+    args->ThrowError("Failed to create async work");
+    return nullptr;
+  }
+  // Create the returned promise.
+  napi_value result;
+  if (napi_create_promise(data->env, &data->deffered, &result) != napi_ok) {
+    args->ThrowError("Failed to create promise");
+    return nullptr;
+  }
+  // Start the work.
+  data->arrays = TreeFlatten(args);
+  if (napi_queue_async_work(data->env, data->work) != napi_ok) {
+    args->ThrowError("Failed to queue async work");
+    return nullptr;
+  }
+  // Leak the data, which will be freed in complete handler.
+  data.release();
+  return result;
+}
+
 auto ValueAndGrad(ki::Persistent js_func,
                   std::optional<std::variant<int, std::vector<int>>> argnums) {
   return ValueAndGradImpl("[value_and_grad]", false, std::move(js_func),
@@ -405,6 +466,7 @@ void InitTransforms(napi_env env, napi_value exports) {
   ki::Set(env, exports,
           "eval", EvalOpWrapper(&mx::eval),
           "asyncEval", EvalOpWrapper(&mx::async_eval),
+          "evalInWorker", &transforms_ops::EvalInWorker,
           "jvp", JVPOpWrapper(&mx::jvp),
           "vjp", JVPOpWrapper(&mx::vjp),
           "valueAndGrad", &transforms_ops::ValueAndGrad,

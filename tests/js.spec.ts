@@ -52,6 +52,21 @@ describe('js', () => {
     });
   });
 
+  describe('evalInWorker', () => {
+    it('async', async () => {
+      const a = mx.add(mx.array(1), mx.array(1));
+      await mx.evalInWorker(a);
+      assert.equal(a.item(), 2);
+    });
+
+    it('disposeWhenEval', async () => {
+      const a = mx.add(mx.array(1), mx.array(1));
+      const task = mx.evalInWorker(a);
+      mx.dispose(a);
+      await task;
+    });
+  });
+
   describe('tidy', () => {
     it('unwrapObjects', () => {
       const objects: mx.array[] = [];
