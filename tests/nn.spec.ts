@@ -586,8 +586,14 @@ describe('layers', function() {
     y = c.forward(x);
     assert.deepEqual(y.shape, [N, L - (ks - 1) * dil, COut]);
 
-    c = new nn.Conv1d(CIn, COut, ks, undefined, undefined, undefined, false);
+    c = new nn.Conv1d(CIn, COut, ks, undefined, undefined, undefined, undefined, false);
     assert.notProperty(c.parameters(), 'bias');
+
+    const groups = CIn;
+    c = new nn.Conv1d(CIn, COut, ks, undefined, undefined, undefined, groups);
+    y = c.forward(x);
+    assert.deepEqual(c.weight.shape, [COut, ks, CIn / groups]);
+    assert.deepEqual(y.shape, [N, L - ks + 1, COut]);
   });
 
   it('conv2d', () => {

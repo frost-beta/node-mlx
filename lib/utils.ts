@@ -34,7 +34,7 @@
 export function treeMap(func: (...args: any[]) => unknown,
                         tree: Record<string, any>,
                         rest?: Record<string, any>[],
-                        isLeaf?: (node: unknown) => boolean): unknown {
+                        isLeaf?: (node: unknown) => boolean): Record<string, any> {
   if (isLeaf && isLeaf(tree)) {
     if (rest)
       return func(tree, ...rest);

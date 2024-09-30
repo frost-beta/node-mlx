@@ -24,6 +24,7 @@ export class Conv1d extends Module {
   stride: number;
   padding: number;
   dilation: number;
+  groups: number;
   weight: mx.array;
   bias?: mx.array;
 
@@ -33,14 +34,20 @@ export class Conv1d extends Module {
               stride = 1,
               padding = 0,
               dilation = 1,
+              groups = 1,
               bias = true) {
     super();
+
+    if (inChannels % groups != 0)
+      throw new Error(`The number of input channels (${inChannels}) must be divisible by the number of groups (${groups})`);
+
     this.stride = stride;
     this.padding = padding;
     this.dilation = dilation;
+    this.groups = groups;
 
     const scale = Math.sqrt(1 / (inChannels * kernelSize));
-    this.weight = mx.random.uniform(-scale, scale, [outChannels, kernelSize, inChannels]);
+    this.weight = mx.random.uniform(-scale, scale, [outChannels, kernelSize, inChannels / groups]);
     if (bias) {
       this.bias = mx.zeros([outChannels]);
     }
@@ -50,11 +57,11 @@ export class Conv1d extends Module {
     return `${this.weight.shape[2]}, ${this.weight.shape[0]}, ` +
            `kernelSize=${this.weight.shape[1]}, stride=${this.stride}, ` +
            `padding=${this.padding}, dilation=${this.dilation}, ` +
-           `bias=${!!this.bias}`;
+           `groups=${this.groups}, bias=${!!this.bias}`;
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.conv1d(x, this.weight, this.stride, this.padding, this.dilation, 1);
+    const y = mx.conv1d(x, this.weight, this.stride, this.padding, this.dilation, this.groups);
     if (this.bias)
       return mx.add(y, this.bias);
     else
