@@ -6,6 +6,26 @@
 namespace ki {
 
 template<>
+struct Type<mx::float16_t> {
+  static constexpr const char* name = "mx.float16";
+  static inline napi_status ToNode(napi_env env,
+                                   mx::float16_t value,
+                                   napi_value* result) {
+    return ConvertToNode(env, static_cast<float>(value), result);
+  }
+};
+
+template<>
+struct Type<mx::bfloat16_t> {
+  static constexpr const char* name = "mx.bfloat16";
+  static inline napi_status ToNode(napi_env env,
+                                   mx::bfloat16_t value,
+                                   napi_value* result) {
+    return ConvertToNode(env, static_cast<float>(value), result);
+  }
+};
+
+template<>
 struct Type<mx::Dtype> {
   static constexpr const char* name = "Dtype";
   static void Define(napi_env env,
@@ -30,7 +50,7 @@ struct Type<mx::Dtype::Category> {
 
 template<>
 struct Type<mx::array> : public AllowPassByValue<mx::array> {
-  static constexpr const char* name = "array";
+  static constexpr const char* name = "mx.array";
   static constexpr bool allow_function_call = true;
   static mx::array* Constructor(napi_env env,
                                 napi_value value,

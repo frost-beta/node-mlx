@@ -163,7 +163,8 @@ bool FlattenArray(napi_env env, napi_value value, std::vector<T>* result) {
 
 // Convert JS Array to mx.array.
 template<typename T>
-T ArrayToArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
+T JsArrayToMxArray(napi_env env, napi_value value,
+                   std::optional<mx::Dtype> dtype) {
   // Get array's shape, validate it and decide a proper dtype for it.
   std::vector<int> shape;
   if (!GetShape(env, value, &shape))
@@ -205,7 +206,7 @@ T ArrayToArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
 
 // Convert JS TypedArray to mx.array.
 template<typename T>
-T TypedArrayToArray(napi_env env, napi_value value) {
+T JsTypedArrayToMxArray(napi_env env, napi_value value) {
   void* data;
   size_t length;
   napi_typedarray_type element_type;
@@ -253,9 +254,9 @@ T CreateArray(napi_env env, napi_value value, std::optional<mx::Dtype> dtype) {
     case napi_object: {
       // Convert JS array to mx.array.
       if (ki::IsArray(env, value))
-        return ArrayToArray<T>(env, value, dtype);
+        return JsArrayToMxArray<T>(env, value, dtype);
       if (ki::IsTypedArray(env, value))
-        return TypedArrayToArray<T>(env, value);
+        return JsTypedArrayToMxArray<T>(env, value);
       // Test if it is an mx.array instance.
       auto a = ki::FromNodeTo<mx::array*>(env, value);
       if (a) {
@@ -303,43 +304,57 @@ ArrayAt* At(mx::array* a, ki::Arguments* args) {
   return new ArrayAt(*a, std::move(indices));
 }
 
-// Convert the array to scalar.
-napi_value Item(mx::array* a, napi_env env) {
-  a->eval();
+// Helper to get the array data with type.
+template<typename F>
+auto VisitArrayData(F&& visitor, mx::array* a) {
   switch (a->dtype()) {
     case mx::bool_:
-      return ki::ToNodeValue(env, a->item<bool>());
+      return visitor(a->data<bool>());
     case mx::uint8:
-      return ki::ToNodeValue(env, a->item<uint8_t>());
+      return visitor(a->data<uint8_t>());
     case mx::uint16:
-      return ki::ToNodeValue(env, a->item<uint16_t>());
+      return visitor(a->data<uint16_t>());
     case mx::uint32:
-      return ki::ToNodeValue(env, a->item<uint32_t>());
+      return visitor(a->data<uint32_t>());
     case mx::uint64:
-      return ki::ToNodeValue(env, a->item<uint64_t>());
+      return visitor(a->data<uint64_t>());
     case mx::int8:
-      return ki::ToNodeValue(env, a->item<int8_t>());
+      return visitor(a->data<int8_t>());
     case mx::int16:
-      return ki::ToNodeValue(env, a->item<int16_t>());
+      return visitor(a->data<int16_t>());
     case mx::int32:
-      return ki::ToNodeValue(env, a->item<int32_t>());
+      return visitor(a->data<int32_t>());
     case mx::int64:
-      return ki::ToNodeValue(env, a->item<int64_t>());
+      return visitor(a->data<int64_t>());
     case mx::float16:
-      return ki::ToNodeValue(env, static_cast<float>(a->item<mx::float16_t>()));
+      return visitor(a->data<mx::float16_t>());
     case mx::float32:
-      return ki::ToNodeValue(env, a->item<float>());
+      return visitor(a->data<float>());
     case mx::bfloat16:
-      return ki::ToNodeValue(env, static_cast<float>(a->item<mx::bfloat16_t>()));
+      return visitor(a->data<mx::bfloat16_t>());
     case mx::complex64:
-      return ki::ToNodeValue(env, a->item<std::complex<float>>());
+      return visitor(a->data<std::complex<float>>());
   }
 }
 
+// Convert the array to scalar.
+napi_value Item(mx::array* a, napi_env env) {
+  if (a->size() != 1) {
+    napi_throw_error(env, nullptr,
+                     "item() can only be called on arrays of size 1.");
+    return nullptr;
+  }
+  a->eval();
+  return VisitArrayData([env](auto* data) {
+    return ki::ToNodeValue(env, *data);
+  }, a);
+}
+
 // Convert mx::array to JS array.
-template<typename T, typename U = T>
-napi_value ArrayToNodeValue(napi_env env,
+template<typename T>
+napi_value MxArrayToJsArray(napi_env env,
                             const mx::array& a,
+                            T* data,
                             size_t index = 0,
                             int dim = 0) {
   napi_value ret;
@@ -349,11 +364,10 @@ napi_value ArrayToNodeValue(napi_env env,
   for (size_t i = 0; i < a.shape(dim); ++i) {
     if (dim == a.ndim() - 1) {
       // The last dimension only has scalars.
-      napi_set_element(env, ret, i,
-                       ki::ToNodeValue(env, static_cast<U>(a.data<T>()[index])));
+      napi_set_element(env, ret, i, ki::ToNodeValue(env, data[index]));
     } else {
       napi_set_element(env, ret, i,
-                       ArrayToNodeValue<T, U>(env, a, index, dim + 1));
+                       MxArrayToJsArray(env, a, data, index, dim + 1));
     }
     index += stride;
   }
@@ -365,34 +379,9 @@ napi_value ToList(mx::array* a, napi_env env) {
   if (a->ndim() == 0)
     return Item(a, env);
   a->eval();
-  switch (a->dtype()) {
-    case mx::bool_:
-      return ArrayToNodeValue<bool>(env, *a);
-    case mx::uint8:
-      return ArrayToNodeValue<uint8_t>(env, *a);
-    case mx::uint16:
-      return ArrayToNodeValue<uint16_t>(env, *a);
-    case mx::uint32:
-      return ArrayToNodeValue<uint32_t>(env, *a);
-    case mx::uint64:
-      return ArrayToNodeValue<uint64_t>(env, *a);
-    case mx::int8:
-      return ArrayToNodeValue<int8_t>(env, *a);
-    case mx::int16:
-      return ArrayToNodeValue<int16_t>(env, *a);
-    case mx::int32:
-      return ArrayToNodeValue<int32_t>(env, *a);
-    case mx::int64:
-      return ArrayToNodeValue<int64_t>(env, *a);
-    case mx::float16:
-      return ArrayToNodeValue<mx::float16_t, float>(env, *a);
-    case mx::float32:
-      return ArrayToNodeValue<float>(env, *a);
-    case mx::bfloat16:
-      return ArrayToNodeValue<mx::bfloat16_t, float>(env, *a);
-    case mx::complex64:
-      return ArrayToNodeValue<std::complex<float>>(env, *a);
-  }
+  return VisitArrayData([env, a](auto* data) {
+    return MxArrayToJsArray(env, *a, data);
+  }, a);
 }
 
 // Get the Symbol.iterator.

@@ -24,7 +24,6 @@ describe('js', () => {
       assert.equal(array.size, buffer.byteLength);
       assert.deepEqual(array.tolist(), [...Array.from(buffer)]);
     });
-
   });
 
   describe('toString', () => {
@@ -43,7 +42,7 @@ describe('js', () => {
         }
       });
       for (let i = 0; i < 100; ++i) {
-        assert.throws(() => objects[i].size, 'Error converting "this" to array.');
+        assert.throws(() => objects[i].size, 'Error converting "this" to mx.array.');
       }
     });
 
@@ -69,7 +68,7 @@ describe('js', () => {
         return ret;
       });
       for (let i = 0; i < 99; ++i) {
-        assert.throws(() => objects[i].size, 'Error converting "this" to array.');
+        assert.throws(() => objects[i].size, 'Error converting "this" to mx.array.');
       }
       assert.equal(objects[99].item(), 8964);
     });
@@ -83,7 +82,7 @@ describe('js', () => {
         }
       });
       for (let i = 0; i < objects.length; ++i) {
-        assert.throws(() => objects[i].size, 'Error converting "this" to array.');
+        assert.throws(() => objects[i].size, 'Error converting "this" to mx.array.');
       }
     });
 
@@ -108,7 +107,7 @@ describe('js', () => {
       });
       assert.equal(intermediate.length, 2);
       for (const i of intermediate) {
-        assert.throws(() => i.size, 'Error converting "this" to array.');
+        assert.throws(() => i.size, 'Error converting "this" to mx.array.');
       }
       assert.deepEqual(b.tolist(), [8, 9, 6, 4]);
     });
@@ -118,15 +117,15 @@ describe('js', () => {
     it('nested', () => {
       const obj = {a: mx.array([1, 2, 3, 4])};
       mx.dispose(obj);
-      assert.throws(() => obj.a.size, 'Error converting "this" to array.');
+      assert.throws(() => obj.a.size, 'Error converting "this" to mx.array.');
     });
 
     it('args', () => {
       const a = mx.array([0]);
       const b = mx.array([0]);
       mx.dispose(a, b);
-      assert.throws(() => a.size, 'Error converting "this" to array.');
-      assert.throws(() => b.size, 'Error converting "this" to array.');
+      assert.throws(() => a.size, 'Error converting "this" to mx.array.');
+      assert.throws(() => b.size, 'Error converting "this" to mx.array.');
     });
   });
 });
