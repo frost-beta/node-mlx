@@ -384,6 +384,49 @@ napi_value ToList(mx::array* a, napi_env env) {
   }, a);
 }
 
+// Convert the data to TypedArray.
+napi_value ToTypedArray(mx::array* a, napi_env env) {
+  if (a->ndim() != 1) {
+    napi_throw_type_error(env, nullptr, "Array must have only one dimension.");
+    return nullptr;
+  }
+  napi_typedarray_type type;
+  switch (a->dtype()) {
+    case mx::uint8:  type = napi_uint8_array; break;
+    case mx::uint16: type = napi_uint16_array; break;
+    case mx::uint32: type = napi_uint32_array; break;
+    case mx::int8:  type = napi_int8_array; break;
+    case mx::int16: type = napi_int16_array; break;
+    case mx::int32: type = napi_int32_array; break;
+    case mx::float32: type = napi_float32_array; break;
+    default:
+      napi_throw_type_error(env, nullptr, "No matching TypedArray for dtype.");
+      return nullptr;
+  }
+  a->eval();
+  // Create a ArrayBuffer that stores a reference to array's data.
+  using DataType = std::shared_ptr<mx::array::Data>;
+  napi_value buffer;
+  if (napi_create_external_arraybuffer(env,
+                                       a->data<uint8_t>(), a->nbytes(),
+                                       [](napi_env env, void*, void* hint) {
+                                          delete static_cast<DataType*>(hint);
+                                       },
+                                       new DataType(a->data_shared_ptr()),
+                                       &buffer) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to create ArrayBuffer.");
+    return nullptr;
+  }
+  // Create view on the ArrayBuffer.
+  napi_value buffer_view;
+  if (napi_create_typedarray(env, type, a->size(), buffer, 0,
+                             &buffer_view) != napi_ok) {
+    napi_throw_error(env, nullptr, "Unable to create TypedArray.");
+    return nullptr;
+  }
+  return buffer_view;
+}
+
 // Get the Symbol.iterator.
 napi_value SymbolIterator(napi_env env) {
   napi_value result;
@@ -601,6 +644,7 @@ void Type<mx::array>::Define(napi_env env,
       "at", MemberFunction(&At),
       "item", MemberFunction(&Item),
       "tolist", MemberFunction(&ToList),
+      "toTypedArray", MemberFunction(&ToTypedArray),
       "astype", MemberFunction(&mx::astype),
       "flatten", MemberFunction(&ops::Flatten),
       "reshape", MemberFunction(&ops::Reshape),

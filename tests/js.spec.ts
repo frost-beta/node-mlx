@@ -26,6 +26,25 @@ describe('js', () => {
     });
   });
 
+  describe('toTypedArray', () => {
+    it('typeAndValue', () => {
+      assert.instanceOf(mx.array([1]).toTypedArray(), Float32Array);
+      assert.instanceOf(mx.array([1], mx.int32).toTypedArray(), Int32Array);
+      assert.instanceOf(mx.array([1], mx.uint8).toTypedArray(), Uint8Array);
+
+      const data = [8, 9, 6, 4];
+      const array = mx.array(data, mx.uint16);
+      assert.deepEqual(Array.from(array.toTypedArray()), data);
+    });
+
+    it('garbageCollection', () => {
+      const array = mx.array([8, 9, 6, 4]);
+      const buffer = array.toTypedArray();
+      mx.dispose(array);
+      assert.deepEqual(Array.from(buffer), [8, 9, 6, 4]);
+    })
+  });
+
   describe('toString', () => {
     it('array', () => {
       assert.equal(mx.array([1, 2, 3, 4]).toString(),

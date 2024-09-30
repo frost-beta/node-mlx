@@ -76,10 +76,11 @@ export namespace core {
 
   // Array helper types.
   type MultiDimensionalArray<T> = MultiDimensionalArray<T>[] | T;
+  type TypedArray = Int8Array | Uint8Array | Int16Array | Uint16Array |
+                    Int32Array | Uint32Array | Float32Array | Float64Array;
   type Scalar = boolean | number | Complex;
-  type ScalarOrArray = MultiDimensionalArray<Scalar | array>;
+  type ScalarOrArray = MultiDimensionalArray<Scalar | TypedArray | array>;
   type ArrayIndex = null | Slice | '...' | array | number;
-
   // Helper class to apply updates at specific indices.
   class ArrayAt {
     constructor(array: array, indices: ArrayIndex | ArrayIndex[]);
@@ -103,6 +104,7 @@ export namespace core {
     at(...index: ArrayIndex[]): ArrayAt;
     item(): Scalar;
     tolist(): MultiDimensionalArray<Scalar>;
+    toTypedArray(): TypedArray;
     dtype: Dtype;
     itemsize: number;
     nbytes?: number;

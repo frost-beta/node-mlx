@@ -110,6 +110,20 @@ You can pass following JavaScript types to `mx.array`:
 * `Buffer` - Same with `UInt8Array`.
 * `Int8Array`/`Uint8Array`/`Int16Array`/`Uint16Array`/`Int32Array`/`Uint32Array`/`Float32Array`
 
+#### `mx.array.toTypedArray`
+
+While it is possible to use the `tolist()` method of `mx.array` to convert the
+array to JavaScript `Array`, a copy of data is invovled.
+
+For 1D arrays whose dtype has a representation in JavaScript
+[`TypedArray`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray),
+you can use the `toTypedArray()` method to expose the data to JavaScript without
+copying.
+
+```typescript
+const buffer: Uint8Array = mx.array([1, 2, 3, 4], mx.uint8);
+```
+
 #### `mx.tidy`
 
 This is the same with [`tf.tidy`](https://js.tensorflow.org/api/latest/#tidy)
@@ -122,13 +136,20 @@ let result = mx.tidy(() => {
 });
 ```
 
+In addition, it also works with async functions.
+
+```typescript
+await mx.tidy(async () => { ... });
+```
+
 ### `mx.dispose`
 
 This is the same with [`tf.dispose`](https://js.tensorflow.org/api/latest/#dispose)
 API of TensorFlow.js, which cleans up all the tensors found in the object.
 
 ```typescript
-mx.dispose({ a: mx.array([1, 2, 3, 4]) })
+mx.dispose({ a: mx.array([1, 2, 3, 4]) });
+mx.dispose(mx.array([1]), mx.array([2]));
 ```
 
 ### Complex numbers
