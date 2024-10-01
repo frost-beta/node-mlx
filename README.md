@@ -116,23 +116,6 @@ copying.
 const buffer: Uint8Array = mx.array([1, 2, 3, 4], mx.uint8);
 ```
 
-#### `mx.evalInWorker`
-
-The `mx.eval` API is synchronous that the main thread would be blocked waiting
-for the result, which breaks the assumption of Node.js that nothing should block
-in main thread, and results in a hanging process that not responding to
-anything, including tries to end the process with Ctrl+C.
-
-The JavaScript-only `mx.evalInWorker` API runs `mx.eval` in a worker thread and
-returns a promise that resolves when the call ends. It is useful when the
-program runs a large model and you want to make the app alive to user
-interactions while doing computations.
-
-```typescript
-const y = model.forward(x);
-await mx.evalInWorker(y);
-```
-
 #### `mx.tidy`
 
 This is the same with [`tf.tidy`](https://js.tensorflow.org/api/latest/#tidy)
