@@ -19,6 +19,8 @@ CPU support:
 
 * [llm.js](https://github.com/frost-beta/llm.js) - Large language models
   implemented with JavaScript, vision models included.
+* [not-a-vector-database](https://github.com/frost-beta/not-a-vector-database) -
+  Node.js module for storing and searching embeddings.
 * [sisi](https://github.com/frost-beta/sisi) - Semantic Image Search CLI.
 * [clip](https://github.com/frost-beta/clip) - Node.js module for the CLIP
   model.
