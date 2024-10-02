@@ -5,6 +5,10 @@
 // Needed for detail::compile.
 #include "mlx/transforms_impl.h"
 
+namespace mlx::core {
+array eval_impl(std::vector<array> outputs, bool async);
+}
+
 namespace {
 
 // Use large prime numbers to represent non-constant JS elements.
@@ -18,7 +22,7 @@ struct WorkerData {
   napi_env env = nullptr;
   napi_async_work work = nullptr;
   napi_deferred deffered = nullptr;
-  std::vector<mx::array> arrays;
+  mx::Event event;
 
   ~WorkerData() {
     if (deffered) {
@@ -78,15 +82,6 @@ uint64_t StrToConstant(std::string_view str) {
   for (size_t i = 0; i < length; ++i)
     r *= str[i];
   return r;
-}
-
-// A template converter for ops that accept infinite |array|s.
-inline
-std::function<void(ki::Arguments* args)>
-EvalOpWrapper(void(*func)(std::vector<mx::array>)) {
-  return [func](ki::Arguments* args) {
-    func(TreeFlatten(args));
-  };
 }
 
 // A template converter for ops that accept |primals| and |tangents|.
@@ -261,19 +256,20 @@ ValueAndGradImpl(const char* error_tag,
 
 namespace transforms_ops {
 
-napi_value EvalInWorker(ki::Arguments* args) {
+void Eval(ki::Arguments* args) {
+  mx::eval(TreeFlatten(args));
+}
+
+napi_value AsyncEval(ki::Arguments* args) {
   std::unique_ptr<WorkerData> data = std::make_unique<WorkerData>();
   data->env = args->Env();
   if (napi_create_async_work(
       data->env,
       nullptr,
-      ki::ToNodeValue(data->env, "evalInWorker"),
+      ki::ToNodeValue(data->env, "asyncEval"),
       [](napi_env env, void* hint) {
         auto* data = static_cast<WorkerData*>(hint);
-        // Call actual eval, do not move the arrays otherwise the underlying
-        // data might end up getting freed in worker, which causes race
-        // conditions.
-        mx::eval(data->arrays);
+        data->event.wait();
       },
       [](napi_env env, napi_status status, void* hint) {
         auto* data = static_cast<WorkerData*>(hint);
@@ -294,7 +290,7 @@ napi_value EvalInWorker(ki::Arguments* args) {
     return nullptr;
   }
   // Start the work.
-  data->arrays = TreeFlatten(args);
+  data->event = mx::eval_impl(TreeFlatten(args), true).event();
   if (napi_queue_async_work(data->env, data->work) != napi_ok) {
     args->ThrowError("Failed to queue async work");
     return nullptr;
@@ -464,9 +460,8 @@ Compile(ki::Persistent js_func, std::optional<bool> shapeless) {
 
 void InitTransforms(napi_env env, napi_value exports) {
   ki::Set(env, exports,
-          "eval", EvalOpWrapper(&mx::eval),
-          "asyncEval", EvalOpWrapper(&mx::async_eval),
-          "evalInWorker", &transforms_ops::EvalInWorker,
+          "eval", &transforms_ops::Eval,
+          "asyncEval", &transforms_ops::AsyncEval,
           "jvp", JVPOpWrapper(&mx::jvp),
           "vjp", JVPOpWrapper(&mx::vjp),
           "valueAndGrad", &transforms_ops::ValueAndGrad,

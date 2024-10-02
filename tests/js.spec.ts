@@ -52,16 +52,16 @@ describe('js', () => {
     });
   });
 
-  describe('evalInWorker', () => {
+  describe('asyncEval', () => {
     it('async', async () => {
       const a = mx.add(mx.array(1), mx.array(1));
-      await mx.evalInWorker(a);
+      await mx.asyncEval(a);
       assert.equal(a.item(), 2);
     });
 
     it('disposeWhenEval', async () => {
       const a = mx.add(mx.array(1), mx.array(1));
-      const task = mx.evalInWorker(a);
+      const task = mx.asyncEval(a);
       mx.dispose(a);
       await task;
     });
