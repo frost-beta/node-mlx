@@ -292,5 +292,8 @@ export function toCamelCase(e: string) {
 }
 
 export function toSnakeCase(e: string) {
+  // Do not convert if the first character is upper case.
+  if (e.length > 0 && e[0] == e[0].toUpperCase())
+    return e;
   return e.replace(/[A-Z]/g, (ch, i) => i ? '_' + ch.toLowerCase() : ch.toLowerCase());
 }
