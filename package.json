@@ -6,8 +6,8 @@
   "types": "index.d.ts",
   "scripts": {
     "install": "node install.js",
-    "prepack": "tsc",
-    "prebuild": "tsc",
+    "prepack": "tsc --build",
+    "prebuild": "tsc --build",
     "build": "cmake-js build --prefer-make",
     "pretest": "tsc --project tests/tsconfig.json --noEmit",
     "test": "tsx tests/run.ts"
