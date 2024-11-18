@@ -753,6 +753,12 @@ describe('array', () => {
   });
 
   it('deepGraphs', function() {
+    // FIXME(zcbenz): Compilation fails on QEMU in CI.
+    if (process.env.CI == 'true' &&
+        process.platform == 'linux' &&
+        process.arch == 'arm64') {
+      this.skip();
+    }
     this.timeout(10_000);
     this.slow(5_000);
     // The following tests should simply run cleanly without a segfault or
