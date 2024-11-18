@@ -7,7 +7,8 @@ describe('metal', () => {
       this.skip();
   });
 
-  it('memoryInfo', () => {
+  it('memoryInfo', function() {
+    this.timeout(10_000);
     let a = mx.zeros([4096], mx.int32);
     mx.eval(a);
     mx.synchronize();

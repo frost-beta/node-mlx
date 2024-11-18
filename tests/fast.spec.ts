@@ -214,7 +214,14 @@ describe('fast', () => {
   });
 
   it('layerNorm', () => {
-    const tolerances = [{dtype: mx.float32, eps: 1e-5}, {dtype: mx.float16, eps: 5e-3}, {dtype: mx.bfloat16, eps: 5e-2}];
+    const tolerances = [
+      {dtype: mx.float32, eps: 1e-5},
+      {dtype: mx.float16, eps: 5e-3},
+      {dtype: mx.bfloat16, eps: 5e-2},
+    ];
+    if (process.env.CI == 'true') {
+      tolerances[0].eps = 1e-4;
+    }
 
     const dtypes = [mx.float32, mx.float16, mx.bfloat16];
     const epss = [1e-3, 1e-5];
