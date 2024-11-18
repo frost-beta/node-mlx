@@ -23,6 +23,13 @@ mx::array Norm(const mx::array& a,
   }
 }
 
+mx::array Cross(const mx::array& a,
+                const mx::array& b,
+                std::optional<int> axis,
+                mx::StreamOrDevice s) {
+  return mx::linalg::cross(a, b, axis.value_or(-1), s);
+}
+
 }  // namespace linalg
 
 void InitLinalg(napi_env env, napi_value exports) {
@@ -38,5 +45,7 @@ void InitLinalg(napi_env env, napi_value exports) {
           "cholesky", &mx::linalg::cholesky,
           "choleskyInv", &mx::linalg::cholesky_inv,
           "pinv", &mx::linalg::pinv,
-          "cross", &mx::linalg::cross);
+          "cross", &linalg::Cross,
+          "eigvalsh", &mx::linalg::eigvalsh,
+          "eigh", &mx::linalg::eigvalsh);
 }

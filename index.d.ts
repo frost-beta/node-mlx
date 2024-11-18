@@ -360,17 +360,25 @@ export namespace core {
 
   // Metal.
   namespace metal {
+    interface DeviceInfo {
+      architecture: string,
+      max_buffer_length: number,
+      max_recommended_working_set_size: number,
+      memory_size: number,
+    }
+
     function isAvailable(): boolean;
     function getActiveMemory(): number;
     function getPeakMemory(): number;
     function resetPeakMemory(): void;
     function getCacheMemory(): number;
     function setMemoryLimit(limit: number, relaxed?: boolean): number;
+    function setWiredLimit(limit: number): number;
     function clearCache(): void;
     function setCacheLimit(limit: number): number;
     function startCapture(path: string): boolean;
     function stopCapture(): void;
-    function deviceInfo(): {[key: string]: string | number};
+    function deviceInfo(): DeviceInfo;
   }
 
   // Random.
@@ -410,14 +418,16 @@ export namespace core {
   // Linear algebra.
   namespace linalg {
     function norm(array: ScalarOrArray, norm?: number | string, axes?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-    function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
-    function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function inv(array: ScalarOrArray, s?: StreamOrDevice): array;
     function triInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function cholesky(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function choleskyInv(array: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
     function pinv(array: ScalarOrArray, s?: StreamOrDevice): array;
-    function cross(a: ScalarOrArray, b: ScalarOrArray, axis: number, s?: StreamOrDevice): array;
+    function cross(a: ScalarOrArray, b: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
+    function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
+    function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
+    function eigvalsh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
+    function eigh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
   }
 
   // Fast operations.

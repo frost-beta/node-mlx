@@ -71,4 +71,64 @@ describe('linalg', () => {
       assertArrayAllTrue(mx.allclose(mx.matmul(mx.matmul(M, MPlus), M), M, 0, 1e-3));
     }
   });
+
+  it('choleskyInv', () => {
+    it('choleskyInv', () => {
+      mx.random.seed(7);
+
+      const sqrtA = mx.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0], [7.0, 8.0, 9.0]], mx.float32);
+      let A = mx.divide(mx.matmul(sqrtA.T, sqrtA), 81);
+
+      const N = 3;
+      A = mx.matmul(A, A.T);
+
+      [false, true].forEach((upper) => {
+        const L = mx.linalg.cholesky(A, upper, mx.cpu);
+        const AInv = mx.linalg.choleskyInv(L, upper, mx.cpu);
+        assertArrayAllTrue(mx.isclose(mx.matmul(A, AInv), mx.eye(N), 1e-4));
+      });
+
+      const B = mx.add(A, mx.divide(1, 9));
+      const AB = mx.stack([A, B]);
+      [false, true].forEach((upper) => {
+        const Ls = mx.linalg.cholesky(AB, upper, mx.cpu);
+        const ABInv = mx.linalg.choleskyInv(Ls, upper, mx.cpu);
+        for (let i = 0; i < AB.size; ++i) {
+          const M = AB.index(i);
+          const MInv = ABInv.index(i);
+          assertArrayAllTrue(mx.allclose(mx.matmul(M, MInv), mx.eye(N), undefined, 1e-4));
+        }
+      });
+    });
+  });
+
+  it('crossProduct', () => {
+    let a = mx.array([1.0, 2.0, 3.0]);
+    let b = mx.array([4.0, 5.0, 6.0]);
+    let result = mx.linalg.cross(a, b);
+    assert.deepEqual(result.tolist(), [-3.0, 6.0, -3.0]);
+
+    // Test with negative values.
+    a = mx.array([-1.0, -2.0, -3.0]);
+    b = mx.array([4.0, -5.0, 6.0]);
+    result = mx.linalg.cross(a, b);
+    assert.deepEqual(result.tolist(), [-27, -6, 13]);
+
+    // Test with integer values.
+    a = mx.array([1, 2, 3]);
+    b = mx.array([4, 5, 6]);
+    result = mx.linalg.cross(a, b);
+    assert.deepEqual(result.tolist(), [-3, 6, -3]);
+
+    // Test with 2D arrays and axis parameter.
+    a = mx.array([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]);
+    b = mx.array([[4.0, 5.0, 6.0], [1.0, 2.0, 3.0]]);
+    result = mx.linalg.cross(a, b, 1);
+    assert.deepEqual(result.tolist(), [[-3.0, 6.0, -3.0], [3.0, -6.0, 3.0]]);
+
+    // Test with incorrect vector size (should raise an exception).
+    a = mx.array([1.0]);
+    b = mx.array([4.0]);
+    assert.throws(() => mx.linalg.cross(a, b), Error);
+  });
 });

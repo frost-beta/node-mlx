@@ -284,6 +284,44 @@ export function heUniform(dtype: mx.Dtype = mx.float32): (a: mx.array, mode?: 'f
   return initializer;
 }
 
+/**
+ * An initializer that returns a sparse matrix.
+ *
+ * @remarks
+ *
+ * Initializer return an array that has the same shape as input array with
+ * the values filled with samples from a normal distribution.
+ *
+ * @param sparsity - The fraction of elements in each column to be set to zero.
+ * @param mean - Mean of the normal distribution. Default: `0.0`.
+ * @param std - Standard deviation of the normal distribution. Default: `1.0`.
+ * @param dtype - The data type of the array. Default: `mx.float32`.
+ *
+ * @returns An initializer that returns a sparse matrix.
+ *
+ * @example
+ * ```
+ * const initFn = nn.init.sparse(0.5);
+ * initFn(mx.zeros([2, 2]));
+ * // [[-1.91187, -0.117483],
+ * //  [0, 0]], dtype=float32)
+ * ```
+ */
+export function sparse(sparsity: number, mean: number = 0.0, std: number = 1.0, dtype: mx.Dtype = mx.float32): (a: mx.array) => mx.array {
+  const initializer = (a: mx.array): mx.array => {
+    if (a.shape.length !== 2) {
+      throw new Error('Only tensors with 2 dimensions are supported');
+    }
+    const [rows, cols] = a.shape;
+    const numZeros = Math.ceil(sparsity * cols);
+    const order = mx.argsort(mx.random.uniform(0, 1, a.shape), 1);
+    a = mx.random.normal(a.shape, dtype, mean, std);
+    a.indexPut_([mx.arange(rows, mx.int64).reshape(rows, 1), order.index(mx.Slice(), mx.Slice(0, numZeros))], 0);
+    return a;
+  };
+  return initializer;
+}
+
 // Helpers.
 function calculateFanInFanOut(x: mx.array): [number, number] {
   if (x.ndim < 2) {

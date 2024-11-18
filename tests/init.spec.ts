@@ -69,4 +69,26 @@ describe('init', () => {
       });
     });
   });
+
+  it('sparse', () => {
+    const mean = 0.0;
+    const std = 1.0;
+    const sparsity = 0.5;
+    const dtypes: mx.Dtype[] = [mx.float32, mx.float16];
+    dtypes.forEach(dtype => {
+      const initializer = nn.init.sparse(sparsity, mean, std, dtype);
+      const shapes: [number, number][] = [[3, 2], [2, 2], [4, 3]];
+      shapes.forEach(shape => {
+        let result = initializer(mx.array(mx.zeros(shape), dtype));
+        assert.deepEqual(result.shape, shape);
+        assert.equal(result.dtype, dtype);
+        assertArrayAllTrue(
+          mx.greaterEqual(mx.sum(mx.equal(result, 0)), 0.5 * shape[0] * shape[1])
+        );
+      });
+      assert.throws(() => {
+        initializer(mx.zeros([1], dtype));
+      }, Error);
+    });
+  });
 });

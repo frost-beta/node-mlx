@@ -25,5 +25,15 @@ describe('metal', () => {
 
     mx.metal.clearCache();
     assert.equal(mx.metal.getCacheMemory(), 0);
+
+    mx.metal.resetPeakMemory();
+    assert.equal(mx.metal.getPeakMemory(), 0);
+
+    let oldLimit = mx.metal.setWiredLimit(1000);
+    oldLimit = mx.metal.setWiredLimit(0);
+    assert.equal(oldLimit, 1000);
+
+    const maxSize = mx.metal.deviceInfo().max_recommended_working_set_size;
+    assert.throws(() => mx.metal.setWiredLimit(maxSize + 10));
   });
 });
