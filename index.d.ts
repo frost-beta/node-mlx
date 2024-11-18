@@ -445,10 +445,10 @@ export namespace core {
 }
 
 // The nn module.
-export * as nn from './nn';
+export * as nn from './lib/nn';
 
 // The optim module.
-export * as optimizers from './optimizers';
+export * as optimizers from './lib/optimizers';
 
 // The utils module.
-export * as utils from './utils';
+export * as utils from './lib/utils';

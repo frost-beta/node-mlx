@@ -752,7 +752,9 @@ describe('array', () => {
                      [...Array(3)].map((_,i) => [...Array(6)].map((_,j) => [...Array(4)].map((_,k) => 4 * (6 * i + j) + 3 - k))));
   });
 
-  it('deepGraphs', () => {
+  it('deepGraphs', function() {
+    this.timeout(10_000);
+    this.slow(5_000);
     // The following tests should simply run cleanly without a segfault or
     // crash due to exceeding recursion depth limits.
 

@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "outDir": "dist",
     "rootDir": "lib",
     "noImplicitOverride": true,

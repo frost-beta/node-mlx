@@ -1,5 +1,5 @@
 // The core APIs are in native bindings.
-const core = require(__dirname + '/../build/Release/mlx.node');
+const core = require(__dirname + '/build/Release/mlx.node');
 
 // Helper for creating complex number.
 core.Complex = (re, im) => {
@@ -7,13 +7,13 @@ core.Complex = (re, im) => {
 };
 
 // The stream helper is in TS.
-core.stream = require('../dist/stream').stream;
+core.stream = require('./dist/stream').stream;
 
 // Export core (mx) module.
 exports.core = core;
 
 // Export utils module.
-exports.utils = require('../dist/utils');
+exports.utils = require('./dist/utils');
 
 // Lazy-load nn/optimizers modules to avoid circular references.
 const cache = {};
@@ -40,7 +40,7 @@ function defineLazyModule(name) {
     configurable: true,
     enumerable: true,
     get() {
-      const mod = require(`../dist/${name}`);
+      const mod = require(`./dist/${name}`);
       Object.defineProperty(cache, name, {
         value: mod,
         writable: false,

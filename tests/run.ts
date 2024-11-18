@@ -28,7 +28,7 @@ if (values.grep) mocha.grep(values.grep);
 if (values.invert) mocha.invert();
 
 for (const f of fs.readdirSync(__dirname)) {
-  if (f.endsWith('.spec.ts'))
+  if (f.endsWith('.spec.ts') || f.endsWith('.spec.js'))
     mocha.addFile(path.join(__dirname, f));
 }
 mocha.run(process.exit);

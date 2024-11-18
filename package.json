@@ -2,14 +2,14 @@
   "name": "@frost-beta/mlx",
   "version": "0.0.1-dev",
   "description": "Node-API bindings for MLX",
-  "main": "lib/index.js",
-  "types": "lib/index.d.ts",
+  "main": "index.js",
+  "types": "index.d.ts",
   "scripts": {
     "install": "node install.js",
     "prepack": "tsc",
     "prebuild": "tsc",
     "build": "cmake-js build --prefer-make",
-    "pretest": "tsc",
+    "pretest": "tsc --project tests/tsconfig.json --noEmit",
     "test": "tsx tests/run.ts"
   },
   "author": "zcbenz",
