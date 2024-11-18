@@ -106,7 +106,7 @@ function nearestIndices(N: number,
                         scale: number,
                         dim: number,
                         ndims: number): mx.array {
-  return scaledIndices(N, scale, true, dim, ndims).astype(mx.int32);
+  return scaledIndices(N, scale, true, dim, ndims).astype(mx.uint32);
 }
 
 function linearIndices(N: number,
@@ -121,8 +121,8 @@ function linearIndices(N: number,
   const weight = mx.expandDims(mx.subtract(indices, indicesL), -1);
 
   return [
-    [ indicesL.astype(mx.int32), mx.subtract(1, weight) ],
-    [ indicesR.astype(mx.int32), weight ],
+    [ indicesL.astype(mx.uint32), mx.subtract(1, weight) ],
+    [ indicesR.astype(mx.uint32), weight ],
   ];
 }
 
@@ -172,10 +172,10 @@ function cubicIndices(N: number,
   indicesR2 = mx.clip(indicesR2, 0, N - 1);
 
   return [
-    [ indicesL1.astype(mx.int32), weightL1 ],
-    [ indicesR1.astype(mx.int32), weightR1 ],
-    [ indicesL2.astype(mx.int32), weightL2 ],
-    [ indicesR2.astype(mx.int32), weightR2 ]
+    [ indicesL1.astype(mx.uint32), weightL1 ],
+    [ indicesR1.astype(mx.uint32), weightR1 ],
+    [ indicesL2.astype(mx.uint32), weightL2 ],
+    [ indicesR2.astype(mx.uint32), weightR2 ]
   ];
 };
 

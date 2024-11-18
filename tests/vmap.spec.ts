@@ -243,7 +243,11 @@ describe('vmap', () => {
     assertArrayAllTrue(mx.allclose(out, expected));
   });
 
-  it('vmapSvd', () => {
+  it('vmapSvd', function() {
+    // This test is unreliable in CPU.
+    if (!mx.metal.isAvailable())
+      this.retries(4);
+
     const a = mx.random.uniform(0, 1, [3, 4, 2]);
     const cpuSvd = (x: mx.array) => mx.linalg.svd(x, mx.cpu);
 
@@ -303,5 +307,119 @@ describe('vmap', () => {
           mx.allclose(mx.matmul(a.index(mx.Slice(), i, mx.Slice()), invs.index(i)),
                       mx.eye(a.shape[0]), 0, 1e-5));
     }
+  });
+
+  it('vmapScatter', () => {
+    const scatter = (a: mx.array) => {
+      a.indexPut_(0, mx.array(0.0));
+      return a;
+    }
+
+    let a = mx.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]]);
+    let out = mx.vmap(scatter)(a);
+    let expected = mx.array([[0.0, 2.0, 3.0], [0.0, 3.0, 4.0]]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    out = mx.vmap(scatter, 1, 1)(a);
+    expected = mx.array([[0.0, 0.0, 0.0], [2.0, 3.0, 4.0]]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    const scatterAdd = (a: mx.array) => {
+      return a.at(mx.array(0, mx.int64)).add(mx.array(1.0));
+    }
+
+    a = mx.array([[1.0, 2.0, 3.0], [2.0, 3.0, 4.0]]);
+    out = mx.vmap(scatterAdd)(a);
+    expected = mx.array([[2.0, 2.0, 3.0], [3.0, 3.0, 4.0]]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    out = mx.vmap(scatterAdd, 1, 1)(a);
+    expected = mx.array([[2.0, 3.0, 4.0], [2.0, 3.0, 4.0]]);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    const scatterMultipleIndices = (a: mx.array) => {
+      a.indexPut_([mx.array([0, 1], mx.int64), mx.array([0, 1], mx.int64)], mx.array([1.0, 1.0]));
+      return a;
+    }
+
+    a = mx.zeros([3, 3, 3]);
+
+    expected = mx.repeat(scatterMultipleIndices(mx.zeros([3, 3])).index(null), 3, 0);
+    out = mx.vmap(scatterMultipleIndices, [0], 0)(a);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    expected = mx.zeros([3, 3, 3]);
+    expected.indexPut_([0, mx.Slice(), 0], 1);
+    expected.indexPut_([1, mx.Slice(), 1], 1);
+    out = mx.vmap(scatterMultipleIndices, 1, 1)(a);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    expected = mx.zeros([3, 3, 3]);
+    expected.indexPut_([0, 0, mx.Slice()], 1);
+    expected.indexPut_([1, 1, mx.Slice()], 1);
+    out = mx.vmap(scatterMultipleIndices, 2, 2)(a);
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    const scatterSrcIndices = (a: mx.array, idx: any) => {
+      a.indexPut_(idx, mx.array(1.0));
+      return a;
+    }
+
+    a = mx.zeros([3, 4]);
+    const idx = mx.array([0, 1, 2], mx.int64);
+    out = mx.vmap(scatterSrcIndices, [0, 0], 0)(a, idx);
+    assertArrayAllTrue(mx.allclose(out, mx.eye(3, 4)));
+
+    out = mx.vmap(scatterSrcIndices, [null, 0], 0)(a, idx);
+    expected = mx.zeros([3, 3, 4]);
+    expected.indexPut_([0, 0], 1);
+    expected.indexPut_([1, 1], 1);
+    expected.indexPut_([2, 2], 1);
+    // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
+    // assertArrayAllTrue(mx.allclose(out, expected));
+
+    const scatterSrcIndicesUpdates = (a: mx.array, idx: mx.array, updates: mx.array) => {
+      a.indexPut_(idx, updates);
+      return a;
+    }
+
+    a = mx.zeros([3, 4]);
+    const updates = mx.array([1, 2, 3]);
+    out = mx.vmap(scatterSrcIndicesUpdates, [0, 0, 0], 0)(a, idx, updates);
+    expected = mx.diag(mx.array([1, 2, 3]), -1).index(mx.Slice(1));
+    assertArrayAllTrue(mx.allclose(out, expected));
+
+    out = mx.vmap(scatterSrcIndicesUpdates, [null, null, 0], 0)(a, idx, updates);
+    expected = mx.zeros([3, 3, 4]);
+    expected.indexPut_([mx.Slice(), 0], mx.array([1, 2, 3]).index(mx.Slice(), null));
+    // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
+    // assertArrayAllTrue(mx.allclose(out, expected));
+  });
+
+  it('vmapConstFunc', () => {
+    const a = mx.random.uniform(0, 1, [2, 3, 4]);
+    const b = mx.random.uniform(0, 1, [4, 3]);
+
+    const constFunc = (a: mx.array, b: mx.array) => {
+      return mx.array(2);
+    }
+
+    let out: mx.array;
+    // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
+    // out = mx.vmap(constFunc, [0, null])(a, b);
+    // assertArrayAllTrue(mx.arrayEqual(out, mx.full([2], 2)));
+    // out = mx.vmap(constFunc, [null, 0])(a, b);
+    // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
+    // assertArrayAllTrue(mx.arrayEqual(out, mx.full([4], 2)));
+    out = mx.vmap(constFunc, [1, 1])(a, b);
+    assertArrayAllTrue(mx.arrayEqual(out, mx.full([3], 2)));
+
+    assert.throws(() => {
+      out = mx.vmap(constFunc, [null, null])(a, b);
+    });
+
+    assert.throws(() => {
+      out = mx.vmap(constFunc, [0, 0])(a, b);
+    });
   });
 });

@@ -752,6 +752,40 @@ describe('array', () => {
                      [...Array(3)].map((_,i) => [...Array(6)].map((_,j) => [...Array(4)].map((_,k) => 4 * (6 * i + j) + 3 - k))));
   });
 
+  it('multiOutputLeak', function() {
+    if (!mx.metal.isAvailable())
+      this.skip();
+
+    const fun = (): void => {
+      const a = mx.zeros([2**20]);
+      mx.eval(a);
+      const [b, c] = mx.divmod(a, a);
+      mx.dispose(b, c);
+    };
+
+    fun();
+    mx.synchronize();
+    let peak1 = mx.metal.getPeakMemory();
+    fun();
+    mx.synchronize();
+    let peak2 = mx.metal.getPeakMemory();
+    assert.equal(peak1, peak2);
+
+   const fun2 = () => {
+      const a = mx.array([1.0, 2.0, 3.0, 4.0]);
+      const [b] = mx.divmod(a, a);
+      return mx.log(b);
+    };
+
+    fun2();
+    mx.synchronize();
+    peak1 = mx.metal.getPeakMemory();
+    fun2();
+    mx.synchronize();
+    peak2 = mx.metal.getPeakMemory();
+    assert.equal(peak1, peak2);
+  });
+
   it('deepGraphs', function() {
     // FIXME(zcbenz): Compilation fails on QEMU in CI.
     if (process.env.CI == 'true' &&
