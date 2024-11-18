@@ -309,6 +309,53 @@ describe('vmap', () => {
     }
   });
 
+  // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
+  xit('vmapGather', () => {
+    const gather = (a: mx.array, idx: any) => {
+      return a.index(idx);
+    };
+
+    let a = mx.array([[1, 2], [3, 4]]);
+    let idx = mx.array(0);
+    let out = mx.vmap(gather, [0, null])(a, idx);
+    assert.deepEqual(out.tolist(), [1, 3]);
+    out = mx.vmap(gather, [1, null])(a, idx);
+    assert.deepEqual(out.tolist(), [1, 2]);
+
+    idx = mx.array([0, 1]);
+    out = mx.vmap(gather, [0, 0])(a, idx);
+    assert.deepEqual(out.tolist(), [1, 4]);
+
+    a = mx.ones([2, 3, 4]);
+    idx = mx.zeros(4, mx.int32);
+    out = mx.vmap(gather, [2, 0])(a, idx);
+    assert.deepEqual(out.shape, [4, 3]);
+
+    let f = mx.vmap(gather, [0, 0]);
+    out = f(mx.ones([2, 3, 4]), mx.zeros(2, mx.int32));
+    assert.deepEqual(out.shape, [2, 4]);
+
+    const gather2 = (a: mx.array, idxa: any, idxb: any) => {
+      return a.index(idxa, idxb);
+    };
+
+    a = mx.ones([2, 3, 4]);
+    let idxa = mx.zeros([2, 3], mx.int32);
+    let idxb = mx.zeros(3, mx.int32);
+    out = mx.vmap(gather2, [0, 0, null])(a, idxa, idxb);
+    assert.deepEqual(out.shape, [2, 3]);
+
+    idxa = mx.zeros([3, 1, 2], mx.int32);
+    idxb = mx.zeros([2, 3, 1, 2], mx.int32);
+    out = mx.vmap(gather2, [0, null, 0])(a, idxa, idxb);
+    assert.deepEqual(out.shape, [2, 3, 1, 2]);
+
+    idxa = mx.zeros([3, 1, 2], mx.int32);
+    idxb = mx.zeros([3, 1, 2, 2], mx.int32);
+    out = mx.vmap(gather2, [0, null, 3])(a, idxa, idxb);
+    assert.deepEqual(out.shape, [2, 3, 1, 2]);
+  });
+
   it('vmapScatter', () => {
     const scatter = (a: mx.array) => {
       a.indexPut_(0, mx.array(0.0));
@@ -409,7 +456,6 @@ describe('vmap', () => {
     // out = mx.vmap(constFunc, [0, null])(a, b);
     // assertArrayAllTrue(mx.arrayEqual(out, mx.full([2], 2)));
     // out = mx.vmap(constFunc, [null, 0])(a, b);
-    // FIXME(zcbenz): mx.vmap currently must have all args being mx.array.
     // assertArrayAllTrue(mx.arrayEqual(out, mx.full([4], 2)));
     out = mx.vmap(constFunc, [1, 1])(a, b);
     assertArrayAllTrue(mx.arrayEqual(out, mx.full([3], 2)));

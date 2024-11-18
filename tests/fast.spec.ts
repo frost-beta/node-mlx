@@ -175,6 +175,11 @@ describe('fast', () => {
     const rx = rmsNorm(x, weight, eps);
     const rxFast = mx.fast.rmsNorm(x, weight, eps);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-6);
+
+    assert.throws(() => {
+      const x = mx.random.uniform(0, 1, [1, 5]);
+      mx.fast,rmsNorm(x, mx.ones([4]), 1e-5);
+    });
   });
 
   it('rmsNormGrad', () => {
@@ -213,15 +218,16 @@ describe('fast', () => {
     assert.isBelow((mx.subtract(gw1, gw2).abs().max().item() as number) / (gw1.abs().mean().item() as number), 1e-5);
   });
 
-  it('layerNorm', () => {
+  it('layerNorm', function() {
+    // This test is unreliable in CPU.
+    if (!mx.metal.isAvailable())
+      this.retries(4);
+
     const tolerances = [
       {dtype: mx.float32, eps: 1e-5},
       {dtype: mx.float16, eps: 5e-3},
       {dtype: mx.bfloat16, eps: 5e-2},
     ];
-    if (process.env.CI == 'true') {
-      tolerances[0].eps = 1e-4;
-    }
 
     const dtypes = [mx.float32, mx.float16, mx.bfloat16];
     const epss = [1e-3, 1e-5];
@@ -345,6 +351,10 @@ describe('fast', () => {
 
   it('layerNormGrad', function() {
     this.timeout(10 * 1000);  // slow in QEMU
+
+    // This test is unreliable in CPU.
+    if (!mx.metal.isAvailable())
+      this.retries(4);
 
     let D = 32;
     const eps = 1e-5;

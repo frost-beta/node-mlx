@@ -624,8 +624,12 @@ std::pair<bool, mx::array> SliceUpdate(
   // Pre process tuple.
   mx::array up = ToArray(std::move(vals), a->dtype());
 
-  // Remove leading singletons dimensions from the update.
-  std::vector<int> up_shape = GetUpShape(up);
+  // Remove extra leading singletons dimensions from the update.
+  int s = 0;
+  while (s < up.ndim() && up.shape(s) == 1 && (up.ndim() - s) > a->ndim()) {
+    s++;
+  }
+  std::vector<int> up_shape(up.shape().begin() + s, up.shape().end());
   up = mx::reshape(std::move(up), up_shape.empty() ? std::vector<int>{1}
                                                    : std::move(up_shape));
 
