@@ -625,4 +625,18 @@ describe('compile', function() {
       assertArrayAllTrue(mx.arrayEqual(expected, out));
     }
   });
+
+  it('compileDynamicDims', () => {
+    const a = mx.random.uniform(0, 1, [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]).T;
+    const b = mx.random.uniform(0, 1, [2, 2, 2, 2, 2, 2, 2, 2, 2, 2]);
+    mx.eval(a, b);
+
+    const fn = (a: mx.array, b: mx.array) => {
+      return mx.abs(mx.add(a, b));
+    }
+
+    let out = (mx.compile(fn))(a, b);
+    const expected = fn(a, b);
+    assert(mx.allclose(out, expected));
+  });
 });

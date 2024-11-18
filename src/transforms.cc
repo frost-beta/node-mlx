@@ -3,7 +3,7 @@
 #include "src/trees.h"
 
 // Needed for detail::compile.
-#include "mlx/transforms_impl.h"
+#include "mlx/compile_impl.h"
 
 namespace mlx::core {
 array eval_impl(std::vector<array> outputs, bool async);
