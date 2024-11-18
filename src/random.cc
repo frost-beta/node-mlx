@@ -123,13 +123,15 @@ mx::array Laplace(std::optional<std::vector<int>> shape,
       std::move(key), s);
 }
 
-mx::array Permuation(std::variant<int, mx::array> x,
-                     int axis,
-                     std::optional<mx::array> key,
-                     mx::StreamOrDevice s) {
+mx::array Permutation(std::variant<int, mx::array> x, ki::Arguments* args) {
   if (auto i = std::get_if<int>(&x); i) {
+    auto key = args->TryGetNext<mx::array>();
+    auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
     return mx::random::permutation(*i, std::move(key), s);
   } else {
+    auto axis = args->TryGetNext<int>().value_or(0);
+    auto key = args->TryGetNext<mx::array>();
+    auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
     return mx::random::permutation(std::move(std::get<mx::array>(x)),
                                    axis, std::move(key), s);
   }
@@ -154,5 +156,5 @@ void InitRandom(napi_env env, napi_value exports) {
           "gumbel", &random_ops::Gumbel,
           "categorical", &random_ops::Categorical,
           "laplace", &random_ops::Laplace,
-          "permuation", &random_ops::Permuation);
+          "permutation", &random_ops::Permutation);
 }

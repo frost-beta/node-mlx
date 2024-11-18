@@ -385,7 +385,8 @@ export namespace core {
     function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
     function uniform(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
     function laplace(shape?: number[], dtype?: Dtype, loc?: number, scale?: number, key?: array, s?: StreamOrDevice): array;
-    function permutation(x: number | array, axis?: number, key?: array, s?: StreamOrDevice): array;
+    function permutation(x: number, key?: array, s?: StreamOrDevice): array;
+    function permutation(x: array, axis?: number, key?: array, s?: StreamOrDevice): array;
   }
 
   // FFT.
