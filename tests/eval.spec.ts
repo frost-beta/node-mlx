@@ -53,11 +53,14 @@ describe('eval', () => {
   });
 
   it('asyncEvalTwice', () => {
-    let x = mx.add(mx.add(1, 1), 1);
-    mx.asyncEval(x);
-    let y = mx.add(x, 1);
-    mx.asyncEval(y);
-    assert.equal(x.item(), 3);
+    for (let i = 0; i < 1000; ++i) {
+      let x = mx.add(mx.add(1, 1), 1);
+      mx.asyncEval(x);
+      let y = mx.add(x, 1);
+      mx.asyncEval(y);
+      assert.equal(x.item(), 3);
+      assert.equal(y.item(), 4);
+    }
   });
 
   it('asyncEvalInTrace', () => {

@@ -751,4 +751,34 @@ describe('array', () => {
     assert.deepEqual(b.tolist(),
                      [...Array(3)].map((_,i) => [...Array(6)].map((_,j) => [...Array(4)].map((_,k) => 4 * (6 * i + j) + 3 - k))));
   });
+
+  it('deepGraphs', () => {
+    // The following tests should simply run cleanly without a segfault or
+    // crash due to exceeding recursion depth limits.
+
+    // Deep graph destroyed without eval.
+    let x = mx.array([1.0, 2.0]);
+    for (let i = 0; i < 100_000; i++) {
+      x = mx.sin(x);
+    }
+
+    // Duplicate input deep graph destroyed without eval.
+    x = mx.array([1.0, 2.0]);
+    for (let i = 0; i < 100_000; i++) {
+      x = mx.add(x, x);
+    }
+
+    // Deep graph with siblings destroyed without eval.
+    x = mx.array([1, 2]);
+    for (let i = 0; i < 100_000; i++) {
+      x = mx.concat(mx.split(x, 2));
+    }
+
+    // Deep graph with eval.
+    x = mx.array([1.0, 2.0]);
+    for (let i = 0; i < 100_000; i++) {
+      x = mx.sin(x);
+    }
+    mx.eval(x);
+  });
 });

@@ -255,14 +255,34 @@ describe('random', () => {
     assert.deepEqual(out.shape, [5, 20]);
     assertArrayAllTrue(mx.less(mx.max(out), 10));
 
-    out = mx.random.categorical(logits, 1, null, 7);
+    out = mx.random.categorical(logits, 1, undefined, 7);
     assert.deepEqual(out.shape, [10, 7]);
 
-    out = mx.random.categorical(logits, 0, null, 7);
+    out = mx.random.categorical(logits, 0, undefined, 7);
     assert.deepEqual(out.shape, [20, 7]);
 
     assert.throws(() => {
       mx.random.categorical(logits, -1, [10, 5], 5);
     }, Error);
+  });
+
+  it('permutation', () => {
+    let x = mx.random.permutation(4);
+    assert.deepEqual((x.tolist() as number[]).sort(), [0, 1, 2, 3]);
+
+    x = mx.random.permutation(mx.array([0, 1, 2, 3]));
+    assert.deepEqual((x.tolist() as number[]).sort(), [0, 1, 2, 3]);
+
+    // 2-D
+    x = mx.arange(16).reshape(4, 4);
+    let out = mx.sort(mx.random.permutation(x, 0), 0);
+    assertArrayAllTrue(mx.arrayEqual(x, out));
+    out = mx.sort(mx.random.permutation(x, 1), 1);
+    assertArrayAllTrue(mx.arrayEqual(x, out));
+
+    // Basically 0 probability this should fail.
+    const sortedX = mx.arange(16384);
+    x = mx.random.permutation(16384);
+    assertArrayAllFalse(mx.arrayEqual(sortedX, x));
   });
 });

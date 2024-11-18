@@ -22,7 +22,7 @@ struct WorkerData {
   napi_env env = nullptr;
   napi_async_work work = nullptr;
   napi_deferred deffered = nullptr;
-  mx::Event event;
+  std::unique_ptr<mx::array> array;
 
   ~WorkerData() {
     if (deffered) {
@@ -269,7 +269,7 @@ napi_value AsyncEval(ki::Arguments* args) {
       ki::ToNodeValue(data->env, "asyncEval"),
       [](napi_env env, void* hint) {
         auto* data = static_cast<WorkerData*>(hint);
-        data->event.wait();
+        data->array->wait();
       },
       [](napi_env env, napi_status status, void* hint) {
         auto* data = static_cast<WorkerData*>(hint);
@@ -290,7 +290,8 @@ napi_value AsyncEval(ki::Arguments* args) {
     return nullptr;
   }
   // Start the work.
-  data->event = mx::eval_impl(TreeFlatten(args), true).event();
+  data->array = std::make_unique<mx::array>(
+      mx::eval_impl(TreeFlatten(args), true));
   if (napi_queue_async_work(data->env, data->work) != napi_ok) {
     args->ThrowError("Failed to queue async work");
     return nullptr;

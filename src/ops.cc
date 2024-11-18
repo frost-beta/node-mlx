@@ -734,6 +734,30 @@ bool IsSubDtype(std::variant<mx::Dtype, mx::Dtype::Category> dtype,
   }
 }
 
+mx::array Roll(const mx::array& a,
+               OptionalAxes shift,
+               OptionalAxes axis,
+               mx::StreamOrDevice s) {
+  return std::visit(
+      [&](auto sh, auto ax) -> mx::array {
+        using T = decltype(ax);
+        using V = decltype(sh);
+
+        if constexpr (std::is_same_v<V, std::monostate>) {
+          throw std::invalid_argument(
+              "[roll] Expected two arguments but only one was given.");
+        } else {
+          if constexpr (std::is_same_v<T, std::monostate>) {
+            return mx::roll(a, sh, s);
+          } else {
+            return mx::roll(a, sh, ax, s);
+          }
+        }
+      },
+      shift,
+      axis);
+}
+
 }  // namespace ops
 
 void InitOps(napi_env env, napi_value exports) {
@@ -895,5 +919,6 @@ void InitOps(napi_env env, napi_value exports) {
           "view", &mx::view,
           "hadamardTransform", &mx::hadamard_transform,
           "einsumPath", &mx::einsum_path,
-          "einsum", &mx::einsum);
+          "einsum", &mx::einsum,
+          "roll", &ops::Roll);
 }

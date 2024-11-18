@@ -227,8 +227,8 @@ export namespace core {
   function diagonal(array: ScalarOrArray, offset?: number, axis1?: number, axis2?: number, s?: StreamOrDevice): array;
   function divide(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function divmod(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): [array, array];
-  function einsumPath(subscripts: string[], operands: array[], s?: StreamOrDevice): [[number, number][], string];
-  function einsum(subscripts: string[], operands: array[], s?: StreamOrDevice): array;
+  function einsumPath(subscripts: string | string[], operands: array | array[], s?: StreamOrDevice): [[number, number][], string];
+  function einsum(subscripts: string | string[], operands: array | array[], k: array, s?: StreamOrDevice): array;
   function equal(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function notEqual(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function erf(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -277,7 +277,7 @@ export namespace core {
   function minimum(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function moveaxis(array: ScalarOrArray, source: number | number[], destination: number | number[], s?: StreamOrDevice): array;
   function multiply(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
-  function nanToNum(a: array, nan: number, posinf?: number, neginf?: number, s?: StreamOrDevice): array;
+  function nanToNum(array: array, nan: number, posinf?: number, neginf?: number, s?: StreamOrDevice): array;
   function negative(array: ScalarOrArray, s?: StreamOrDevice): array;
   function ones(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;
   function onesLike(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -287,7 +287,7 @@ export namespace core {
   function power(array: ScalarOrArray, exponent: ScalarOrArray, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, keepdims?: boolean, s?: StreamOrDevice): array;
   function prod(array: ScalarOrArray, axis?: number | number[], keepdims?: boolean, s?: StreamOrDevice): array;
-  function putAlongAxis(a: ScalarOrArray, indices: ScalarOrArray, values: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
+  function putAlongAxis(array: ScalarOrArray, indices: ScalarOrArray, values: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
   function quantize(w: array, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function quantizedMatmul(w: array, x: array, scales: ScalarOrArray, biases: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function radians(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -296,6 +296,7 @@ export namespace core {
   function repeat(array: ScalarOrArray, repeats?: number, axis?: number, s?: StreamOrDevice): array;
   function reshape(array: ScalarOrArray, ...shape: (number | number[])[]): array;
   function rightShift(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+  function roll(array: ScalarOrArray, shift?: number | number[], axis?: number | number[], s?: StreamOrDevice): array;
   function round(array: ScalarOrArray, s?: StreamOrDevice): array;
   function rsqrt(array: ScalarOrArray, s?: StreamOrDevice): array;
   function save(filepath: string, array: array): void;
@@ -384,6 +385,7 @@ export namespace core {
     function truncatedNormal(lower: ScalarOrArray, upper: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
     function uniform(low: ScalarOrArray, high: ScalarOrArray, shape?: number[], dtype?: Dtype, key?: array, s?: StreamOrDevice): array;
     function laplace(shape?: number[], dtype?: Dtype, loc?: number, scale?: number, key?: array, s?: StreamOrDevice): array;
+    function permutation(x: number | array, axis?: number, key?: array, s?: StreamOrDevice): array;
   }
 
   // FFT.

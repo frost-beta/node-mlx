@@ -1169,6 +1169,36 @@ describe('ops', () => {
     }
   });
 
+  it('softmax', () => {
+    for (const s of [100, 2049, 4097, 8193]) {
+      const a = tf.fill([s], -Infinity).arraySync();
+      a[s - 1] = 0.0;
+      const b = mx.softmax(a);
+      assert.isFalse((b.tolist() as number[]).some(i => isNaN(i)));
+      assertArrayAllTrue(mx.less(b.index(mx.Slice(null, -1)), 1e-9).all());
+      assert.equal(b.index(-1).item(), 1);
+    }
+
+    // Sliced inputs.
+    const y = mx.random.uniform(0, 1, [8, 4]);
+    const out = mx.softmax(y.index(mx.Slice(), mx.Slice(0, 2)), -1);
+    assert.closeTo(out.sum().item() as number, 8.0, 1e-5);
+
+    // Precise.
+    for (const t of [mx.float16, mx.bfloat16]) {
+      const a = mx.multiply(mx.random.normal([1024]), 10).astype(t);
+      const outExpect = mx.softmax(a.astype(mx.float32)).astype(t);
+      const out = mx.softmax(a, -1, true);
+      assertArrayAllTrue(mx.allclose(outExpect, out));
+    }
+
+    // All Infs give NaNs.
+    for (const n of [127, 128, 129]) {
+      const x = mx.full([n], -Infinity);
+      assertArrayAllTrue(mx.isnan(mx.softmax(x)));
+    }
+  });
+
   it('concatenate', function() {
     this.timeout(10 * 1000);  // slow in QEMU
 
@@ -1361,6 +1391,18 @@ describe('ops', () => {
     const x = mx.array([3, 1, 2]);
     const sortedX = mx.sort(x);
     assert.deepEqual(sortedX.tolist(), [1, 2, 3]);
+  });
+
+  it('argpartition', () => {
+    let x = mx.broadcastTo(mx.array([1, 2, 3]), [2, 3]);
+    let out = mx.argpartition(x, 1, 0);
+    let expected = mx.array([[0, 0, 0], [1, 1, 1]]);
+    assertArrayAllTrue(mx.equal(out, expected));
+
+    x = mx.transpose(mx.array([[1, 2], [3, 4]]));
+    out = mx.argpartition(x, 1, 0);
+    expected = mx.array([[0, 0], [1, 1]]);
+    assertArrayAllTrue(mx.equal(out, expected));
   });
 
   it('largeBinary', function () {
