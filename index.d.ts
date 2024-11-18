@@ -244,6 +244,7 @@ export namespace core {
   function greater(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function greaterEqual(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function identity(n: number, dtype?: Dtype, s?: StreamOrDevice): array;
+  function imag(array: ScalarOrArray, s?: StreamOrDevice): array;
   function inner(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function isclose(a: ScalarOrArray, b: ScalarOrArray, rtol?: number, atol?: number, equalNan?: boolean, s?: StreamOrDevice): array;
   function isinf(array: ScalarOrArray, s?: StreamOrDevice): array;
@@ -291,6 +292,7 @@ export namespace core {
   function quantize(w: array, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function quantizedMatmul(w: array, x: array, scales: ScalarOrArray, biases: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
   function radians(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function real(array: ScalarOrArray, s?: StreamOrDevice): array;
   function reciprocal(array: ScalarOrArray, s?: StreamOrDevice): array;
   function remainder(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function repeat(array: ScalarOrArray, repeats?: number, axis?: number, s?: StreamOrDevice): array;

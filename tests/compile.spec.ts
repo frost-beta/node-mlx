@@ -639,4 +639,24 @@ describe('compile', function() {
     const expected = fn(a, b);
     assert(mx.allclose(out, expected));
   });
+
+  it('compileManyInputs', () => {
+    const inputs = Array(20).fill(mx.ones([2, 2, 2, 2]));
+    inputs[0] = mx.transpose(inputs[0]);
+
+    const fun = mx.compile((...inputs: mx.array[]) => {
+      let x = inputs[0];
+      for (let y of inputs.slice(1, 10)) {
+        x = mx.add(x, y);
+      }
+      let a = inputs[10];
+      for (let b of inputs.slice(11)) {
+        a = mx.add(a, b);
+      }
+      return mx.add(x, a);
+    });
+
+    const out = fun(...inputs);
+    assertArrayAllTrue(mx.allclose(out, mx.full([2, 2], 20)));
+  });
 });

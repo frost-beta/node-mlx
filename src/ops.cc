@@ -920,5 +920,7 @@ void InitOps(napi_env env, napi_value exports) {
           "hadamardTransform", &mx::hadamard_transform,
           "einsumPath", &mx::einsum_path,
           "einsum", &mx::einsum,
-          "roll", &ops::Roll);
+          "roll", &ops::Roll,
+          "real", &mx::real,
+          "imag", &mx::imag);
 }
