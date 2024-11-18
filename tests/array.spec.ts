@@ -760,13 +760,12 @@ describe('array', () => {
       const a = mx.zeros([2**20]);
       mx.eval(a);
       const [b, c] = mx.divmod(a, a);
-      mx.dispose(b, c);
     };
 
-    fun();
+    mx.tidy(() => fun());
     mx.synchronize();
     let peak1 = mx.metal.getPeakMemory();
-    fun();
+    mx.tidy(() => fun());
     mx.synchronize();
     let peak2 = mx.metal.getPeakMemory();
     assert.equal(peak1, peak2);
@@ -777,10 +776,10 @@ describe('array', () => {
       return mx.log(b);
     };
 
-    fun2();
+    mx.tidy(() => fun2());
     mx.synchronize();
     peak1 = mx.metal.getPeakMemory();
-    fun2();
+    mx.tidy(() => fun2());
     mx.synchronize();
     peak2 = mx.metal.getPeakMemory();
     assert.equal(peak1, peak2);
