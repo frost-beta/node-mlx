@@ -97,12 +97,8 @@ class Pool3d extends Pool {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, L, C)` and `kernelSize` is `k`, the output is
- * a tensor of shape `(N, L_out, C)`, given by:
- *
- * `out(N_i, t, C_j) = max_{m=0,...,k-1} input(N_i, stride * t + m, C_j)`
- *
- * where `L_out = floor((L + 2 * padding - kernelSize) / stride) + 1`.
+ * Spatially downsamples the input by taking the maximum of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
  * @param kernelSize - The size of the pooling window kernel.
  * @param stride - The stride of the pooling window. Default: `kernelSize`.
@@ -122,12 +118,8 @@ export class MaxPool1d extends Pool1d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, L, C)` and `kernelSize` is `k`, the output is
- * a tensor of shape `(N, L_out, C)`, given by:
- *
- * `out(N_i, t, C_j) = 1/k * sum_{m=0,...,k-1} input(N_i, stride * t + m, C_j)`
- *
- * where `L_out = floor((L + 2 * padding - kernelSize) / stride) + 1`.
+ * Spatially downsamples the input by taking the average of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
  * @param kernelSize - The size of the pooling window kernel.
  * @param stride - The stride of the pooling window. Default: `kernelSize`.
@@ -147,15 +139,11 @@ export class AvgPool1d extends Pool1d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, H, W, C)` and `kernelSize` is `(k_H, k_W)`,
- * the output is a tensor of shape `(N, H_out, W_out, C)`, given by:
+ * Spatially downsamples the input by taking the maximum of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
- * `out(N_i, h, w, C_j) = max_{m=0,...,k_H-1} max_{n=0,...,k_W-1} input(N_i, stride[0] * h + m, stride[1] * w + n, C_j)`
+ * The parameters `kernelSize`, `stride` and `padding` can either be:
  *
- * where `H_out = floor((H + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`
- *       `W_out = floor((W + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
- *
- * The parameters `kernelSize`, `stride`, `padding`, can either be:
  *   - a single `number` -- in which case the same value is used for both the
  *     height and width axis;
  *   - a `tuple` of two `numbers`s -- in which case, the first `number` is used
@@ -179,16 +167,10 @@ export class MaxPool2d extends Pool2d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, H, W, C)` and `kernelSize` is `(kH, kW)`,
- * the output is a tensor of shape `(N, H_out, W_out, C)`, given by:
+ * Spatially downsamples the input by taking the average of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
- * `out(N_i, h, w, C_j) = 1/(kH*kW) * sum_{m=0,...,kH-1} sum_{n=0,...,kW-1}
- *    input(N_i, stride[0] * h + m, stride[1] * w + n, C_j)`
- *
- * where `H_out = floor((H + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`,
- * `W_out = floor((W + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`.
- *
- * The parameters `kernelSize`, `stride`, `padding`, can either be:
+ * The parameters `kernelSize`, `stride` and `padding` can either be:
  *
  * - a single `number` -- in which case the same value is used for both the
  *   height and width axis
@@ -213,22 +195,16 @@ export class AvgPool2d extends Pool2d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, D, H, W, C)` and `kernelSize` is `(k_D, k_H, k_W)`,
- * the output is a tensor of shape `(N, D_out, H_out, W_out, C)`, given by:
+ * Spatially downsamples the input by taking the maximum of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
- * `out(N_i, d, h, w, C_j) = max_{l=0,...,k_D-1} max_{m=0,...,k_H-1} max_{n=0,...,k_W-1}
- *                           input(N_i, stride[0] * d + l, stride[1] * h + m, stride[2] * w + n, C_j)`
+ * The parameters `kernelSize`, `stride` and `padding` can either be:
  *
- * where `D_out = floor((D + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`
- *       `H_out = floor((H + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
- *       `W_out = floor((W + 2 * padding[2] - kernelSize[2]) / stride[2]) + 1`
- *
- * The parameters `kernelSize`, `stride`, `padding`, can either be:
  *   - a single `number` -- in which case the same value is used for the depth,
  *     height and width axis;
- *   - a `tuple` of three `numbers`s -- in which case, the first `number` is used
- *     for the depth axis, the second `number` for the height axis, and the third
- *     `number` for the width axis.
+ *   - a `tuple` of three `numbers`s -- in which case, the first `number` is
+ *     used for the depth axis, the second `number` for the height axis, and the
+ *     third `number` for the width axis.
  *
  * @param kernelSize - The size of the pooling window.
  * @param stride - The stride of the pooling window. Default: `kernelSize`.
@@ -248,14 +224,8 @@ export class MaxPool3d extends Pool3d {
  *
  * @remarks
  *
- * Assuming an input of shape `(N, D, H, W, C)` and `kernelSize` is `(k_D, k_H, k_W)`,
- * the output is a tensor of shape `(N, D_out, H_out, W_out, C)`, given by:
- *
- * `out(N_i, d, h, w, C_j) = (1 / (k_D * k_H * k_W)) * sum_{l=0,...,k_D-1} sum_{m=0,...,k_H-1} sum_{n=0,...,k_W-1} input(N_i, stride[0] * d + l, stride[1] * h + m, stride[2] * w + n, C_j)`
- *
- * where `D_out = floor((D + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`
- *       `H_out = floor((H + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
- *       `W_out = floor((W + 2 * padding[2] - kernelSize[2]) / stride[2]) + 1`
+ * Spatially downsamples the input by taking the average of a sliding window
+ * of size `kernel_size` and sliding stride `stride`.
  *
  * The parameters `kernelSize`, `stride`, `padding`, can either be:
  *
