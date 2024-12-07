@@ -130,4 +130,68 @@ describe('eval', () => {
       assert.equal(peakMem, mx.metal.getPeakMemory());
     }
   });
+
+  it('asyncEvalWithMultipleStreams', () => {
+    let x = mx.array([1.0]);
+    let y = mx.array([1.0]);
+    let a = mx.array([1.0]);
+    let b = mx.array([1.0]);
+
+    const d = mx.defaultDevice();
+    const s2 = mx.newStream(d);
+
+    for (let i = 0; i < 50; i++) {
+      for (let j = 0; j < 20; j++) {
+        x = mx.add(x, y);
+      }
+      mx.asyncEval(x);
+      mx.eval(mx.add(a, b));
+    }
+  });
+
+  it('donationForNoops', function() {
+    if (!mx.metal.isAvailable()) {
+      this.skip();
+      return;
+    }
+
+    const fun1 = (x) => {
+      let s = x.shape;
+      for (let i = 0; i < 10; i++) {
+        x = mx.abs(x);
+        x = mx.reshape(x, [-1]);
+        x = x.T.T;
+        x = mx.stopGradient(x);
+        x = mx.abs(x);
+      }
+      return x;
+    };
+
+    let x = mx.zeros([4096, 4096]);
+    mx.eval(x);
+    const pre = mx.metal.getPeakMemory();
+    const out = mx.tidy(() => fun1(x));
+    mx.dispose(x);
+    mx.eval(out);
+    const post = mx.metal.getPeakMemory();
+    assert.equal(pre, post);
+
+    const fun2 = (x) => {
+      for (let i = 0; i < 10; i++) {
+        x = mx.abs(x);
+        x = x.index(mx.Slice(null, -1));
+        x = mx.abs(x);
+      }
+      return x;
+    };
+
+    x = mx.zeros([4096 * 4096]);
+    mx.eval(x);
+    const pre2 = mx.metal.getPeakMemory();
+    const out2 = mx.tidy(() => fun2(x));
+    mx.dispose(x);
+    mx.eval(out2);
+    const post2 = mx.metal.getPeakMemory();
+    assert.equal(pre2, post2);
+  });
 });

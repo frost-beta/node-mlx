@@ -666,6 +666,7 @@ describe('array', () => {
         process.platform == 'darwin' &&
         process.arch == 'arm64') {
       this.skip();
+      return;
     }
 
     let a = mx.array(1);
@@ -753,8 +754,10 @@ describe('array', () => {
   });
 
   it('multiOutputLeak', function() {
-    if (!mx.metal.isAvailable())
+    if (!mx.metal.isAvailable()) {
       this.skip();
+      return;
+    }
 
     const fun = (): void => {
       const a = mx.zeros([2**20]);
@@ -791,6 +794,7 @@ describe('array', () => {
         process.platform == 'linux' &&
         process.arch == 'arm64') {
       this.skip();
+      return;
     }
     this.timeout(10_000);
     this.slow(5_000);
