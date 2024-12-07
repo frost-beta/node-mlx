@@ -4,6 +4,8 @@ import {Embedding} from './embedding';
 import {Linear} from './linear';
 import {Module} from './base';
 
+export type ClassPredicate = (p: string, m: Module) => [number, number] | boolean;
+
 /**
  * Quantize the sub-modules of a module according to a predicate.
  *
@@ -19,20 +21,27 @@ import {Module} from './base';
  * @param groupSize - The quantization group size. Default: `64`.
  * @param bits - The number of bits per parameter. Default: `4`.
  * @param classPredicate - A function which receives the `Module` path and
- * `Module` itself and returns `true` if it should be quantized and `false`
- * otherwise. If `null`, then all layers that define a
- * `toQuantized(group_size, bits)` method are quantized. The path is converted
- * to snake_case for convenience. Default: `null`.
+ * `Module` itself and returns `true` or an array of arguments for `toQuantized`
+ * if it should be quantized and `false` otherwise. If `null`, then all layers
+ * that define a `toQuantized(group_size, bits)` method are quantized. The path
+ * is converted to snake_case for convenience.
  */
 export function quantize(model: Module,
                          groupSize = 64,
                          bits = 4,
-                         classPredicate = (p: string, m: Module) => 'toQuantized' in m && typeof m.toQuantized === 'function'): void {
+                         classPredicate: ClassPredicate = (p: string, m: Module) => 'toQuantized' in m && typeof m.toQuantized === 'function'): void {
   function maybeQuantize(path: string, m: Module): Module {
-    if (!classPredicate(toSnakeCase(path), m))
+    const boolOrArgs = classPredicate(toSnakeCase(path), m);
+    if (!boolOrArgs)
       return m;
-    if ('toQuantized' in m && typeof m.toQuantized === 'function')
-      return m.toQuantized(groupSize, bits);
+    if ('toQuantized' in m && typeof m.toQuantized === 'function') {
+      if (typeof boolOrArgs == 'boolean')
+        return m.toQuantized(groupSize, bits);
+      else if (Array.isArray(boolOrArgs))
+        return m.toQuantized(...boolOrArgs);
+      else
+        throw Error('"class_predicate" must return a bool or an array of arguments to pass to "toQuantized"');
+    }
     throw Error(`Unable to quantize model of type ${typeof m}`);
   }
 
