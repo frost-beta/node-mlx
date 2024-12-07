@@ -30,7 +30,8 @@ std::function<mx::array(const mx::array& a,
                         std::optional<std::vector<int>> n,
                         std::optional<std::vector<int>> axes,
                         mx::StreamOrDevice s)>
-FFTNOpWrapper(mx::array(*func1)(const mx::array&,
+FFTNOpWrapper(const char* name,
+              mx::array(*func1)(const mx::array&,
                                 const std::vector<int>&,
                                 const std::vector<int>&,
                                 mx::StreamOrDevice),
@@ -39,18 +40,19 @@ FFTNOpWrapper(mx::array(*func1)(const mx::array&,
                                 mx::StreamOrDevice),
               mx::array(*func3)(const mx::array&,
                                 mx::StreamOrDevice)) {
-  return [func1, func2, func3](const mx::array& a,
-                               std::optional<std::vector<int>> n,
-                               std::optional<std::vector<int>> axes,
-                               mx::StreamOrDevice s) {
+  return [name, func1, func2, func3](const mx::array& a,
+                                     std::optional<std::vector<int>> n,
+                                     std::optional<std::vector<int>> axes,
+                                     mx::StreamOrDevice s) {
     if (n && axes) {
       return mx::fft::fftn(a, std::move(*n), std::move(*axes), s);
     } else if (axes) {
       return mx::fft::fftn(a, std::move(*axes), s);
     } else if (n) {
-      std::vector<int> all(n->size());
-      std::iota(all.begin(), all.end(), -n.value().size());
-      return mx::fft::fftn(a, std::move(*n), std::move(all), s);
+      std::ostringstream msg;
+      msg << "[" << name << "] "
+          << "`axes` should not be `None` if `s` is not `None`.";
+      throw std::invalid_argument(msg.str());
     } else {
       return mx::fft::fftn(a, s);
     }
@@ -62,7 +64,8 @@ std::function<mx::array(const mx::array& a,
                         std::optional<std::vector<int>> n,
                         std::optional<std::vector<int>> axes,
                         mx::StreamOrDevice s)>
-FFT2OpWrapper(mx::array(*func1)(const mx::array&,
+FFT2OpWrapper(const char* name,
+              mx::array(*func1)(const mx::array&,
                                 const std::vector<int>&,
                                 const std::vector<int>&,
                                 mx::StreamOrDevice),
@@ -71,11 +74,11 @@ FFT2OpWrapper(mx::array(*func1)(const mx::array&,
                                 mx::StreamOrDevice),
               mx::array(*func3)(const mx::array&,
                                 mx::StreamOrDevice)) {
-  return [func1, func2, func3](const mx::array& a,
-                               std::optional<std::vector<int>> n,
-                               std::optional<std::vector<int>> axes,
-                               mx::StreamOrDevice s) {
-    return FFTNOpWrapper(func1, func2, func3)(
+  return [name, func1, func2, func3](const mx::array& a,
+                                     std::optional<std::vector<int>> n,
+                                     std::optional<std::vector<int>> axes,
+                                     mx::StreamOrDevice s) {
+    return FFTNOpWrapper(name, func1, func2, func3)(
         a, std::move(n), std::move(axes.value_or(std::vector<int>{-2, -1})), s);
   };
 }
@@ -89,30 +92,38 @@ void InitFFT(napi_env env, napi_value exports) {
                               &mx::fft::fft),
           "ifft", FFTOpWrapper(&mx::fft::ifft,
                                &mx::fft::ifft),
-          "fft2", FFT2OpWrapper(&mx::fft::fftn,
+          "fft2", FFT2OpWrapper("fft2",
+                                &mx::fft::fftn,
                                 &mx::fft::fftn,
                                 &mx::fft::fftn),
-          "ifft2", FFT2OpWrapper(&mx::fft::ifftn,
+          "ifft2", FFT2OpWrapper("ifft2",
+                                 &mx::fft::ifftn,
                                  &mx::fft::ifftn,
                                  &mx::fft::ifftn),
-          "fftn", FFTNOpWrapper(&mx::fft::fftn,
+          "fftn", FFTNOpWrapper("fftn",
+                                &mx::fft::fftn,
                                 &mx::fft::fftn,
                                 &mx::fft::fftn),
-          "ifftn", FFTNOpWrapper(&mx::fft::ifftn,
+          "ifftn", FFTNOpWrapper("ifftn",
+                                 &mx::fft::ifftn,
                                  &mx::fft::ifftn,
                                  &mx::fft::ifftn),
           "rfft", FFTOpWrapper(&mx::fft::rfft, &mx::fft::rfft),
           "irfft", FFTOpWrapper(&mx::fft::irfft, &mx::fft::irfft),
-          "rfft2", FFT2OpWrapper(&mx::fft::rfftn,
+          "rfft2", FFT2OpWrapper("rfft2",
+                                 &mx::fft::rfftn,
                                  &mx::fft::rfftn,
                                  &mx::fft::rfftn),
-          "irfft2", FFT2OpWrapper(&mx::fft::irfftn,
+          "irfft2", FFT2OpWrapper("irfft2",
+                                  &mx::fft::irfftn,
                                   &mx::fft::irfftn,
                                   &mx::fft::irfftn),
-          "rfftn", FFTNOpWrapper(&mx::fft::rfftn,
+          "rfftn", FFTNOpWrapper("rfftn",
+                                 &mx::fft::rfftn,
                                  &mx::fft::rfftn,
                                  &mx::fft::rfftn),
-          "irfftn", FFTNOpWrapper(&mx::fft::irfftn,
+          "irfftn", FFTNOpWrapper("irfftn",
+                                  &mx::fft::irfftn,
                                   &mx::fft::irfftn,
                                   &mx::fft::irfftn));
 }

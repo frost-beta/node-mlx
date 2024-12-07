@@ -656,6 +656,12 @@ describe('layers', function() {
     assert.isBelow(mx.subtract(y, c.weight.sum([1, 2, 3]))
                      .abs().max().item() as number,
                    1e-4);
+
+    // 3x3 conv groups > 1
+    x = mx.ones([4, 7, 7, 4]);
+    c = new nn.Conv2d(4, 8, 3, 1, 1, undefined, 2);
+    y = c.forward(x);
+    assert.deepEqual(y.shape, [4, 7, 7, 8]);
   });
 
   it('sequential', () => {

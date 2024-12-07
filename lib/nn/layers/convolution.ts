@@ -18,6 +18,7 @@ import {Module} from './base';
  * @param stride - The stride when applying the filter. Default: 1.
  * @param padding - How many positions to 0-pad the input with. Default: 0.
  * @param dilation - The dilation of the convolution.
+ * @param groups - The number of groups for the convolution. Default: 1.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
 export class Conv1d extends Module {
@@ -87,11 +88,13 @@ export class Conv1d extends Module {
  * @param stride - The size of the stride when applying the filter. Default: 1.
  * @param padding - How many positions to 0-pad the input with. Default: 0.
  * @param dilation - The dilation of the convolution.
+ * @param groups - The number of groups for the convolution. Default: 1.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
 export class Conv2d extends Module {
   stride: number[];
   padding: number[];
+  groups: number;
   dilation: number | number[];
   weight: mx.array;
   bias?: mx.array;
@@ -102,15 +105,17 @@ export class Conv2d extends Module {
               stride: number | number[] = [1, 1],
               padding: number | number[] = [0, 0],
               dilation: number | number[] = 1,
+              groups = 1,
               bias = true) {
     super();
     this.stride = Array.isArray(stride) ? stride : [stride, stride];
     this.padding = Array.isArray(padding) ? padding : [padding, padding];
     this.dilation = dilation;
+    this.groups = groups;
 
     kernelSize = Array.isArray(kernelSize) ? kernelSize : [kernelSize, kernelSize];
     const scale = Math.sqrt(1 / (inChannels * kernelSize[0] * kernelSize[1]));
-    this.weight = mx.random.uniform(-scale, scale, [outChannels, ...kernelSize, inChannels]);
+    this.weight = mx.random.uniform(-scale, scale, [outChannels, ...kernelSize, inChannels / groups]);
     if (bias) {
       this.bias = mx.zeros([outChannels]);
     }
@@ -120,11 +125,11 @@ export class Conv2d extends Module {
     return `${this.weight.shape[3]}, ${this.weight.shape[0]}, ` +
            `kernelSize=${this.weight.shape.slice(1, 2)}, stride=${this.stride}, ` +
            `padding=${this.padding}, dilation=${this.dilation}, ` +
-           `bias=${!!this.bias}`;
+           `groups=${this.groups}, bias=${!!this.bias}`;
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.conv2d(x, this.weight, this.stride, this.padding, this.dilation);
+    const y = mx.conv2d(x, this.weight, this.stride, this.padding, this.dilation, this.groups);
     if (this.bias)
       return mx.add(y, this.bias);
     else
