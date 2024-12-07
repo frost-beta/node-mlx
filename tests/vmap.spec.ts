@@ -468,4 +468,27 @@ describe('vmap', () => {
       out = mx.vmap(constFunc, [0, 0])(a, b);
     });
   });
+
+  it('vmapConcatenate', () => {
+    const x = mx.random.uniform(0, 1, [2, 2, 2]);
+
+    const catFun = (x: mx.array, y: mx.array) => {
+      return mx.concatenate([x, y], 1);
+    }
+
+    const catConstant = (x: mx.array) => {
+      const y = mx.ones([2, 1]);
+      return mx.concatenate([x, y], 1);
+    }
+
+    let out = mx.vmap(catFun, [0, 2])(x, x);
+    const target = mx.stack(
+      [0, 1].map(i => mx.concatenate([x.index(i), x.index(mx.Slice(), mx.Slice(), i)], 1))
+    );
+    assertArrayAllTrue(mx.arrayEqual(out, target));
+
+    out = mx.vmap(catConstant)(x);
+    const target2 = mx.concatenate([x, mx.ones([2, 2, 1])], 2);
+    assertArrayAllTrue(mx.arrayEqual(out, target2));
+  });
 });

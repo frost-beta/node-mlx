@@ -826,4 +826,23 @@ describe('array', () => {
     }
     mx.eval(x);
   });
+
+  // TODO(zcbenz): Figure out how to make this test work in Node.js.
+  it.skip('siblingsWithoutEval', () => {
+    const key = mx.array([1, 2]);
+
+    const t = () => {
+      let [a, b] = mx.split(key, 2);
+      a = mx.reshape(a, []);
+      b = mx.reshape(b, []);
+    };
+
+    mx.tidy(() => t());
+    const expected = process.resourceUsage().maxRSS;
+    for (let i = 0; i < 100; i++) {
+      mx.tidy(() => t());
+    }
+    const used = process.resourceUsage().maxRSS;
+    assert.equal(expected, used);
+  });
 });

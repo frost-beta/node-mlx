@@ -41,9 +41,9 @@ class Pool extends Module {
 class Pool1d extends Pool {
   constructor(poolingFunction: (x: mx.array, axes: number[]) => mx.array,
               paddingValue: number,
-              kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+              kernelSize: number | [number],
+              stride: number | [number] | null = null,
+              padding: number | [number] = 0) {
     const msg = '"{}" must be an integer or a tuple containing 1 integer';
     kernelSize = valueOrList(kernelSize, 1, msg.replace('{}', 'kernelSize'));
     if (stride != null)
@@ -59,9 +59,9 @@ class Pool1d extends Pool {
 class Pool2d extends Pool {
   constructor(poolingFunction: (x: mx.array, axes: number[]) => mx.array,
               paddingValue: number,
-              kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+              kernelSize: number | [number, number],
+              stride: number | [number, number] | null = null,
+              padding: number | [number, number] = 0) {
     const msg = '"{}" must be an integer or a tuple containing 2 integers';
     kernelSize = valueOrList(kernelSize, 2, msg.replace('{}', 'kernelSize'));
     if (stride != null)
@@ -69,6 +69,24 @@ class Pool2d extends Pool {
     else
       stride = kernelSize;
     padding = valueOrList(padding, 2, msg.replace('{}', 'padding'))
+
+    super(poolingFunction, kernelSize, stride, padding.map(p => [p, p]), paddingValue);
+  }
+}
+
+class Pool3d extends Pool {
+  constructor(poolingFunction: (x: mx.array, axes: number[]) => mx.array,
+              paddingValue: number,
+              kernelSize: number | [number, number, number],
+              stride: number | [number, number, number] | null = null,
+              padding: number | [number, number, number] = 0) {
+    const msg = '"{}" must be an integer or a tuple containing 3 integers';
+    kernelSize = valueOrList(kernelSize, 3, msg.replace('{}', 'kernelSize'));
+    if (stride != null)
+      stride = valueOrList(stride, 3, msg.replace('{}', 'stride'));
+    else
+      stride = kernelSize;
+    padding = valueOrList(padding, 3, msg.replace('{}', 'padding'))
 
     super(poolingFunction, kernelSize, stride, padding.map(p => [p, p]), paddingValue);
   }
@@ -92,9 +110,9 @@ class Pool2d extends Pool {
  * is applied to both sides of the spatial axis. Default: `0`.
  */
 export class MaxPool1d extends Pool1d {
-  constructor(kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+  constructor(kernelSize: number | [number],
+              stride: number | [number] | null = null,
+              padding: number | [number] = 0) {
     super(mx.max, -Infinity, kernelSize, stride, padding);
   }
 }
@@ -117,9 +135,9 @@ export class MaxPool1d extends Pool1d {
  * is applied to both sides of the spatial axis. Default: `0`.
  */
 export class AvgPool1d extends Pool1d {
-  constructor(kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+  constructor(kernelSize: number | [number],
+              stride: number | [number] | null = null,
+              padding: number | [number] = 0) {
     super(mx.mean, 0, kernelSize, stride, padding);
   }
 }
@@ -149,9 +167,9 @@ export class AvgPool1d extends Pool1d {
  * applied on both sides of the height and width axis. Default: `0`.
  */
 export class MaxPool2d extends Pool2d {
-  constructor(kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+  constructor(kernelSize: number | [number, number],
+              stride: number | [number, number] | null = null,
+              padding: number | [number, number] = 0) {
     super(mx.max, -Infinity, kernelSize, stride, padding);
   }
 }
@@ -183,14 +201,84 @@ export class MaxPool2d extends Pool2d {
  * applied on both sides of the height and width axis. Default: `0`.
  */
 export class AvgPool2d extends Pool2d {
-  constructor(kernelSize: number | number[],
-              stride: number | number[] | null = null,
-              padding: number | number[] = 0) {
+  constructor(kernelSize: number | [number, number],
+              stride: number | [number, number] | null = null,
+              padding: number | [number, number] = 0) {
     super(mx.mean, 0, kernelSize, stride, padding);
   }
 }
 
-function valueOrList(x: number | number[], n: number, msg: string): number[] {
+/**
+ * Applies 3-dimensional max pooling.
+ *
+ * @remarks
+ *
+ * Assuming an input of shape `(N, D, H, W, C)` and `kernelSize` is `(k_D, k_H, k_W)`,
+ * the output is a tensor of shape `(N, D_out, H_out, W_out, C)`, given by:
+ *
+ * `out(N_i, d, h, w, C_j) = max_{l=0,...,k_D-1} max_{m=0,...,k_H-1} max_{n=0,...,k_W-1}
+ *                           input(N_i, stride[0] * d + l, stride[1] * h + m, stride[2] * w + n, C_j)`
+ *
+ * where `D_out = floor((D + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`
+ *       `H_out = floor((H + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
+ *       `W_out = floor((W + 2 * padding[2] - kernelSize[2]) / stride[2]) + 1`
+ *
+ * The parameters `kernelSize`, `stride`, `padding`, can either be:
+ *   - a single `number` -- in which case the same value is used for the depth,
+ *     height and width axis;
+ *   - a `tuple` of three `numbers`s -- in which case, the first `number` is used
+ *     for the depth axis, the second `number` for the height axis, and the third
+ *     `number` for the width axis.
+ *
+ * @param kernelSize - The size of the pooling window.
+ * @param stride - The stride of the pooling window. Default: `kernelSize`.
+ * @param padding - How much padding to apply to the input. The padding is
+ * applied on both sides of the depth, height and width axis. Default: `0`.
+ */
+export class MaxPool3d extends Pool3d {
+  constructor(kernelSize: number | [number, number, number],
+              stride: number | [number, number, number] | null = null,
+              padding: number | [number, number, number] = 0) {
+    super(mx.max, -Infinity, kernelSize, stride, padding);
+  }
+}
+
+/**
+ * Applies 3-dimensional average pooling.
+ *
+ * @remarks
+ *
+ * Assuming an input of shape `(N, D, H, W, C)` and `kernelSize` is `(k_D, k_H, k_W)`,
+ * the output is a tensor of shape `(N, D_out, H_out, W_out, C)`, given by:
+ *
+ * `out(N_i, d, h, w, C_j) = (1 / (k_D * k_H * k_W)) * sum_{l=0,...,k_D-1} sum_{m=0,...,k_H-1} sum_{n=0,...,k_W-1} input(N_i, stride[0] * d + l, stride[1] * h + m, stride[2] * w + n, C_j)`
+ *
+ * where `D_out = floor((D + 2 * padding[0] - kernelSize[0]) / stride[0]) + 1`
+ *       `H_out = floor((H + 2 * padding[1] - kernelSize[1]) / stride[1]) + 1`
+ *       `W_out = floor((W + 2 * padding[2] - kernelSize[2]) / stride[2]) + 1`
+ *
+ * The parameters `kernelSize`, `stride`, `padding`, can either be:
+ *
+ * - a single `number` -- in which case the same value is used for the depth,
+ * height and width axis;
+ * - a `tuple` of three `numbers`s -- in which case, the first `number` is used
+ * for the depth axis, the second `number` for the height axis, and the third
+ * `number` for the width axis.
+ *
+ * @param kernelSize - The size of the pooling window.
+ * @param stride - The stride of the pooling window. Default: `kernelSize`.
+ * @param padding - How much zero padding to apply to the input. The padding is
+ * applied on both sides of the depth, height and width axis. Default: `0`.
+ */
+export class AvgPool3d extends Pool3d {
+  constructor(kernelSize: number | [number, number, number],
+              stride: number | [number, number, number] | null = null,
+              padding: number | [number, number, number] = 0) {
+    super(mx.mean, 0, kernelSize, stride, padding);
+  }
+}
+
+function valueOrList<T>(x: number | T, n: number, msg: string): T {
   if (Array.isArray(x)) {
     if (x.length !== n)
       throw Error(msg);
@@ -198,7 +286,7 @@ function valueOrList(x: number | number[], n: number, msg: string): number[] {
   }
   if (typeof x !== 'number')
     throw Error(msg);
-  return new Array(n).fill(x);
+  return new Array(n).fill(x) as T;
 }
 
 function nonOverlappingSlidingWindows(x: mx.array,
