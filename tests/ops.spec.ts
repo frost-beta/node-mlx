@@ -869,6 +869,16 @@ describe('ops', () => {
     assertArrayAllTrue(mx.equal(out, mx.array([4, 5, 6, 7])));
     out = mx.take(a, 1, 1);
     assertArrayAllTrue(mx.equal(out, mx.array([1, 5])));
+
+    // Take with multi-dim scalar preserves dims
+    out = mx.take(a, mx.array(1, mx.int32), 0);
+    assert.deepEqual(out.shape, [4]);
+
+    out = mx.take(a, mx.array([1], mx.int32), 0);
+    assert.deepEqual(out.shape, [1, 4]);
+
+    out = mx.take(a, mx.array([[1]], mx.int32), 0);
+    assert.deepEqual(out.shape, [1, 1, 4]);
   });
 
   it('takeAlongAxis', () => {

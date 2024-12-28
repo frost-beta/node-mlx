@@ -284,5 +284,9 @@ describe('random', () => {
     const sortedX = mx.arange(16384);
     x = mx.random.permutation(16384);
     assertArrayAllFalse(mx.arrayEqual(sortedX, x));
+
+    // Preserves shape / doesn't cast input to int.
+    x = mx.random.permutation(mx.array([[1]]));
+    assert.deepEqual(x.shape, [1, 1]);
   });
 });

@@ -107,14 +107,11 @@ export class QuantizedEmbedding extends Module {
   }
 
   override forward(x: mx.array): mx.array {
-    const s = x.shape;
-    x = x.flatten();
-    const out = mx.dequantize(this.weight.index(x),
-                              this.scales.index(x),
-                              this.biases.index(x),
-                              this.groupSize,
-                              this.bits);
-    return out.reshape(...s, -1);
+    return mx.dequantize(this.weight.index(x),
+                         this.scales.index(x),
+                         this.biases.index(x),
+                         this.groupSize,
+                         this.bits);
   }
 
   /**

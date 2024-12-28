@@ -340,13 +340,19 @@ describe('compile', function() {
     const x1 = mx.array([[1, 2], [3, 4], [5, 6]]);
     const x2 = mx.array([[1, 2]]);
 
-    const fun1 = x => {
+    const fun1 = (x: mx.array) => {
       return mx.multiply(x, x.sum(-1, true));
     };
 
     const cfun = mx.compile(fun1, true);
     mx.eval(cfun(x1));
     assertArrayAllTrue(mx.arrayEqual(fun1(x2), cfun(x2)));
+
+    const fun2 = (x: mx.array) => {
+      return mx.multiply(x, x.sum(-1, false));
+    };
+    const cfun2 = mx.compile(fun2, true);
+    assertArrayAllTrue(mx.arrayEqual(fun2(x2), cfun2(x2)));
   });
 
   describe('compileWithConstant', () => {
@@ -658,5 +664,13 @@ describe('compile', function() {
 
     const out = fun(...inputs);
     assertArrayAllTrue(mx.allclose(out, mx.full([2, 2], 20)));
+  });
+
+  it('shapelessCompileMatmul', () => {
+    const a = mx.array([0.0, 1.0, 2.0]);
+    const b = mx.array([0.0, 1.0, 2.0]);
+
+    const fun = mx.compile((a: mx.array, b: mx.array) => mx.matmul(a, b), true);
+    assertArrayAllTrue(mx.allclose(fun(a, b), mx.matmul(a, b)));
   });
 });

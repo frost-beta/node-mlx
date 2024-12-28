@@ -80,12 +80,14 @@ mx::array GatherNDimensional(mx::array a,
       if (is_slice[i]) {
         mx::Shape index_shape(*max_dims + num_slices, 1);
         index_shape[*max_dims + slice_index] = gather_indices[i].shape(0);
-        gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
+        gather_indices[i] = mx::reshape(gather_indices[i],
+                                        std::move(index_shape));
         slice_index++;
       } else {
         mx::Shape index_shape = gather_indices[i].shape();
         index_shape.insert(index_shape.end(), num_slices, 1);
-        gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
+        gather_indices[i] = mx::reshape(gather_indices[i],
+                                        std::move(index_shape));
       }
     }
   } else {
@@ -93,7 +95,8 @@ mx::array GatherNDimensional(mx::array a,
       if (i < num_slices) {
         mx::Shape index_shape(*max_dims + num_slices, 1);
         index_shape[i] = gather_indices[i].shape(0);
-        gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
+        gather_indices[i] = mx::reshape(gather_indices[i],
+                                        std::move(index_shape));
       }
     }
   }
@@ -105,16 +108,10 @@ mx::array GatherNDimensional(mx::array a,
   mx::array gathered = mx::gather(std::move(a), std::move(gather_indices),
                                   std::move(axes), std::move(slice_sizes));
 
-  mx::Shape out_shape;
-  out_shape.insert(
-      out_shape.end(),
-      gathered.shape().begin(),
-      gathered.shape().begin() + *max_dims + num_slices);
-  out_shape.insert(
-      out_shape.end(),
-      gathered.shape().begin() + *max_dims + num_slices + indices.size(),
-      gathered.shape().end());
-  return mx::reshape(std::move(gathered), std::move(out_shape));
+  for (auto& ax : axes) {
+    ax += *max_dims + num_slices;
+  }
+  return mx::squeeze(std::move(gathered), std::move(axes));
 }
 
 // The implementation comes from mlx_expand_ellipsis.

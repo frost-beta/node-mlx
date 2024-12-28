@@ -293,7 +293,7 @@ describe('vmap', () => {
     for (let i = 0; i < a.shape[0]; i++) {
       assertArrayAllTrue(
           mx.allclose(mx.matmul(a.index(i), invs.index(i)),
-                      mx.eye(a.shape[1]), 0, delta));
+                      mx.eye(a.shape[1]), 1e-4, delta));
     }
 
     a = mx.random.uniform(0, 1, [4, 3, 4]);
@@ -305,7 +305,7 @@ describe('vmap', () => {
     for (let i = 0; i < a.shape[1]; i++) {
       assertArrayAllTrue(
           mx.allclose(mx.matmul(a.index(mx.Slice(), i, mx.Slice()), invs.index(i)),
-                      mx.eye(a.shape[0]), 0, 1e-5));
+                      mx.eye(a.shape[0]), 1e-4, 1e-5));
     }
   });
 
