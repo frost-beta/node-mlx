@@ -79,9 +79,9 @@ mx::array Flatten(const mx::array& a,
 
 mx::array Reshape(const mx::array& a,
                   ki::Arguments* args) {
-  std::vector<int> shape;
+  mx::Shape shape;
   if (args->RemainingsLength() == 1) {
-    auto ret = args->GetNext<std::vector<int>>();
+    auto ret = args->GetNext<mx::Shape>();
     if (!ret) {
       args->ThrowError("Shape");
       return a;
@@ -187,7 +187,7 @@ mx::array PutAlongAxis(const mx::array& a,
                        a.shape(), s);
 }
 
-mx::array Full(std::variant<int, std::vector<int>> shape,
+mx::array Full(std::variant<int, mx::Shape> shape,
                ScalarOrArray vals,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
@@ -196,13 +196,13 @@ mx::array Full(std::variant<int, std::vector<int>> shape,
                   s);
 }
 
-mx::array Zeros(std::variant<int, std::vector<int>> shape,
+mx::array Zeros(std::variant<int, mx::Shape> shape,
                 std::optional<mx::Dtype> dtype,
                 mx::StreamOrDevice s) {
   return mx::zeros(PutIntoVector(std::move(shape)), dtype.value_or(mx::float32), s);
 }
 
-mx::array Ones(std::variant<int, std::vector<int>> shape,
+mx::array Ones(std::variant<int, mx::Shape> shape,
                std::optional<mx::Dtype> dtype,
                mx::StreamOrDevice s) {
   return mx::ones(PutIntoVector(std::move(shape)), dtype.value_or(mx::float32), s);
@@ -406,16 +406,16 @@ mx::array Pad(const mx::array& a,
 }
 
 mx::array AsStrided(const mx::array& a,
-                    std::optional<std::vector<int>> shape,
-                    std::optional<std::vector<size_t>> strides,
+                    std::optional<mx::Shape> shape,
+                    std::optional<mx::Strides> strides,
                     std::optional<size_t> offset,
                     mx::StreamOrDevice s) {
-  std::vector<int> a_shape = shape.value_or(a.shape());
-  std::vector<size_t> a_strides;
+  mx::Shape a_shape = shape.value_or(a.shape());
+  mx::Strides a_strides;
   if (strides) {
     a_strides = std::move(*strides);
   } else {
-    a_strides = std::vector<size_t>(a_shape.size(), 1);
+    a_strides = mx::Strides(a_shape.size(), 1);
     for (int i = a_shape.size() - 1; i > 0; i--)
       a_strides[i - 1] = a_shape[i] * a_strides[i];
   }

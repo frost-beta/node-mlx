@@ -78,12 +78,12 @@ mx::array GatherNDimensional(mx::array a,
     size_t slice_index = 0;
     for (size_t i = 0; i < gather_indices.size(); i++) {
       if (is_slice[i]) {
-        std::vector<int> index_shape(*max_dims + num_slices, 1);
+        mx::Shape index_shape(*max_dims + num_slices, 1);
         index_shape[*max_dims + slice_index] = gather_indices[i].shape(0);
         gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
         slice_index++;
       } else {
-        std::vector<int> index_shape = gather_indices[i].shape();
+        mx::Shape index_shape = gather_indices[i].shape();
         index_shape.insert(index_shape.end(), num_slices, 1);
         gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
       }
@@ -91,7 +91,7 @@ mx::array GatherNDimensional(mx::array a,
   } else {
     for (size_t i = 0; i < gather_indices.size(); i++) {
       if (i < num_slices) {
-        std::vector<int> index_shape(*max_dims + num_slices, 1);
+        mx::Shape index_shape(*max_dims + num_slices, 1);
         index_shape[i] = gather_indices[i].shape(0);
         gather_indices[i] = mx::reshape(gather_indices[i], index_shape);
       }
@@ -100,12 +100,12 @@ mx::array GatherNDimensional(mx::array a,
 
   std::vector<int> axes(indices.size());
   std::iota(axes.begin(), axes.end(), 0);
-  std::vector<int> slice_sizes = a.shape();
+  mx::Shape slice_sizes = a.shape();
   std::fill(slice_sizes.begin(), slice_sizes.begin() + indices.size(), 1);
   mx::array gathered = mx::gather(std::move(a), std::move(gather_indices),
                                   std::move(axes), std::move(slice_sizes));
 
-  std::vector<int> out_shape;
+  mx::Shape out_shape;
   out_shape.insert(
       out_shape.end(),
       gathered.shape().begin(),
@@ -119,7 +119,7 @@ mx::array GatherNDimensional(mx::array a,
 
 // The implementation comes from mlx_expand_ellipsis.
 std::pair<size_t, std::vector<ArrayIndex>> ExpandEllipsis(
-    const std::vector<int>& shape,
+    const mx::Shape& shape,
     std::vector<ArrayIndex> entries) {
   if (entries.size() == 0)
     return {0, {}};
@@ -307,7 +307,7 @@ mx::array IndexNDimensional(const mx::array* a,
   }
 
   if (unsqueeze_needed || squeeze_needed) {
-    std::vector<int> out_shape;
+    mx::Shape out_shape;
     size_t axis = 0;
     for (const ArrayIndex& index : remaining_indices) {
       if (unsqueeze_needed && std::holds_alternative<std::monostate>(index)) {
@@ -331,7 +331,7 @@ mx::array IndexNDimensional(const mx::array* a,
 // Modified from mlx_get_item.
 mx::array IndexOne(const mx::array* a, ArrayIndex index) {
   if (std::holds_alternative<std::monostate>(index)) {
-    std::vector<int> shape = { 1 };
+    mx::Shape shape = { 1 };
     shape.insert(shape.end(), a->shape().begin(), a->shape().end());
     return mx::reshape(*a, std::move(shape));
   }
@@ -357,11 +357,11 @@ mx::array IndexOne(const mx::array* a, ArrayIndex index) {
 }
 
 // Return a new shape that removes begining dimensions with size 1.
-std::vector<int> GetUpShape(const mx::array& a) {
+mx::Shape GetUpShape(const mx::array& a) {
   size_t s = 0;
   while (s < a.ndim() && a.shape(s) == 1)
     s++;
-  return std::vector<int>(a.shape().begin() + s, a.shape().end());
+  return mx::Shape(a.shape().begin() + s, a.shape().end());
 }
 
 using ScatterResult = std::tuple<std::vector<mx::array>,
@@ -372,8 +372,8 @@ using ScatterResult = std::tuple<std::vector<mx::array>,
 ScatterResult ScatterArgsInt(const mx::array* a,
                              int index,
                              mx::array update) {
-  std::vector<int> up_shape = GetUpShape(update);
-  std::vector<int> shape = a->shape();
+  mx::Shape up_shape = GetUpShape(update);
+  mx::Shape shape = a->shape();
   shape[0] = 1;
   return {{GetIntIndex(index, a->shape(0))},
           mx::broadcast_to(mx::reshape(std::move(update), std::move(up_shape)),
@@ -385,7 +385,7 @@ ScatterResult ScatterArgsInt(const mx::array* a,
 ScatterResult ScatterArgsArray(const mx::array* a,
                                mx::array indices,
                                mx::array update) {
-  std::vector<int> up_shape = GetUpShape(update);
+  mx::Shape up_shape = GetUpShape(update);
   mx::array up = mx::reshape(std::move(update), std::move(up_shape));
 
   up_shape = indices.shape();
@@ -403,7 +403,7 @@ ScatterResult ScatterArgsSlice(const mx::array* a,
                                const Slice& slice,
                                mx::array update) {
   if (IsSliceNone(slice)) {
-    std::vector<int> up_shape = GetUpShape(update);
+    mx::Shape up_shape = GetUpShape(update);
     return {{},
             mx::broadcast_to(mx::reshape(std::move(update),
                                          std::move(up_shape)),
@@ -417,10 +417,10 @@ ScatterResult ScatterArgsSlice(const mx::array* a,
   ReadSlice(slice, stop, &start, &stop, &step);
 
   if (step == 1) {
-    std::vector<int> up_shape = GetUpShape(update);
+    mx::Shape up_shape = GetUpShape(update);
     mx::array up = mx::reshape(std::move(update), std::move(up_shape));
 
-    std::vector<int> up_shape_broadcast = {1, stop - start};
+    mx::Shape up_shape_broadcast = {1, stop - start};
     up_shape_broadcast.insert(up_shape_broadcast.end(),
                               a->shape().begin() + 1, a->shape().end());
     return {{mx::array({start}, {1}, mx::uint32)},
@@ -444,7 +444,7 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
     throw std::invalid_argument(msg.str());
   }
 
-  std::vector<int> up_shape = GetUpShape(update);
+  mx::Shape up_shape = GetUpShape(update);
   mx::array up = mx::reshape(std::move(update), std::move(up_shape));
 
   if (non_none_indices == 0) {
@@ -493,8 +493,8 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
   size_t slice_num = 0;
   size_t array_num = 0;
 
-  std::vector<int> update_shape(non_none_indices, 1);
-  std::vector<int> slice_shapes;
+  mx::Shape update_shape(non_none_indices, 1);
+  mx::Shape slice_shapes;
 
   size_t axis = 0;
   for (const ArrayIndex& index : indices) {
@@ -506,7 +506,7 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
       start = start < 0 ? start + axis_size : start;
       stop = stop < 0 ? stop + axis_size : stop;
 
-      std::vector<int> index_shape(index_ndim, 1);
+      mx::Shape index_shape(index_ndim, 1);
       if (array_num >= num_arrays && num_strided_slices == 0 && step == 1) {
         slice_shapes.push_back(stop - start);
         arr_indices.push_back(
@@ -531,7 +531,7 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
       slice_num++;
     } else if (std::holds_alternative<mx::array*>(index)) {
       mx::array* idx = std::get<mx::array*>(index);
-      std::vector<int> index_shape(index_ndim, 1);
+      mx::Shape index_shape(index_ndim, 1);
       size_t start = (arrays_first ? 0 : 1) * slice_num + max_dim - idx->ndim();
       for (size_t j = 0; j < idx->ndim(); j++) {
         index_shape[start + j] = idx->shape(j);
@@ -550,7 +550,7 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
 
   arr_indices = mx::broadcast_arrays(std::move(arr_indices));
 
-  std::vector<int> up_shape_broadcast = arr_indices[0].shape();
+  mx::Shape up_shape_broadcast = arr_indices[0].shape();
   up_shape_broadcast.insert(up_shape_broadcast.end(),
                             slice_shapes.begin(), slice_shapes.end());
   up_shape_broadcast.insert(up_shape_broadcast.end(),
@@ -558,13 +558,13 @@ ScatterResult ScatterArgsNDimentional(const mx::array* a,
                             a->shape().end());
   up = mx::broadcast_to(std::move(up), std::move(up_shape_broadcast));
 
-  std::vector<int> up_reshape = arr_indices[0].shape();
+  mx::Shape up_reshape = arr_indices[0].shape();
   up_reshape.insert(up_reshape.end(), update_shape.begin(), update_shape.end());
   up_reshape.insert(up_reshape.end(),
                     a->shape().begin() + non_none_indices, a->shape().end());
   up = mx::reshape(std::move(up), std::move(up_reshape));
 
-  std::vector<int> axes(arr_indices.size(), 0);
+  mx::Shape axes(arr_indices.size(), 0);
   std::iota(axes.begin(), axes.end(), 0);
   return {std::move(arr_indices), std::move(up), std::move(axes)};
 }
@@ -629,8 +629,8 @@ std::pair<bool, mx::array> SliceUpdate(
   while (s < up.ndim() && up.shape(s) == 1 && (up.ndim() - s) > a->ndim()) {
     s++;
   }
-  std::vector<int> up_shape(up.shape().begin() + s, up.shape().end());
-  up = mx::reshape(std::move(up), up_shape.empty() ? std::vector<int>{1}
+  mx::Shape up_shape(up.shape().begin() + s, up.shape().end());
+  up = mx::reshape(std::move(up), up_shape.empty() ? mx::Shape{1}
                                                    : std::move(up_shape));
 
   // Build slice update params.
@@ -665,7 +665,7 @@ std::pair<bool, mx::array> SliceUpdate(
   }
 
   // Process entries.
-  std::vector<int> up_reshape(a->ndim());
+  mx::Shape up_reshape(a->ndim());
   int axis = a->ndim() - 1;
   int up_axis = up.ndim() - 1;
   while (axis >= non_none_indices) {

@@ -50,7 +50,7 @@ inline T CreateInstance(Args&&... args) {
 }
 
 // Get the shape of input nested array.
-bool GetShape(napi_env env, napi_value value, std::vector<int>* shape) {
+bool GetShape(napi_env env, napi_value value, mx::Shape* shape) {
   uint32_t length;
   if (napi_get_array_length(env, value, &length) != napi_ok)
     return false;
@@ -82,7 +82,7 @@ enum InputType {
 // the input.
 bool ValidateInputArray(napi_env env,
                         napi_value value,
-                        const std::vector<int>& shape,
+                        const mx::Shape& shape,
                         std::optional<InputType>* input_type,
                         size_t dim = 0) {
   if (dim >= shape.size()) {
@@ -166,7 +166,7 @@ template<typename T>
 T JsArrayToMxArray(napi_env env, napi_value value,
                    std::optional<mx::Dtype> dtype) {
   // Get array's shape, validate it and decide a proper dtype for it.
-  std::vector<int> shape;
+  mx::Shape shape;
   if (!GetShape(env, value, &shape))
     return T();
   // FIXME(zcbenz): Currently we assume the input array only includes primitive
@@ -214,7 +214,7 @@ T JsTypedArrayToMxArray(napi_env env, napi_value value) {
                                nullptr, nullptr) != napi_ok) {
     return T();
   }
-  std::vector<int>&& shape = { static_cast<int>(length) };
+  mx::Shape&& shape = { static_cast<int32_t>(length) };
   switch (element_type) {
     case napi_int8_array:
       return CreateInstance<T>(static_cast<int8_t*>(data), shape, mx::int8);
@@ -624,7 +624,7 @@ void Type<mx::array>::Define(napi_env env,
                              napi_value constructor,
                              napi_value prototype) {
   // Disambiguate the 2 overloads of shape().
-  using shape_fun = const std::vector<int>& (mx::array::*)() const;
+  using shape_fun = const mx::Shape& (mx::array::*)() const;
   shape_fun shape = &mx::array::shape;
   // Disambiguate the 3 overloads of transpose().
   using t_fun = mx::array (*)(const mx::array&, mx::StreamOrDevice);

@@ -11,51 +11,51 @@ mx::array Split(const mx::array& a,
 
 mx::array Uniform(const mx::array& low,
                   const mx::array& high,
-                  std::optional<std::vector<int>> shape,
+                  std::optional<mx::Shape> shape,
                   std::optional<mx::Dtype> dtype,
                   std::optional<mx::array> key,
                   mx::StreamOrDevice s) {
   return mx::random::uniform(low, high,
-                             std::move(shape.value_or(std::vector<int>())),
+                             std::move(shape.value_or(mx::Shape())),
                              dtype.value_or(mx::float32), std::move(key), s);
 }
 
-mx::array Normal(std::optional<std::vector<int>> shape,
+mx::array Normal(std::optional<mx::Shape> shape,
                  std::optional<mx::Dtype> dtype,
                  std::optional<float> loc,
                  std::optional<float> scale,
                  std::optional<mx::array> key,
                  mx::StreamOrDevice s) {
   return mx::random::normal(
-      std::move(shape.value_or(std::vector<int>())),
+      std::move(shape.value_or(mx::Shape())),
       dtype.value_or(mx::float32), loc.value_or(0), scale.value_or(1),
       std::move(key), s);
 }
 
 mx::array MultivariateNormal(const mx::array& mean,
                              const mx::array& conv,
-                             std::optional<std::vector<int>> shape,
+                             std::optional<mx::Shape> shape,
                              std::optional<mx::Dtype> dtype,
                              std::optional<mx::array> key,
                              mx::StreamOrDevice s) {
   return mx::random::multivariate_normal(
-      mean, conv, std::move(shape.value_or(std::vector<int>())),
+      mean, conv, std::move(shape.value_or(mx::Shape())),
       dtype.value_or(mx::float32), std::move(key), s);
 }
 
 mx::array RandInt(const mx::array& low,
                   const mx::array& high,
-                  std::optional<std::vector<int>> shape,
+                  std::optional<mx::Shape> shape,
                   std::optional<mx::Dtype> dtype,
                   std::optional<mx::array> key,
                   mx::StreamOrDevice s) {
   return mx::random::randint(
-      low, high, std::move(shape.value_or(std::vector<int>())),
+      low, high, std::move(shape.value_or(mx::Shape())),
       dtype.value_or(mx::int32), std::move(key), s);
 }
 
 mx::array Bernoulli(std::optional<mx::array> param,
-                    std::optional<std::vector<int>> shape,
+                    std::optional<mx::Shape> shape,
                     std::optional<mx::array> key,
                     mx::StreamOrDevice s) {
   mx::array p = std::move(param.value_or(mx::array(0.5)));
@@ -67,7 +67,7 @@ mx::array Bernoulli(std::optional<mx::array> param,
 
 mx::array TruncatedNormal(const mx::array& lower,
                           const mx::array& upper,
-                          std::optional<std::vector<int>> shape,
+                          std::optional<mx::Shape> shape,
                           std::optional<mx::Dtype> dtype,
                           std::optional<mx::array> key,
                           mx::StreamOrDevice s) {
@@ -80,11 +80,11 @@ mx::array TruncatedNormal(const mx::array& lower,
   }
 }
 
-mx::array Gumbel(std::optional<std::vector<int>> shape,
+mx::array Gumbel(std::optional<mx::Shape> shape,
                  std::optional<mx::Dtype> dtype,
                  std::optional<mx::array> key,
                  mx::StreamOrDevice s) {
-  return mx::random::gumbel(std::move(shape.value_or(std::vector<int>())),
+  return mx::random::gumbel(std::move(shape.value_or(mx::Shape())),
                             dtype.value_or(mx::float32), std::move(key), s);
 }
 
@@ -92,11 +92,11 @@ mx::array Categorical(
     const mx::array& logits,
     std::optional<int> optional_axis,
     // Use variant to explicitly allow passing null/undefined as shape.
-    std::optional<std::variant<std::monostate, std::vector<int>>> shape,
+    std::optional<std::variant<std::monostate, mx::Shape>> shape,
     std::optional<int> num_samples,
     std::optional<mx::array> key,
     mx::StreamOrDevice s) {
-  bool has_shape = shape && std::get_if<std::vector<int>>(&shape.value());
+  bool has_shape = shape && std::get_if<mx::Shape>(&shape.value());
   if (has_shape && num_samples) {
     throw std::invalid_argument(
         "[categorical] At most one of shape or num_samples can be specified.");
@@ -104,21 +104,21 @@ mx::array Categorical(
   int axis = optional_axis.value_or(-1);
   if (has_shape) {
     return mx::random::categorical(logits, axis,
-                                   std::get<std::vector<int>>(*shape), key, s);
+                                   std::get<mx::Shape>(*shape), key, s);
   }
   if (num_samples)
     return mx::random::categorical(logits, axis, *num_samples, key, s);
   return mx::random::categorical(logits, axis, key, s);
 }
 
-mx::array Laplace(std::optional<std::vector<int>> shape,
+mx::array Laplace(std::optional<mx::Shape> shape,
                   std::optional<mx::Dtype> dtype,
                   std::optional<float> loc,
                   std::optional<float> scale,
                   std::optional<mx::array> key,
                   mx::StreamOrDevice s) {
   return mx::random::normal(
-      std::move(shape.value_or(std::vector<int>())),
+      std::move(shape.value_or(mx::Shape())),
       dtype.value_or(mx::float32), loc.value_or(0), scale.value_or(1),
       std::move(key), s);
 }

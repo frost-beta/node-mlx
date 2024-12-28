@@ -144,7 +144,7 @@ ValueAndGradImpl(const char* error_tag,
     }
     // Collect the arrays located at |argnums|.
     std::vector<mx::array> arrays;
-    std::vector<size_t> strides = {0};
+    mx::Strides strides = {0};
     for (int i : argnums) {
       // Concatenate flatten results to |arrays|.
       std::vector<mx::array> flat = TreeFlatten(args.Env(), args[i]);

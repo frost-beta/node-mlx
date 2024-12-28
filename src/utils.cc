@@ -1,10 +1,10 @@
 #include "src/array.h"
 #include "src/utils.h"
 
-std::vector<int> PutIntoVector(std::variant<int, std::vector<int>> shape) {
+mx::Shape PutIntoVector(std::variant<int, mx::Shape> shape) {
   if (auto i = std::get_if<int>(&shape); i)
     return {*i};
-  return std::move(std::get<std::vector<int>>(shape));
+  return std::move(std::get<mx::Shape>(shape));
 }
 
 std::vector<int> GetReduceAxes(OptionalAxes value, int dims) {
