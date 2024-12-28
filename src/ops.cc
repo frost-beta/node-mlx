@@ -764,6 +764,7 @@ void InitOps(napi_env env, napi_value exports) {
   ki::Set(env, exports,
           "reshape", &ops::Reshape,
           "flatten", &ops::Flatten,
+          "unflatten", &mx::unflatten,
           "squeeze", &ops::Squeeze,
           "expandDims", &ops::ExpandDims,
           "abs", &mx::abs,

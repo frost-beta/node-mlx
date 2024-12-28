@@ -334,6 +334,7 @@ export namespace core {
   function tri(N: number, M?: number, k?: number, dtype?: Dtype, s?: StreamOrDevice): array;
   function tril(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
   function triu(array: ScalarOrArray, k?: number, s?: StreamOrDevice): array;
+  function unflatten(array: ScalarOrArray, axis: number, shape: number[], s?: StreamOrDevice): array;
   function variance(array: ScalarOrArray, indicesOrSections?: number | number[], keepdims?: boolean, ddof?: number, s?: StreamOrDevice): array;
   function where(condition: ScalarOrArray, x: ScalarOrArray, y: ScalarOrArray, s?: StreamOrDevice): array;
   function zeros(shape: number | number[], dtype?: Dtype, s?: StreamOrDevice): array;

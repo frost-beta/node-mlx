@@ -1367,7 +1367,7 @@ describe('ops', () => {
   });
 
   it('asStrided', () => {
-    const x = mx.random.normal([128]).astype(mx.float32);
+    let x = mx.random.normal([128]).astype(mx.float32);
     const shapes = [[10, 10], [5, 5], [2, 20], [10]];
     const strides = [[3, 3], [7, 1], [1, 5], [4]];
     for (let i = 0; i < shapes.length; i++) {
@@ -1378,6 +1378,10 @@ describe('ops', () => {
         assert.deepEqual(y.shape, shape);
       }
     }
+
+    x = mx.random.uniform(0, 1, [32]);
+    let y = mx.asStrided(x, [x.size], [-1], x.size - 1);
+    assertArrayAllTrue(mx.arrayEqual(y, x.index(mx.Slice(null, null, -1))));
   });
 
   it('squeezeExpand', () => {
@@ -1401,6 +1405,11 @@ describe('ops', () => {
     const x = mx.array([3, 1, 2]);
     const sortedX = mx.sort(x);
     assert.deepEqual(sortedX.tolist(), [1, 2, 3]);
+
+    const a = mx.array([[4, 3], [2, 1], [5, 4], [3, 2]], mx.uint32);
+    const out = mx.argsort(a.index(mx.Slice(), 1));
+    const expected = mx.array([1, 3, 0, 2], mx.uint32);
+    assertArrayAllTrue(mx.arrayEqual(out, expected));
   });
 
   it('argpartition', () => {

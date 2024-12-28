@@ -355,6 +355,18 @@ describe('compile', function() {
     assertArrayAllTrue(mx.arrayEqual(fun2(x2), cfun2(x2)));
   });
 
+  describe('shapelessCompileUnflatten', () => {
+    const x = mx.zeros([1, 1, 4 * 32]);
+    const fun = (x: mx.array) =>  mx.unflatten(x, -1, [4, -1]);
+    assert.deepEqual(mx.compile(fun, true)(x).shape, [1, 1, 4, 32]);
+  });
+
+  describe('shapelessCompileGather', () => {
+    const x = mx.zeros([1, 1, 32]);
+    const fun = (x: mx.array) =>  x.index(mx.Slice(), -1, mx.Slice());
+    assert.deepEqual(mx.compile(fun, true)(x).shape, [1, 32]);
+  });
+
   describe('compileWithConstant', () => {
     it('float', () => {
       const fun = (x, y) => {

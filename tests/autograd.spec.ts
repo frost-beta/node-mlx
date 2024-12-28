@@ -485,4 +485,22 @@ describe('autograd', () => {
     const expected = mx.array([[0, 0, 1, 0, 1], [1, 0, 0, 0, 1]], mx.float32);
     assertArrayAllTrue(mx.arrayEqual(out, expected));
   });
+
+  it('flattenUnflattenVjps', () => {
+    const fun1 = (x: mx.array) => {
+      const y = mx.unflatten(x, 0, [2, 2]);
+      return y.sum();
+    }
+
+    let x = mx.zeros([4, 8]);
+    assert.deepEqual(mx.grad(fun1)(x).shape, [4, 8]);
+
+    const fun2 = (x: mx.array) => {
+      const y = mx.flatten(x, 0, 2);
+      return y.sum();
+    }
+
+    x = mx.zeros([2, 4, 8]);
+    assert.deepEqual(mx.grad(fun2)(x).shape, [2, 4, 8]);
+  });
 });

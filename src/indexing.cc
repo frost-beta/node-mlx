@@ -304,21 +304,23 @@ mx::array IndexNDimensional(const mx::array* a,
   }
 
   if (unsqueeze_needed || squeeze_needed) {
-    mx::Shape out_shape;
-    size_t axis = 0;
-    for (const ArrayIndex& index : remaining_indices) {
+    std::vector<int> squeeze_axes;
+    std::vector<int> unsqueeze_axes;
+    for (int axis = 0; axis < remaining_indices.size(); ++axis) {
+      ArrayIndex& index = remaining_indices[axis];
       if (unsqueeze_needed && std::holds_alternative<std::monostate>(index)) {
-        out_shape.push_back(1);
+        unsqueeze_axes.push_back(axis - squeeze_axes.size());
       } else if (squeeze_needed && std::holds_alternative<int>(index)) {
-        axis++;
-      } else {
-        out_shape.push_back(gathered.shape(axis++));
+        squeeze_axes.push_back(axis - unsqueeze_axes.size());
       }
     }
-
-    out_shape.insert(out_shape.end(),
-                     gathered.shape().begin() + axis, gathered.shape().end());
-    gathered = mx::reshape(std::move(gathered), std::move(out_shape));
+    if (!squeeze_axes.empty()) {
+      gathered = mx::squeeze(std::move(gathered), std::move(squeeze_axes));
+    }
+    if (!unsqueeze_axes.empty()) {
+      gathered = mx::expand_dims(std::move(gathered),
+                                 std::move(unsqueeze_axes));
+    }
   }
 
   return gathered;
