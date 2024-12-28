@@ -18,6 +18,18 @@ describe('dtype', () => {
     assert.equal(mx.bfloat16.size, 2);
     assert.equal(mx.complex64.size, 8);
   });
+
+  it('finfo', () => {
+    assert.throws(() => mx.finfo(mx.int32), Error);
+
+    assert.isAbove(mx.finfo(mx.float32).min, -Number.MAX_VALUE);
+    assert.isBelow(mx.finfo(mx.float32).max, Number.MAX_VALUE);
+    assert.equal(mx.finfo(mx.float32).dtype, mx.float32);
+
+    assert.isAbove(mx.finfo(mx.float16).min, -Number.MAX_VALUE);
+    assert.isBelow(mx.finfo(mx.float16).max, Number.MAX_VALUE);
+    assert.equal(mx.finfo(mx.float16).dtype, mx.float16);
+  });
 });
 
 describe('equality', () => {

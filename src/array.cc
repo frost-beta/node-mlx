@@ -442,6 +442,16 @@ ArrayIterator* CreateArrayIterator(mx::array* a) {
   return new ArrayIterator(*a);
 }
 
+// Implement the finfo function.
+napi_value FInfo(napi_env env, mx::Dtype dtype) {
+  mx::finfo info = mx::finfo(dtype);
+  napi_value result = ki::CreateObject(env);
+  ki::Set(env, result, "dtype", info.dtype,
+                       "min", info.min,
+                       "max", info.max);
+  return result;
+}
+
 // Store array pointers allocated during a tidy call.
 std::stack<std::set<mx::array*>> g_tidy_arrays;
 
@@ -783,7 +793,8 @@ void InitArray(napi_env env, napi_value exports) {
           "generic", mx::generic);
 
   ki::Set(env, exports,
-          "array", ki::Class<mx::array>());
+          "array", ki::Class<mx::array>(),
+          "finfo", &FInfo);
 
   ki::Set(env, exports,
           "tidy", &Tidy,

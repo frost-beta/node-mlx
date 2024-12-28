@@ -93,6 +93,10 @@ export namespace core {
     minimum(value: ScalarOrArray): array;
   }
 
+  // The finfo is a class in python but we define it as function to simplify the
+  // usage.
+  function finfo(dtype: Dtype): { dtype: Dtype, min: number, max: number };
+
   // Array.
   function array(value: ScalarOrArray, dtype?: Dtype): array;
 
@@ -435,7 +439,7 @@ export namespace core {
   namespace fast {
     function rmsNorm(array: ScalarOrArray, weights: ScalarOrArray, eps: number, s?: StreamOrDevice): array;
     function layerNorm(array: ScalarOrArray, weights: ScalarOrArray | null, bias: ScalarOrArray | null, eps: number, s?: StreamOrDevice): array;
-    function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number | undefined, scale: number, offset: number, freqs?: array, s?: StreamOrDevice): array;
+    function rope(array: ScalarOrArray, dims: number, traditional: boolean, base: number | undefined, scale: number, offset: ScalarOrArray, freqs?: array, s?: StreamOrDevice): array;
     function scaledDotProductAttention(queries: ScalarOrArray, keys: ScalarOrArray, values: ScalarOrArray, scale: number, mask?: ScalarOrArray, memoryEfficientThreshold?: number, s?: StreamOrDevice): array;
     function affineQuantize(w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, groupSize?: number, bits?: number, s?: StreamOrDevice): array;
   }

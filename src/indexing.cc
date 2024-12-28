@@ -13,9 +13,9 @@ inline bool IsSliceNone(const Slice& slice) {
 // Get slice values depending on the array's |length|.
 inline void ReadSlice(const Slice& slice,
                       int length,
-                      int* start,
-                      int* stop,
-                      int* step) {
+                      mx::ShapeElem* start,
+                      mx::ShapeElem* stop,
+                      mx::ShapeElem* step) {
   // Following numpy's convention:
   //    Assume n is the number of elements in the dimension being sliced.
   //    Then, if i is not given it defaults to 0 for k > 0 and n - 1 for
@@ -37,9 +37,9 @@ inline mx::array GetIntIndex(int index, int length) {
 mx::array IndexSlice(const mx::array* a, const Slice& slice) {
   if (IsSliceNone(slice))
     return *a;
-  std::vector<int> starts(a->ndim(), 0);
-  std::vector<int> stops(a->shape());
-  std::vector<int> steps(a->ndim(), 1);
+  mx::Shape starts(a->ndim(), 0);
+  mx::Shape stops(a->shape());
+  mx::Shape steps(a->ndim(), 1);
   ReadSlice(slice, a->shape(0), &starts[0], &stops[0], &steps[0]);
   return mx::slice(*a, std::move(starts), std::move(stops), std::move(steps));
 }
@@ -279,9 +279,9 @@ mx::array IndexNDimensional(const mx::array* a,
   bool squeeze_needed = false;
   bool unsqueeze_needed = false;
   {
-    std::vector<int> starts(gathered.ndim(), 0);
-    std::vector<int> stops(gathered.shape());
-    std::vector<int> steps(gathered.ndim(), 1);
+    mx::Shape starts(gathered.ndim(), 0);
+    mx::Shape stops(gathered.shape());
+    mx::Shape steps(gathered.ndim(), 1);
     size_t axis = 0;
     for (const ArrayIndex& index : remaining_indices) {
       if (!std::holds_alternative<std::monostate>(index)) {
@@ -410,9 +410,9 @@ ScatterResult ScatterArgsSlice(const mx::array* a,
             {}};
   }
 
-  int start = 0;
-  int stop = a->shape(0);
-  int step = 1;
+  mx::ShapeElem start = 0;
+  mx::ShapeElem stop = a->shape(0);
+  mx::ShapeElem step = 1;
   ReadSlice(slice, stop, &start, &stop, &step);
 
   if (step == 1) {
@@ -605,9 +605,11 @@ std::pair<bool, mx::array> SliceUpdate(
     ScalarOrArray vals) {
   bool is_slice = std::holds_alternative<ArrayIndex>(obj) &&
                   std::holds_alternative<Slice>(std::get<ArrayIndex>(obj));
+  bool is_int = std::holds_alternative<ArrayIndex>(obj) &&
+                std::holds_alternative<int>(std::get<ArrayIndex>(obj));
   // Can't route to slice update if not slice or tuple.
   if (a->ndim() == 0 ||
-      (!is_slice && !std::holds_alternative<ArrayIndices>(obj))) {
+      (!is_slice && !is_int && !std::holds_alternative<ArrayIndices>(obj))) {
     return std::make_pair(false, *a);
   }
   if (std::holds_alternative<ArrayIndices>(obj)) {
@@ -633,9 +635,23 @@ std::pair<bool, mx::array> SliceUpdate(
                                                    : std::move(up_shape));
 
   // Build slice update params.
-  std::vector<int> starts(a->ndim(), 0);
-  std::vector<int> stops(a->shape());
-  std::vector<int> steps(a->ndim(), 1);
+  mx::Shape starts(a->ndim(), 0);
+  mx::Shape stops(a->shape());
+  mx::Shape steps(a->ndim(), 1);
+  if (is_int) {
+    if (a->ndim() < 1) {
+      std::ostringstream msg;
+      msg << "Too many indices for array with " << a->ndim() << " dimensions.";
+      throw std::invalid_argument(msg.str());
+    }
+    int idx = std::get<int>(std::get<ArrayIndex>(obj));
+    idx = idx < 0 ? idx + stops[0] : idx;
+    starts[0] = idx;
+    stops[0] = idx + 1;
+    return {true, mx::slice_update(*a, std::move(up), std::move(starts),
+                                   std::move(stops), std::move(steps))};
+  }
+
   // If it's just a simple slice, just do a slice update and return.
   if (is_slice) {
     ReadSlice(std::get<Slice>(std::get<ArrayIndex>(obj)), a->shape(0),

@@ -735,23 +735,15 @@ bool IsSubDtype(std::variant<mx::Dtype, mx::Dtype::Category> dtype,
 }
 
 mx::array Roll(const mx::array& a,
-               OptionalAxes shift,
+               const std::variant<int, mx::Shape>& shift,
                OptionalAxes axis,
                mx::StreamOrDevice s) {
   return std::visit(
       [&](auto sh, auto ax) -> mx::array {
-        using T = decltype(ax);
-        using V = decltype(sh);
-
-        if constexpr (std::is_same_v<V, std::monostate>) {
-          throw std::invalid_argument(
-              "[roll] Expected two arguments but only one was given.");
+        if constexpr (std::is_same_v<decltype(ax), std::monostate>) {
+          return mx::roll(a, sh, s);
         } else {
-          if constexpr (std::is_same_v<T, std::monostate>) {
-            return mx::roll(a, sh, s);
-          } else {
-            return mx::roll(a, sh, ax, s);
-          }
+          return mx::roll(a, sh, ax, s);
         }
       },
       shift,

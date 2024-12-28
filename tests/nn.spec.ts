@@ -1681,4 +1681,14 @@ describe('layers', function() {
 
     assert.isAbove(cosine(y, yq).min().item() as number, 0.99);
   });
+
+  it('causalMask', () => {
+    let mask = nn.MultiHeadAttention.createAdditiveCausalMask(4, mx.float16);
+    assert.isFalse(mx.any(mx.isnan(mask)).item());
+    assert.isBelow(mask.index(0, -1).item() as number, 0);
+
+    mask = nn.MultiHeadAttention.createAdditiveCausalMask(4, mx.bfloat16);
+    assert.isFalse(mx.any(mx.isnan(mask)).item());
+    assert.isBelow(mask.index(0, -1).item() as number, 0);
+  });
 });

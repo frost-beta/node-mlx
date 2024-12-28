@@ -110,8 +110,7 @@ export class MultiHeadAttention extends Module {
     const indices = mx.arange(N, mx.int32);
     let mask = mx.less(indices.index(mx.Slice(), null),
                        indices.index(null));
-    // Usually `infinity` but 1e9 is as good and softmax(full(1e9)) != NaN.
-    mask = mx.multiply(mask.astype(dtype), -1e9);
+    mask = mx.multiply(mask.astype(dtype), mx.finfo(dtype).min);
     return mask;
   }
 }

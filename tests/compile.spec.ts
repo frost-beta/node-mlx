@@ -685,4 +685,19 @@ describe('compile', function() {
     const fun = mx.compile((a: mx.array, b: mx.array) => mx.matmul(a, b), true);
     assertArrayAllTrue(mx.allclose(fun(a, b), mx.matmul(a, b)));
   });
+
+  it('shapelessCompileSliceUpdate', () => {
+    const fun = (x: mx.array) => {
+      x.indexPut_(2, mx.array([3.0]));
+      return x;
+    };
+
+    const cfun = mx.compile(fun, true);
+
+    let a = mx.array([0.0, 1.0, 2.0, 3.0]);
+    assertArrayAllTrue(mx.allclose(cfun(a), fun(a)));
+
+    a = mx.array([0.0, 1.0, 2.0, 3.0, 4.0]);
+    assertArrayAllTrue(mx.allclose(cfun(a), fun(a)));
+  });
 });
