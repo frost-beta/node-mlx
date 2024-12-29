@@ -116,6 +116,9 @@ describe('base', () => {
     const mLoad = makeModel();
     mLoad.loadWeights(safetensorsFile);
 
+    // Eval so the model file is not held.
+    mx.eval(mLoad);
+
     const eqTree = utils.treeMap(mx.arrayEqual, m.parameters(), [ mLoad.parameters() ]);
     assert.notInclude(utils.treeFlatten(eqTree).map(v => v[1]), false);
   });
