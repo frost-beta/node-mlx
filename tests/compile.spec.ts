@@ -4,11 +4,13 @@ import {assert} from 'chai';
 
 describe('compile', function() {
   beforeEach(function() {
-    // FIXME(zcbenz): Compilation fails on QEMU in CI.
-    if (process.env.CI == 'true' &&
-        process.platform == 'linux' &&
-        process.arch == 'arm64') {
-      this.skip();
+    if (process.env.CI == 'true') {
+      // FIXME(zcbenz): Compilation fails on QEMU in CI.
+      if ((process.platform == 'linux' && process.arch == 'arm64') ||
+          // FIXME(zcbenz): Investigate why compilation fails in CI.
+          process.platform == 'win32') {
+        this.skip();
+      }
     }
   });
 

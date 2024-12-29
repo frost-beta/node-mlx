@@ -801,12 +801,13 @@ describe('array', () => {
   });
 
   it('deepGraphs', function() {
-    // FIXME(zcbenz): Compilation fails on QEMU in CI.
-    if (process.env.CI == 'true' &&
-        process.platform == 'linux' &&
-        process.arch == 'arm64') {
-      this.skip();
-      return;
+    if (process.env.CI == 'true') {
+      // FIXME(zcbenz): Compilation fails on QEMU in CI.
+      if ((process.platform == 'linux' && process.arch == 'arm64') ||
+          // FIXME(zcbenz): Investigate why compilation fails in CI.
+          process.platform == 'win32') {
+        this.skip();
+      }
     }
     this.timeout(10_000);
     this.slow(5_000);

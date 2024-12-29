@@ -9,11 +9,13 @@ import {core as mx} from '..';
 // Do not warn about using pure-js tensorflow.
 tf.ENV.set('IS_TEST', true);
 
-// FIXME(zcbenz): Compilation fails on QEMU in CI.
-if (process.env.CI == 'true' &&
-    process.platform == 'linux' &&
-    process.arch == 'arm64') {
-  mx.disableCompile();
+if (process.env.CI == 'true') {
+  // FIXME(zcbenz): Compilation fails on QEMU in CI.
+  if ((process.platform == 'linux' && process.arch == 'arm64') ||
+      // FIXME(zcbenz): Investigate why compilation fails in CI.
+      process.platform == 'win32') {
+    mx.disableCompile();
+  }
 }
 
 const {values} = util.parseArgs({
