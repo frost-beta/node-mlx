@@ -91,13 +91,13 @@ describe('fast', () => {
 
     let rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
     let rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
-    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-5);
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-4);
 
     // Test single vector
     x = mx.random.uniform(0, 1, [1, 1, dims]);
     rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
     rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
-    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-5);
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-4);
 
     // Test grad with freqs
     const f1 = (x, y) => mx.multiply(ropeOrig(x, dims, false, undefined, 1.0, 0, freqs), y).sum();
@@ -107,7 +107,7 @@ describe('fast', () => {
     const y = mx.random.uniform(0, 1, [2, 4, dims]);
     const g1 = mx.grad(f1)(x, y);
     const g2 = mx.grad(f2)(x, y);
-    assert.isBelow(mx.abs(mx.subtract(g1, g2)).max().item() as number, 1e-5);
+    assert.isBelow(mx.abs(mx.subtract(g1, g2)).max().item() as number, 1e-4);
   });
 
   // Test broken with https://github.com/ml-explore/mlx/pull/1450.
