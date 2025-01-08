@@ -669,6 +669,17 @@ describe('array', () => {
       a = mx.zeros([2, 2, 2, 2, 2, 2]);
       a.indexPut_([0, 0], 1);
       assert.deepEqual(a.index(0, 0).tolist(), mx.ones([2, 2, 2, 2]).tolist());
+
+      a = mx.zeros([2, 2, 2]);
+      assert.throws(() => {
+        a.indexPut_([mx.Slice(), null, mx.Slice()], mx.ones([2, 2, 2]));
+      }, Error);
+
+      // Ok, doesn't throw.
+      a.indexPut_([mx.Slice(), null, mx.Slice()], mx.ones([2, 1, 2, 2]));
+      a.indexPut_([mx.Slice(), null, mx.Slice()], mx.ones([2, 2]));
+      a.indexPut_([mx.Slice(), null, 0], mx.ones([2]));
+      a.indexPut_([mx.Slice(), null, 0], mx.ones([1, 2]));
     });
   });
 

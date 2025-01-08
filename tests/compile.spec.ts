@@ -700,4 +700,24 @@ describe('compile', function() {
     a = mx.array([0.0, 1.0, 2.0, 3.0, 4.0]);
     assertArrayAllTrue(mx.allclose(cfun(a), fun(a)));
   });
+
+  it('shapelessCompileWithReshape', () => {
+    const fun = (x) => {
+      return mx.reshape(x, [x.shape[0] * x.shape[1], -1]);
+    };
+
+    const compiledFun = mx.compile(fun, true);
+
+    let x = mx.zeros([2, 3, 4]);
+    let out = compiledFun(x);
+    assert.deepEqual(out.shape, [6, 4]);
+
+    x = mx.zeros([2, 3, 8]);
+    out = compiledFun(x);
+    assert.deepEqual(out.shape, [6, 8]);
+
+    x = mx.zeros([5, 5, 5]);
+
+    assert.throws(() => compiledFun(x), Error);
+  });
 });

@@ -607,7 +607,7 @@ std::pair<bool, mx::array> SliceUpdate(
                   std::holds_alternative<Slice>(std::get<ArrayIndex>(obj));
   bool is_int = std::holds_alternative<ArrayIndex>(obj) &&
                 std::holds_alternative<int>(std::get<ArrayIndex>(obj));
-  // Can't route to slice update if not slice or tuple.
+  // Can't route to slice update if not slice, tuple or int.
   if (a->ndim() == 0 ||
       (!is_slice && !is_int && !std::holds_alternative<ArrayIndices>(obj))) {
     return std::make_pair(false, *a);
@@ -679,39 +679,39 @@ std::pair<bool, mx::array> SliceUpdate(
     return std::make_pair(true, mx::broadcast_to(std::move(up), a->shape()));
   }
 
-  // Process entries.
-  mx::Shape up_reshape(a->ndim());
-  int axis = a->ndim() - 1;
-  int up_axis = up.ndim() - 1;
-  while (axis >= non_none_indices) {
-    if (up_axis >= 0) {
-      up_reshape[axis] = up.shape(up_axis);
-      up_axis--;
-    } else {
-      up_reshape[axis] = 1;
-    }
-    axis--;
-  }
-
-  for (auto it = indices.rbegin(); it != indices.rend(); ++it) {
-    const ArrayIndex& index = *it;
+  int unspecified = a->ndim() - non_none_indices;
+  std::vector<int> squeeze_dims;
+  std::vector<int> expand_dims;
+  for (int i = indices.size() - 1,
+           axis = non_none_indices - 1,
+           up_axis = up.ndim() - unspecified - 1;
+       i >= 0;
+       --i) {
+    const ArrayIndex& index = indices[i];
     if (std::holds_alternative<Slice>(index)) {
       ReadSlice(std::get<Slice>(index), a->shape(axis),
                 &starts[axis], &stops[axis], &steps[axis]);
-      up_reshape[axis] = (up_axis >= 0) ? up.shape(up_axis--) : 1;
       axis--;
+      up_axis--;
     } else if (std::holds_alternative<int>(index)) {
       int start = std::get<int>(index);
       if (start < 0)
-        start += a->shape(axis);
+        start += a->shape(i);
       starts[axis] = start;
       stops[axis] = start + 1;
-      up_reshape[axis] = 1;
+      if (up_axis >= 0) {
+        expand_dims.push_back(i - indices.size() - unspecified);
+      }
       axis--;
+    } else if (std::holds_alternative<std::monostate>(index)) {
+      if (up_axis-- >= 0) {
+        squeeze_dims.push_back(i - indices.size() - unspecified);
+      }
     }
   }
 
-  up = mx::reshape(std::move(up), std::move(up_reshape));
+  up = mx::squeeze(
+      mx::expand_dims(up, std::move(expand_dims)), std::move(squeeze_dims));
   return {true,
           mx::slice_update(*a, std::move(up), std::move(starts),
                            std::move(stops), std::move(steps))};

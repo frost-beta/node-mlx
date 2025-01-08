@@ -841,6 +841,33 @@ describe('ops', () => {
   });
 
 
+  it('kron', () => {
+    // Basic vector test
+    let x = mx.array([1, 2]);
+    let y = mx.array([3, 4]);
+    let z = mx.kron(x, y);
+    assert.deepEqual(z.tolist(), [3, 4, 6, 8]);
+
+    // Basic matrix test
+    x = mx.array([[1, 2], [3, 4]]);
+    y = mx.array([[0, 5], [6, 7]]);
+    z = mx.kron(x, y);
+    assert.deepEqual(z.tolist(), [[0, 5, 0, 10], [6, 7, 12, 14], [0, 15, 0, 20], [18, 21, 24, 28]]);
+
+    // Test with different dimensions
+    x = mx.array([1, 2]);  // (2,)
+    y = mx.array([[3, 4], [5, 6]]);  // (2, 2)
+    z = mx.kron(x, y);
+    assert.deepEqual(z.tolist(), [[3, 4, 6, 8], [5, 6, 10, 12]]);
+
+    // Test with empty array
+    x = mx.array([]);
+    y = mx.array([1, 2]);
+    assert.throws(() => {
+      mx.kron(x, y);
+    }, Error);
+  });
+
   it('take', () => {
     // Shape: 4 x 3 x 2
     const l = [
@@ -1345,6 +1372,14 @@ describe('ops', () => {
       tf.tensor([5, 6])
     );
     assert.deepEqual(rMlx3.tolist(), rTf3.arraySync());
+
+    // Check non-contiguous input with several dimensions.
+    const shape = [1, 2, 2, 3, 3, 1];
+    const strides = [16, 4, 1, 4, 1, 1];
+    let x = mx.ones([1, 4, 4, 1]);
+    x = mx.asStrided(x, shape, strides);
+    const out = mx.where(mx.isnan(x), mx.nan, x);
+    assertArrayAllTrue(mx.allclose(out, mx.onesLike(out)));
   });
 
   // FIXME(zcbenz): mx.allclose is not good at comparing Infinity.
@@ -1627,5 +1662,19 @@ describe('ops', () => {
       const aOut = out.view(mx.int32);
       assertArrayAllTrue(mx.equal(aOut, a));
     }
+  });
+
+  it('dynamicSlicing', () => {
+    let x = mx.random.randint(0, 100, [4, 4, 4]);
+    let expected = x.index(mx.Slice(1), mx.Slice(2), mx.Slice(3));
+    let out = mx.slice(x, mx.array([1, 2, 3], mx.int32), [0, 1, 2], [3, 2, 1]);
+    assertArrayAllTrue(mx.arrayEqual(expected, out));
+
+    x = mx.zeros([4, 4, 4]);
+    const update = mx.random.randint(0, 100, [3, 2, 1]);
+    out = mx.sliceUpdate(x, update, mx.array([1, 2, 3], mx.int32), [0, 1, 2]);
+    expected = mx.zerosLike(x);
+    expected.indexPut_([mx.Slice(1), mx.Slice(2), mx.Slice(3)], update);
+    assertArrayAllTrue(mx.arrayEqual(expected, out));
   });
 });

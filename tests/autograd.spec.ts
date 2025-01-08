@@ -503,4 +503,18 @@ describe('autograd', () => {
     x = mx.zeros([2, 4, 8]);
     assert.deepEqual(mx.grad(fun2)(x).shape, [2, 4, 8]);
   });
+
+  it('concatenateVjps', () => {
+    const fun = (x, y) => {
+      return mx.concatenate([x, y]);
+    }
+
+    const x = mx.array([1, 2, 3], mx.float32);
+    const y = mx.array([1, 2, 3], mx.float16);
+    const grads = mx.vjp(fun, [x, y], [mx.ones([6])])[1];
+    assertArrayAllTrue(mx.allclose(grads[0], mx.ones([3])));
+    assertArrayAllTrue(mx.allclose(grads[1], mx.ones([3])));
+    assert.equal(grads[0].dtype, mx.float32);
+    assert.equal(grads[1].dtype, mx.float16);
+  });
 });

@@ -813,6 +813,7 @@ void InitOps(napi_env env, napi_value exports) {
           "power", BinOpWrapper(&mx::power),
           "arange", &ops::ARange,
           "linspace", &ops::Linspace,
+          "kron", &mx::kron,
           "take", &ops::Take,
           "takeAlongAxis", &ops::TakeAlongAxis,
           "putAlongAxis", &ops::PutAlongAxis,
@@ -916,4 +917,15 @@ void InitOps(napi_env env, napi_value exports) {
           "roll", &ops::Roll,
           "real", &mx::real,
           "imag", &mx::imag);
+  using slice_fun =
+      mx::array (*)(const mx::array&, const mx::array&, std::vector<int>,
+                    mx::Shape, mx::StreamOrDevice);
+  slice_fun slice = &mx::slice;
+  using slice_update_fun =
+      mx::array (*)(const mx::array&, const mx::array&, const mx::array&,
+                    std::vector<int>, mx::StreamOrDevice);
+  slice_update_fun slice_update = &mx::slice_update;
+  ki::Set(env, exports,
+          "slice", slice,
+          "sliceUpdate", slice_update);
 }

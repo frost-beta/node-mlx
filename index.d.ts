@@ -256,6 +256,7 @@ export namespace core {
   function isnan(array: ScalarOrArray, s?: StreamOrDevice): array;
   function isneginf(array: ScalarOrArray, s?: StreamOrDevice): array;
   function isposinf(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function kron(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function leftShift(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function less(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function lessEqual(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
@@ -312,6 +313,8 @@ export namespace core {
   function sign(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sin(array: ScalarOrArray, s?: StreamOrDevice): array;
   function sinh(array: ScalarOrArray, s?: StreamOrDevice): array;
+  function slice(array: ScalarOrArray, startIndices: ScalarOrArray, axes: number[], sliceSize: number[], s?: StreamOrDevice): array;
+  function sliceUpdate(src: ScalarOrArray, update: ScalarOrArray, startIndices: ScalarOrArray, axes: number[], s?: StreamOrDevice): array;
   function softmax(array: ScalarOrArray, axis?: number | number[], precise?: boolean, s?: StreamOrDevice): array;
   function sort(array: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
   function split(array: ScalarOrArray, indicesOrSections?: number | number[], axis?: number, s?: StreamOrDevice): array[];
