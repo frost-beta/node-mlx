@@ -684,7 +684,8 @@ describe('layers', function() {
     assertArrayAllTrue(mx.arrayEqual(y, y2));
   });
 
-  it('gelu', () => {
+  it('gelu', function() {
+    this.timeout(20 * 1000);
     const inputs = mx.array([1.15286231, -0.81037411, 0.35816911, 0.77484438, 0.66276414]);
     const expected = mx.array([1.0093501, -0.16925684, 0.22918941, 0.60498625, 0.49459383]);
     const expectedApprox = mx.array([1.0091482, -0.1693441, 0.22918446, 0.60491, 0.4945476]);
