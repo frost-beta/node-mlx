@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [linux, mac]
+        os: [linux, mac, win]
         arch: [arm64, x64]
         exclude:
           - os: win
