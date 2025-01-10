@@ -203,6 +203,7 @@ export namespace core {
   function bitwiseAnd(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseOr(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseXor(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+  function broadcastArrays(arrays: array[], s?: StreamOrDevice): array[];
   function broadcastTo(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
   function blockMaskedMM(a: ScalarOrArray, b: ScalarOrArray, blockSize: number, maskOut?: ScalarOrArray, maskLhs?: ScalarOrArray, maskRhs?: ScalarOrArray, s?: StreamOrDevice): array;
   function gatherMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, s?: StreamOrDevice): array;

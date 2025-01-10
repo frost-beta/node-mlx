@@ -80,22 +80,13 @@ export class MultiHeadAttention extends Module {
     values = this.valueProj.forward(values);
 
     const numHeads = this.numHeads;
-    const [B, L, D] = queries.shape;
-    const S = keys.shape[1];
-    queries = queries.reshape(B, L, numHeads, -1).transpose(0, 2, 1, 3);
-    keys = keys.reshape(B, S, numHeads, -1).transpose(0, 2, 3, 1);
-    values = values.reshape(B, S, numHeads, -1).transpose(0, 2, 1, 3);
-
-    // Dimensions are [batch x numHeads x sequence x hiddenDim].
+    queries = mx.unflatten(queries, -1, [numHeads, -1]).transpose(0, 2, 1, 3);
+    keys = mx.unflatten(keys, -1, [numHeads, -1]).transpose(0, 2, 1, 3);
+    values = mx.unflatten(values, -1, [numHeads, -1]).transpose(0, 2, 1, 3);
     const scale = Math.sqrt(1 / queries.shape[queries.shape.length - 1]);
-    let scores = mx.matmul(mx.multiply(queries, scale), keys);
-    if (mask)
-      scores = mx.add(scores, mask.astype(scores.dtype));
-    scores = mx.softmax(scores, -1)
-    const valuesHat = mx.matmul(scores, values).transpose(0, 2, 1, 3)
-                                               .reshape(B, L, -1);
-
-    return this.outProj.forward(valuesHat);
+    let output = mx.fast.scaledDotProductAttention(queries, keys, values, scale, mask);
+    output = output.transpose(0, 2, 1, 3).flatten(-2, -1);
+    return this.outProj.forward(output);
   }
 
   /**

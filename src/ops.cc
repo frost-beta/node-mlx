@@ -917,6 +917,10 @@ void InitOps(napi_env env, napi_value exports) {
           "roll", &ops::Roll,
           "real", &mx::real,
           "imag", &mx::imag);
+  using broadcast_arrays_fun =
+      std::vector<mx::array> (*)(const std::vector<mx::array>&,
+                                 mx::StreamOrDevice);
+  broadcast_arrays_fun broadcast_arrays = &mx::broadcast_arrays;
   using slice_fun =
       mx::array (*)(const mx::array&, const mx::array&, std::vector<int>,
                     mx::Shape, mx::StreamOrDevice);
@@ -926,6 +930,7 @@ void InitOps(napi_env env, napi_value exports) {
                     std::vector<int>, mx::StreamOrDevice);
   slice_update_fun slice_update = &mx::slice_update;
   ki::Set(env, exports,
+          "broadcastArrays", broadcast_arrays,
           "slice", slice,
           "sliceUpdate", slice_update);
 }

@@ -1694,4 +1694,11 @@ describe('layers', function() {
     assert.isFalse(mx.any(mx.isnan(mask)).item());
     assert.isBelow(mask.index(0, -1).item() as number, 0);
   });
+
+  it('attention', () => {
+    const attn = new nn.MultiHeadAttention(32, 4);
+    const x = mx.random.normal([2, 5, 32]);
+    const out = attn.forward(x, x, x);
+    assert.deepEqual(out.shape, x.shape);
+  });
 });

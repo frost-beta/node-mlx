@@ -1677,4 +1677,18 @@ describe('ops', () => {
     expected.indexPut_([mx.Slice(1), mx.Slice(2), mx.Slice(3)], update);
     assertArrayAllTrue(mx.arrayEqual(expected, out));
   });
+
+  it('broadcastArrays', () => {
+    let a = mx.array(1, mx.int32);
+    let b = mx.array(1.0, mx.float32);
+    [a, b] = mx.broadcastArrays([a, b]);
+    assert.deepEqual(a.shape, []);
+    assert.equal(a.dtype, mx.int32);
+    assert.deepEqual(b.shape, []);
+    assert.equal(b.dtype, mx.float32);
+
+    [a, b] = mx.broadcastArrays([mx.zeros([3, 1, 2]), mx.zeros([4, 1])]);
+    assert.deepEqual(a.shape, [3, 4, 2]);
+    assert.deepEqual(b.shape, [3, 4, 2]);
+  });
 });

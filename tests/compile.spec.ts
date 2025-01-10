@@ -720,4 +720,94 @@ describe('compile', function() {
 
     assert.throws(() => compiledFun(x), Error);
   });
+
+  it('compileShapelessWithBroadcast', () => {
+    let a = mx.array([0.0]);
+    let b = mx.ones([2, 2]);
+
+    {
+      const fun = (a: mx.array) => {
+        return mx.broadcastTo(a, b.shape);
+      }
+
+      const cfun = mx.compile(fun, true);
+      // Works on the first shape
+      cfun(a);
+
+      // Fails on a different shape
+      assert.throws(() => {
+        cfun(mx.reshape(mx.array([0.0]), [1, 1, 1]));
+      });
+    }
+
+    {
+      const fun = (a: mx.array, b: mx.array) => {
+        return mx.broadcastArrays([a, b]);
+      }
+
+      const cfun = mx.compile(fun, true);
+      [a, b] = cfun(a, b);
+      assert.deepEqual(a.shape, [2, 2]);
+      assert.deepEqual(b.shape, [2, 2]);
+    }
+
+    {
+      // Batched matmul
+      let aMatMul = mx.zeros([2, 1, 4, 2]);
+      let bMatMul = mx.zeros([3, 2, 5]);
+
+      const fun = (a: mx.array, b: mx.array) => {
+        return mx.matmul(a, b);
+      }
+
+      const cfun = mx.compile(fun, true);
+      let out = cfun(aMatMul, bMatMul);
+      assert.deepEqual(out.shape, [2, 3, 4, 5]);
+    }
+
+    {
+      // Shapeless compile should be preserved over vjp, jvp, vmap
+      const fun = (args: mx.array[]) => {
+        return mx.sum(mx.add(args[0], args[1]));
+      }
+
+      a = mx.array(0.0);
+      b = mx.ones([2, 2]);
+
+      const cfun = mx.compile(mx.grad(fun), true);
+      let out = cfun([a, b]);
+
+      assert.deepEqual(out[0].shape, []);
+      assert.deepEqual(out[1].shape, [2, 2]);
+
+      out = cfun([b, a]);
+
+      assert.deepEqual(out[0].shape, [2, 2]);
+      assert.deepEqual(out[1].shape, []);
+    }
+
+    {
+      // Shapeless compile should be preserved over vjp, jvp, vmap
+      const fun = (args: mx.array[]) => {
+        return mx.sum(mx.matmul(args[0], args[1]));
+      }
+
+      let aMatMul = mx.zeros([2, 1, 4, 2]);
+      let bMatMul = mx.zeros([3, 2, 5]);
+
+      const cfun = mx.compile(mx.grad(fun), true);
+      let out = cfun([aMatMul, bMatMul]);
+
+      assert.deepEqual(out[0].shape, [2, 1, 4, 2]);
+      assert.deepEqual(out[1].shape, [3, 2, 5]);
+
+      aMatMul = mx.zeros([3, 1, 4, 2]);
+      bMatMul = mx.zeros([2, 2, 5]);
+
+      out = cfun([aMatMul, bMatMul]);
+
+      assert.deepEqual(out[0].shape, [3, 1, 4, 2]);
+      assert.deepEqual(out[1].shape, [2, 2, 5]);
+    }
+  });
 });
