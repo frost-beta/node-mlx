@@ -25,12 +25,12 @@ jobs:
 
     steps:
       - name: Install linux dependencies
-        if: matrix.os == 'linux' && matrix.arch == runner.arch
-        run: sudo apt-get install -y libblas-dev liblapack-dev liblapacke-dev
+        if: matrix.os == 'linux'
+        run: sudo apt-get install -y ninja-build libblas-dev liblapack-dev liblapacke-dev
 
       - name: Install mac dependencies
-        if: matrix.os == 'mac' && matrix.arch == 'x64'
-        run: brew install openblas
+        if: matrix.os == 'mac'
+        run: brew install ninja openblas
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -42,7 +42,14 @@ jobs:
         id: cpu-cores
 
       - name: Build
-        run: yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
+        shell: bash
+        run: |
+          yarn
+          yarn build -p ${{ steps.cpu-cores.outputs.count }} \
+                     -G Ninja
+
+      - name: Test
+        run: yarn test
 
       - name: Prepare .node file
         run: cp build/Release/mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
