@@ -6,9 +6,11 @@ jobs:
   build:
     runs-on: >-
       ${{
-        (matrix.os == 'mac' && matrix.arch == 'arm64') &&
+        ((matrix.os == 'linux' && matrix.arch == 'arm64') &&
+          'ubuntu-22.04-arm' ||
+        ((matrix.os == 'mac' && matrix.arch == 'arm64') &&
           'macos-15' ||
-          (fromJson('{"linux":"ubuntu-22.04","mac":"macos-13","win":"windows-2022"}')[matrix.os])
+        (fromJson('{"linux":"ubuntu-22.04","mac":"macos-13","win":"windows-2022"}')[matrix.os])))
       }}
     continue-on-error: false
 
@@ -39,29 +41,8 @@ jobs:
         uses: SimenB/github-actions-cpu-cores@v2
         id: cpu-cores
 
-      - name: Build (native)
-        if: matrix.os != 'linux' || matrix.arch == runner.arch
+      - name: Build
         run: yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
-
-      - name: Set up QEMU
-        if: matrix.os == 'linux' && matrix.arch != runner.arch
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: matrix.arch
-
-      - name: Enable multi-arch containers in QEMU
-        if: matrix.os == 'linux' && matrix.arch != runner.arch
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
-
-      - name: Build (docker)
-        if: matrix.os == 'linux' && matrix.arch != runner.arch
-        uses: addnab/docker-run-action@v3
-        with:
-          image: zcbenz/node-mlx:main
-          options: --platform=linux/${{ matrix.arch }} -v ${{ github.workspace }}:/build -w /build
-          run: |
-            export CI=true
-            yarn && yarn build -p ${{ steps.cpu-cores.outputs.count }} && yarn test
 
       - name: Prepare .node file
         run: cp build/Release/mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
