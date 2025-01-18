@@ -37,16 +37,42 @@ jobs:
         with:
           submodules: true
 
+      - name: Install node modules
+        run: yarn
+
+      - name: Use ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ccache-${{ matrix.os }}-${{ matrix.arch }}
+
       - name: Get number of CPU cores
         uses: SimenB/github-actions-cpu-cores@v2
         id: cpu-cores
 
-      - name: Build
-        shell: bash
+      - name: Build (Posix)
+        if: matrix.os != 'win'
         run: |
-          yarn
           yarn build -p ${{ steps.cpu-cores.outputs.count }} \
-                     -G Ninja
+                     -G Ninja \
+                     --CDCMAKE_C_COMPILER_LAUNCHER=ccache \
+                     --CDCMAKE_CXX_COMPILER_LAUNCHER=ccache
+
+      - name: Build (Windows)
+        if: matrix.os == 'win'
+        shell: cmd
+        run: |
+          pushd "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
+          for /f "delims=" %%x in ('.\vswhere.exe -latest -property InstallationPath') do set VSPATH=%%x
+          popd
+          call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.arch }}
+
+          yarn build -p ${{ steps.cpu-cores.outputs.count }} ^
+                     -G Ninja ^
+                     --CDCMAKE_C_COMPILER_LAUNCHER=ccache ^
+                     --CDCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+                     --CDCMAKE_BUILD_TYPE=Release ^
+                     --CDCMAKE_C_COMPILER=cl ^
+                     --CDCMAKE_CXX_COMPILER=cl
 
       - name: Test
         run: yarn test
