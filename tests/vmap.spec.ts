@@ -491,4 +491,34 @@ describe('vmap', () => {
     const target2 = mx.concatenate([x, mx.ones([2, 2, 1])], 2);
     assertArrayAllTrue(mx.arrayEqual(out, target2));
   });
+
+  it('vmapTakeAlongAxis', () => {
+    let a = mx.zeros([4, 5, 1]);
+    let idx = mx.zeros([2, 4, 1], mx.int32);
+
+    const fun = (a: mx.array, idx: mx.array) => {
+      return mx.takeAlongAxis(a, idx, 0);
+    }
+
+    let out = mx.vmap(fun, [0, 1])(a, idx);
+    assert.deepEqual(out.shape, [4, 2, 1]);
+
+    idx = mx.zeros([2, 1], mx.int32);
+
+    a = mx.zeros([5, 1]);
+    idx = mx.zeros([4, 2, 1], mx.int32);
+  });
+
+  it('vmapPutAlongAxis', () => {
+    let a = mx.zeros([4, 5, 1]);
+    let idx = mx.ones([2, 4, 1], mx.int32);
+    let upd = mx.ones([2, 4, 1]);
+
+    const fun = (a: mx.array, idx: mx.array, upd: mx.array) => {
+      return mx.putAlongAxis(a, idx, upd, 0);
+    }
+
+    let out = mx.vmap(fun, [0, 1, 1])(a, idx, upd);
+    assert.deepEqual(out.shape, [4, 5, 1]);
+  });
 });

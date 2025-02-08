@@ -562,4 +562,78 @@ describe('autograd', () => {
     [, [expected]] = mx.jvp((c) => mx.addmm(c, a, b), [c], [z]);
     assertArrayAllTrue(mx.allclose(tangent, expected));
   });
+
+  it('putAlongAxisGrads', () => {
+    const a = mx.zeros([5, 1]);
+    const b = mx.ones([2, 1]);
+
+    const fun = (a: any, b: any) => {
+      const idx = mx.array([[0], [3]], mx.int32);
+      return mx.putAlongAxis(a, idx, b, 0);
+    };
+
+    // Test VJP
+    const cotan = mx.full([5, 1], 2.0);
+    const [, [da, db]] = mx.vjp(fun, [a, b], [cotan]);
+    const expectedDa = mx.array([0.0, 2.0, 2.0, 0.0, 2.0]).index(mx.Slice(), null);
+    const expectedDb = mx.array([2.0, 2.0]).index(mx.Slice(), null);
+    assertArrayAllTrue(mx.allclose(expectedDa, da));
+    assertArrayAllTrue(mx.allclose(expectedDb, db));
+
+    // Test JVP
+    const tanA = mx.full([5, 1], 2.0);
+    const tanB = mx.full([2, 1], 3.0);
+    const [, [jout]] = mx.jvp(fun, [a, b], [tanA, tanB]);
+    const expected = mx.array([3.0, 2.0, 2.0, 3.0, 2.0]).index(mx.Slice(), null);
+    assertArrayAllTrue(mx.allclose(expected, jout));
+
+    const funSingle = (a: mx.array) => {
+      const idx = mx.array([[0], [3]], mx.int32);
+      return mx.putAlongAxis(a, idx, b, 0);
+    };
+
+    const [, [joutSingle]] = mx.jvp(funSingle, [a], [tanA]);
+    const expectedSingle = mx.array([0.0, 2.0, 2.0, 0.0, 2.0]).index(mx.Slice(), null);
+    assertArrayAllTrue(mx.allclose(expectedSingle, joutSingle));
+  });
+
+  it('sliceGrads', () => {
+    // Slice.
+    const fun = (a: mx.array) => a.index(mx.Slice(5, -6, -1));
+
+    let a = mx.ones([5]);
+    let cotan = mx.random.uniform(0, 1, [5]);
+    let [, [grad]] = mx.vjp(fun, [a], [cotan]);
+    assert.deepEqual(grad.tolist(),
+                     cotan.index(mx.Slice(null, null, -1)).tolist());
+
+    let tan = mx.random.uniform(0, 1, [5]);
+    mx.eval(tan);
+    [, [grad]] = mx.jvp(fun, [a], [tan]);
+    assert.deepEqual(grad.tolist(),
+                     tan.index(mx.Slice(null, null, -1)).tolist());
+
+    // Slice update.
+    const fun2 = (a: mx.array, b: mx.array) => {
+      a.indexPut_(mx.Slice(4, -5, -2), b);
+      return a;
+    };
+
+    a = mx.ones([4]);
+    const b = mx.zeros([2]);
+
+    cotan = mx.random.uniform(0, 1, [4]);
+    let [, [gradA, gradB]] = mx.vjp(fun2, [a, b], [cotan]);
+    const expectedA = mx.array(cotan);
+    expectedA.indexPut_(mx.Slice(1, null, 2), 0);
+    assert.deepEqual(gradA.tolist(), expectedA.tolist());
+    assert.deepEqual(gradB.tolist(), cotan.index(mx.Slice(4, -5, -2)).tolist());
+
+    const tanA = mx.random.uniform(0, 1, [4]);
+    const tanB = mx.random.uniform(0, 1, [2]);
+    [, [grad]] = mx.jvp(fun2, [a, b], [tanA, tanB]);
+    let expected = mx.array(tanA);
+    expected.indexPut_(mx.Slice(4, -5, -2), tanB);
+    assertArrayAllTrue(mx.allclose(grad, expected));
+  });
 });

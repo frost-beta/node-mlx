@@ -230,7 +230,8 @@ export abstract class Module {
       });
     }
 
-    this.update(treeUnflatten(weights, toCamelCase) as NestedDict<mx.array>);
+    if (weights.length > 0)
+      this.update(treeUnflatten(weights, toCamelCase) as NestedDict<mx.array>);
     return this;
   }
 

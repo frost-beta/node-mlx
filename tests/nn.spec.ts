@@ -157,6 +157,9 @@ describe('base', () => {
       ['weight', mx.ones([2, 2])],
       ['bias', 3 as unknown as mx.array],
     ]), Error);
+
+    // Empty weights is ok if strict is false.
+    m.loadWeights([], false);
   });
 
   it('snakeWeights', () => {

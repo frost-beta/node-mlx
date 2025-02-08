@@ -146,11 +146,13 @@ export class ConvTranspose2d extends Module {
  * @param kernelSize - The size of the convolution filters.
  * @param stride - The size of the stride when applying the filter. Default: 1.
  * @param padding - How many positions to 0-pad the input with. Default: 0.
+ * @param dilation - The dilation of the convolution.
  * @param bias - If `true` add a learnable bias to the output. Default: `true`
  */
 export class ConvTranspose3d extends Module {
   stride: number[];
   padding: number[];
+  dilation: number | number[];
   weight: mx.array;
   bias?: mx.array;
 
@@ -159,10 +161,12 @@ export class ConvTranspose3d extends Module {
               kernelSize: number | number[],
               stride: number | number[] = [1, 1, 1],
               padding: number | number[] = [0, 0, 0],
+              dilation: number | number[] = [1, 1, 1],
               bias = true) {
     super();
     this.stride = Array.isArray(stride) ? stride : [stride, stride, stride];
     this.padding = Array.isArray(padding) ? padding : [padding, padding, padding];
+    this.dilation = dilation;
 
     kernelSize = Array.isArray(kernelSize) ? kernelSize : [kernelSize, kernelSize];
     const scale = Math.sqrt(1 / (inChannels * kernelSize[0] * kernelSize[1] * kernelSize[2]));
@@ -175,11 +179,12 @@ export class ConvTranspose3d extends Module {
   override toStringExtra(): string {
     return `${this.weight.shape[3]}, ${this.weight.shape[0]}, ` +
            `kernelSize=${this.weight.shape.slice(1, 3)}, stride=${this.stride}, ` +
-           `padding=${this.padding}, bias=${!!this.bias}`;
+           `padding=${this.padding}, dilation=${this.dilation}, ` +
+           `bias=${!!this.bias}`;
   }
 
   override forward(x: mx.array): mx.array {
-    const y = mx.convTranspose3d(x, this.weight, this.stride, this.padding);
+    const y = mx.convTranspose3d(x, this.weight, this.stride, this.padding, this.dilation);
     if (this.bias)
       return mx.add(y, this.bias);
     else

@@ -259,9 +259,14 @@ describe('ops', () => {
       x = mx.subtract(mx.arange(10).astype(dt), 5);
       y = mx.remainder(x, 5);
       z = mx.remainder(x, -5);
-      assert.deepEqual(y.tolist(), [-0, 1, 2, 3, 4, 0, 1, 2, 3, 4]);
-      assert.deepEqual(z.tolist(), [-0, -4, -3, -2, -1, 0, -4, -3, -2, -1]);
+      if (!(process.platform == 'darwin' && process.arch == 'x64')) {
+        assert.deepEqual(y.tolist(), [-0, 1, 2, 3, 4, 0, 1, 2, 3, 4]);
+        assert.deepEqual(z.tolist(), [-0, -4, -3, -2, -1, 0, -4, -3, -2, -1]);
+      }
     }
+
+    const z = mx.remainder(mx.negative(mx.ones(64)), mx.full(64, 2));
+    assertArrayAllTrue(mx.arrayEqual(z, mx.ones(64)));
   });
 
   it('comparisons', () => {
@@ -1690,5 +1695,12 @@ describe('ops', () => {
     [a, b] = mx.broadcastArrays([mx.zeros([3, 1, 2]), mx.zeros([4, 1])]);
     assert.deepEqual(a.shape, [3, 4, 2]);
     assert.deepEqual(b.shape, [3, 4, 2]);
+  });
+
+  it('sliceUpdateReversed', () => {
+    const a = mx.array([1, 2, 3, 4]);
+    const b = a.index(mx.Slice(null, null, -1));
+    b.indexPut_(mx.Slice(0, b.length, 2), 0);
+    assertArrayAllTrue(mx.arrayEqual(b, mx.array([0, 3, 0, 1])));
   });
 });

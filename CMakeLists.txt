@@ -32,11 +32,6 @@ target_sources(${PROJECT_NAME} PRIVATE ${SOURCE_FILES})
 # Use kizunapi.
 target_include_directories(${PROJECT_NAME} PRIVATE "deps/kizunapi")
 
-# Work around https://github.com/ml-explore/mlx/pull/1625.
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin" AND ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86_64")
-  set(ACCELERATE_LIBRARY OFF)
-endif()
-
 # Link with MLX.
 option(MLX_BUILD_TESTS "Build tests for mlx" OFF)
 option(MLX_BUILD_EXAMPLES "Build examples for mlx" OFF)
