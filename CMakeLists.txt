@@ -19,10 +19,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE "." ${CMAKE_JS_INC})
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB})
 set_target_properties(${PROJECT_NAME} PROPERTIES
                       PREFIX ""
-                      OUTPUT_NAME "mlx"
+                      OUTPUT_NAME "node_mlx"
+                      RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Release"
                       SUFFIX ".node")
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
   execute_process(COMMAND ${CMAKE_AR} /def:${CMAKE_JS_NODELIB_DEF} /out:${CMAKE_JS_NODELIB_TARGET} ${CMAKE_STATIC_LINKER_FLAGS})
+  target_link_libraries(${PROJECT_NAME} delayimp)
 endif()
 
 # Add source files.

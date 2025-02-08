@@ -24,13 +24,19 @@ jobs:
             arch: arm64
 
     steps:
-      - name: Install linux dependencies
+      - name: Install Linux dependencies
         if: matrix.os == 'linux'
         run: sudo apt-get install -y ninja-build libblas-dev liblapack-dev liblapacke-dev
 
-      - name: Install mac dependencies
+      - name: Install macOS dependencies
         if: matrix.os == 'mac'
         run: brew install ninja openblas
+
+      - name: Install Windows SDK
+        if: matrix.os == 'win'
+        uses: GuillaumeFalourd/setup-windows10-sdk-action@v2
+        with:
+          sdk-version: 22621
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -61,15 +67,26 @@ jobs:
         if: matrix.os == 'win'
         shell: cmd
         run: |
+          pushd "C:\Program Files (x86)\Microsoft Visual Studio\Installer\"
+          for /f "delims=" %%x in ('.\vswhere.exe -latest -property InstallationPath') do set VSPATH=%%x
+          popd
+          call "%VSPATH%\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.arch }}
+
           yarn build -p ${{ steps.cpu-cores.outputs.count }} ^
-                     --CDCMAKE_BUILD_TYPE=Release
+                     -G Ninja ^
+                     -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
+                     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+                     -DCMAKE_BUILD_TYPE=Release ^
+                     -DCMAKE_C_COMPILER=cl ^
+                     -DCMAKE_CXX_COMPILER=cl ^
+                     -DCMAKE_RC_COMPILER=cl
 
       - name: Test
         if: matrix.os != 'win'
         run: yarn test
 
       - name: Prepare .node file
-        run: cp build/Release/mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
+        run: cp build/Release/node_mlx.node mlx-${{ matrix.os }}-${{ matrix.arch }}.node
 
       - name: Prepare .metallib file
         if: matrix.os == 'mac' && matrix.arch == 'arm64'

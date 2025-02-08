@@ -28,7 +28,7 @@ async function main() {
   const version = packageJson.version;
 
   const prefix = `${urlPrefix}/v${version}/mlx-${os}-${arch}`;
-  const tasks = [ download(`${prefix}.node.gz`, path.join(dir, 'mlx.node')) ];
+  const tasks = [ download(`${prefix}.node.gz`, path.join(dir, 'node_mlx.node')) ];
   if (os == 'mac' && arch == 'arm64')
     tasks.push(download(`${prefix}.metallib.gz`, path.join(dir, 'mlx.metallib')));
   await Promise.all(tasks);

@@ -1,5 +1,5 @@
 // The core APIs are in native bindings.
-const core = require(__dirname + '/build/Release/mlx.node');
+const core = require(__dirname + '/build/Release/node_mlx.node');
 
 // Helper for creating complex number.
 core.Complex = (re, im) => {
