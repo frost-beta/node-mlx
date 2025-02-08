@@ -135,6 +135,11 @@ describe('autograd', () => {
     [value, dfdx] = mx.valueAndGrad(fun)([{ 'foo': [[], [], mx.array(2.0)] }], mx.array(0.5));
     assert.equal(value.item(), 2.0);
     assert.equal(dfdx[0]['foo'][2].item(), 2.0);
+
+    fun = (x) => x;
+    assert.throws(() => {
+      mx.valueAndGrad(fun, [0, 0]);
+    }, Error);
   });
 
 

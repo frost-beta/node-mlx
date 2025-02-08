@@ -91,4 +91,28 @@ describe('init', () => {
       }, Error);
     });
   });
+
+  it('orthogonal', () => {
+    const initializer = nn.init.orthogonal(1.0, mx.float32);
+
+    // Test with a square matrix.
+    let shape = [4, 4];
+    let result = initializer(mx.zeros(shape, mx.float32));
+    assert.deepEqual(result.shape, shape);
+    assert.equal(result.dtype, mx.float32);
+
+    let I = mx.matmul(result, result.T);
+    let eye = mx.eye(shape[0], undefined, undefined, mx.float32);
+    assertArrayAllTrue(mx.allclose(I, eye, undefined, 1e-5));
+
+    // Test with a rectangular matrix: more rows than cols.
+    shape = [6, 4];
+    result = initializer(mx.zeros(shape, mx.float32));
+    assert.deepEqual(result.shape, shape);
+    assert.equal(result.dtype, mx.float32);
+
+    I = mx.matmul(result.T, result);
+    eye = mx.eye(shape[1], undefined, undefined, mx.float32);
+    assertArrayAllTrue(mx.allclose(I, eye, undefined, 1e-5));
+  });
 });

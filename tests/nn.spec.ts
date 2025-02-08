@@ -221,6 +221,27 @@ describe('base', () => {
     assert.isTrue(m.layers[1] instanceof nn.ReLU);
     assert.isTrue(m.layers[2] instanceof nn.QuantizedLinear);
   });
+
+  // FIXME(zcbenz): Port 33421c1dd from MLX.
+  xit('gradOfModule', () => {
+    class Model extends nn.Module {
+      m1: nn.Linear;
+      constructor() {
+        super();
+        this.m1 = new nn.Linear(3, 3);
+      }
+      override forward(x: mx.array) {
+        return this.m1.forward(x);
+      }
+    }
+
+    const model = new Model();
+
+    const lossFn = (model: Model) => model.forward(x);
+
+    const x = mx.zeros([3]);
+    mx.grad(lossFn)(model);
+  });
 });
 
 describe('layers', function() {

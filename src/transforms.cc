@@ -124,6 +124,14 @@ ValueAndGradImpl(const char* error_tag,
                      "argument index ", argnums[0]);
       return nullptr;
     }
+    for (int i = 1; i < argnums.size(); ++i) {
+      if (argnums[i] == argnums[i - 1]) {
+        ki::ThrowError(js_func.Env(),
+                       error_tag, " Duplicate argument index ", argnums[0],
+                       " is not allowed.");
+        return nullptr;
+      }
+    }
   }
   // Return a wrapper that does value_and_grad lazily instead of calling the
   // function directly. This simplifies the implementation, and is fine since

@@ -322,6 +322,43 @@ export function sparse(sparsity: number, mean: number = 0.0, std: number = 1.0, 
   return initializer;
 }
 
+/**
+ * An initializer that returns an orthogonal matrix.
+ *
+ * @param gain - Scaling factor for the orthogonal matrix. Default: `1.0`.
+ * @param dtype - Data type of the array. Default: `float32`.
+ *
+ * @returns An initializer that returns an orthogonal matrix with the same shape
+ * as the input.
+ */
+export function orthogonal(gain: number = 1.0, dtype: mx.Dtype = mx.float32): (a: mx.array) => mx.array {
+  const initializer = (a: mx.array): mx.array => {
+    if (a.ndim !== 2) {
+      throw new Error(`Orthogonal initialization requires a 2D array but got a ${a.ndim}D array.`);
+    }
+
+    const [rows, cols] = a.shape;
+    const n = Math.max(rows, cols);
+
+    const rmat = mx.random.normal([n, n]);
+
+    // Perform QR decomposition on CPU.
+    let [q, r] = mx.linalg.qr(rmat, mx.cpu);
+
+    // Adjust the sign of Q using the diagonal of R.
+    const d = mx.diag(r);
+    a = mx.multiply(q, mx.sign(d));
+
+    // Slice Q to the desired shape
+    q = q.index(mx.Slice(null, rows), mx.Slice(null, cols));
+
+    // Scale Q by gain
+    q = mx.multiply(q, gain);
+    return q.astype(dtype);
+  };
+  return initializer;
+}
+
 // Helpers.
 function calculateFanInFanOut(x: mx.array): [number, number] {
   if (x.ndim < 2) {
