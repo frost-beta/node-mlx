@@ -89,14 +89,29 @@ describe('fast', () => {
 
     const freqs = mx.random.uniform(0, 1, [dims / 2]);
 
-    let rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
-    let rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
-    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-4);
+    const tolerances = [1e-5, 1e-2];
+    const dtypes = [mx.float32, mx.float16];
+    for (let i = 0; i < 2; i++) {
+      const x_ = x.astype(dtypes[i]);
+      const rx = ropeOrig(x_, dims, false, null, 1.0, 0, freqs);
+      const rxFast = mx.fast.rope(
+        x_,
+        dims,
+        false,
+        null,
+        1.0,
+        0,
+        freqs
+      );
+      assert.equal(dtypes[i], rx.dtype);
+      assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
+                     tolerances[i]);
+    };
 
     // Test single vector
     x = mx.random.uniform(0, 1, [1, 1, dims]);
-    rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
-    rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
+    let rx = ropeOrig(x, dims, false, null, 1.0, 0, freqs);
+    let rxFast = mx.fast.rope(x, dims, false, undefined, 1.0, 0, freqs);
     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, 1e-4);
 
     // Test grad with freqs
@@ -466,7 +481,7 @@ function ropeOrig(x, dims, traditional, base, scale, offset, freqs?: mx.array) {
   const dtype = x.dtype;
   const halfD = Math.floor(dims / 2);
   const positions = mx.multiply(mx.arange(offset, N, dtype), scale);
-  const invFreqs = freqs ? mx.divide(1, freqs)
+  const invFreqs = freqs ? mx.divide(1, freqs).astype(x.dtype)
                          : mx.exp(mx.multiply(mx.negative(mx.arange(0, halfD, dtype)),
                                               Math.log(base) / halfD));
   const theta = mx.multiply(mx.reshape(positions, [-1, 1]),

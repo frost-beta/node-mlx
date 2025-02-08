@@ -552,10 +552,15 @@ describe('compile', function() {
 
   it('shapelessMean', () => {
     const mean = x => mx.mean(x, true);
+
+    const cfun = mx.compile(mean);
+    let out = cfun(mx.ones([5, 5]));
+    assertArrayAllTrue(mx.allclose(out, mx.array(1)));
+
     const cmean = mx.compile(mean, true);
 
     let x = mx.ones(2);
-    let out = cmean(x);
+    out = cmean(x);
     assertArrayAllTrue(mx.allclose(out, mean(x)));
 
     x = mx.ones(4);

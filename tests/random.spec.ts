@@ -86,6 +86,9 @@ describe('random', () => {
   });
 
   it('multivariateNormal', () => {
+    // Scope switch to the cpu for SVDs
+    using context = mx.stream(mx.cpu);
+
     let key = mx.random.key(0);
     let mean = mx.array([0, 0]);
     let cov = mx.array([[1, 0], [0, 1]]);

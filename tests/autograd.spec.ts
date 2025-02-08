@@ -522,4 +522,44 @@ describe('autograd', () => {
     assert.equal(grads[0].dtype, mx.float32);
     assert.equal(grads[1].dtype, mx.float16);
   });
+
+  it('matmulJvps', () => {
+    let a = mx.random.uniform(0, 1, [4, 4]);
+    let b = mx.random.uniform(0, 1, [4, 4]);
+    let c = mx.random.uniform(0, 1, [4, 4]);
+    let d = mx.random.uniform(0, 1, [4, 4]);
+
+    let _: mx.array;
+    let tangents: mx.array[];
+    [, tangents] = mx.jvp((a) => mx.matmul(a, b), [a], [c]);
+    assertArrayAllTrue(mx.allclose(tangents[0], mx.matmul(c, b)));
+
+    [, tangents] = mx.jvp((b) => mx.matmul(a, b), [b], [d]);
+    assertArrayAllTrue(mx.allclose(tangents[0], mx.matmul(a, d)));
+
+    [, tangents] = mx.jvp((a, b) => mx.matmul(a, b), [a, b], [c, d]);
+    assertArrayAllTrue(mx.allclose(tangents[0], mx.add(mx.matmul(a, d), mx.matmul(c, b))));
+
+    let x = mx.random.uniform(0, 1, [4, 4]);
+    let y = mx.random.uniform(0, 1, [4, 4]);
+    let z = mx.random.uniform(0, 1, [4, 4]);
+
+    let tangent: mx.array;
+    let expected: mx.array;
+    [, [tangent]] = mx.jvp((a, b, c) => mx.add(mx.matmul(a, b), c), [a, b, c], [x, y, z]);
+    [, [expected]] = mx.jvp((a, b, c) => mx.addmm(c, a, b), [a, b, c], [x, y, z]);
+    assertArrayAllTrue(mx.allclose(tangent, expected));
+
+    [, [tangent]] = mx.jvp((a, c) => mx.add(mx.matmul(a, b), c), [a, c], [x, z]);
+    [, [expected]] = mx.jvp((a, c) => mx.addmm(c, a, b), [a, c], [x, z]);
+    assertArrayAllTrue(mx.allclose(tangent, expected));
+
+    [, [tangent]] = mx.jvp((b, c) => mx.add(mx.matmul(a, b), c), [b, c], [y, z]);
+    [, [expected]] = mx.jvp((b, c) => mx.addmm(c, a, b), [b, c], [y, z]);
+    assertArrayAllTrue(mx.allclose(tangent, expected));
+
+    [, [tangent]] = mx.jvp((c) => mx.add(mx.matmul(a, b), c), [c], [z]);
+    [, [expected]] = mx.jvp((c) => mx.addmm(c, a, b), [c], [z]);
+    assertArrayAllTrue(mx.allclose(tangent, expected));
+  });
 });
