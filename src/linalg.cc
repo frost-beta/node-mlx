@@ -47,5 +47,9 @@ void InitLinalg(napi_env env, napi_value exports) {
           "pinv", &mx::linalg::pinv,
           "cross", &linalg::Cross,
           "eigvalsh", &mx::linalg::eigvalsh,
-          "eigh", &mx::linalg::eigvalsh);
+          "eigh", &mx::linalg::eigvalsh,
+          "lu", &mx::linalg::lu,
+          "luFactor", &mx::linalg::lu_factor,
+          "solve", &mx::linalg::solve,
+          "solveTriangular", &mx::linalg::solve_triangular);
 }

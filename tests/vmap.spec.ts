@@ -521,4 +521,18 @@ describe('vmap', () => {
     let out = mx.vmap(fun, [0, 1, 1])(a, idx, upd);
     assert.deepEqual(out.shape, [4, 5, 1]);
   });
+
+  it('vmapSplitVmap', () => {
+    const fun = (x: any) => {
+      const [a, b] = mx.split(x, 2, 1);
+      return mx.concatenate([b, a], 1);
+    }
+
+    const x = mx.ones([5, 6, 7]);
+    const y = mx.ones([5, 4, 6, 7]);
+    const fx = fun(x);
+    const fy = mx.vmap(fun, 1)(y);
+    assert.deepEqual(fx.shape, [5, 6, 7]);
+    assert.deepEqual(fy.shape, [4, 5, 6, 7]);
+  });
 });

@@ -45,6 +45,7 @@ export namespace core {
   const int64: Dtype;
   const float16: Dtype;
   const float32: Dtype;
+  const float64: Dtype;
   const bfloat16: Dtype;
   const complex64: Dtype;
 
@@ -201,6 +202,7 @@ export namespace core {
   function atleast3d(...arrays: array[]): array;
   function issubdtype(a: Dtype | DtypeCategory, b: Dtype | DtypeCategory): boolean;
   function bitwiseAnd(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+  function bitwiseInvert(array: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseOr(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function bitwiseXor(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
   function broadcastArrays(arrays: array[], s?: StreamOrDevice): array[];
@@ -437,6 +439,10 @@ export namespace core {
     function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function eigvalsh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
     function eigh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
+    function lu(array: ScalarOrArray, s?: StreamOrDevice): array[];
+    function luFactor(array: ScalarOrArray, s?: StreamOrDevice): [array, array];
+    function solve(a: ScalarOrArray, b: ScalarOrArray, s?: StreamOrDevice): array;
+    function solveTriangular(a: ScalarOrArray, b: ScalarOrArray, upper: boolean, s?: StreamOrDevice): array;
   }
 
   // Fast operations.

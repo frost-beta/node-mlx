@@ -906,6 +906,7 @@ void InitOps(napi_env env, napi_value exports) {
           "atleast3d", NdOpWrapper(&mx::atleast_1d, &mx::atleast_3d),
           "issubdtype", &ops::IsSubDtype,
           "bitwiseAnd", BinOpWrapper(&mx::bitwise_and),
+          "bitwiseInvert", &mx::bitwise_invert,
           "bitwiseOr", BinOpWrapper(&mx::bitwise_or),
           "bitwiseXor", BinOpWrapper(&mx::bitwise_xor),
           "leftShift", BinOpWrapper(&mx::left_shift),

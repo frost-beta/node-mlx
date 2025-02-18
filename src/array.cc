@@ -231,6 +231,8 @@ T JsTypedArrayToMxArray(napi_env env, napi_value value) {
       return CreateInstance<T>(static_cast<uint32_t*>(data), shape, mx::uint32);
     case napi_float32_array:
       return CreateInstance<T>(static_cast<float*>(data), shape, mx::float32);
+    case napi_float64_array:
+      return CreateInstance<T>(static_cast<double*>(data), shape, mx::float64);
     default:
       napi_throw_type_error(env, nullptr, "Unsupported TypedArray type.");
       return T();
@@ -330,6 +332,8 @@ auto VisitArrayData(F&& visitor, mx::array* a) {
       return visitor(a->data<mx::float16_t>());
     case mx::float32:
       return visitor(a->data<float>());
+    case mx::float64:
+      return visitor(a->data<double>());
     case mx::bfloat16:
       return visitor(a->data<mx::bfloat16_t>());
     case mx::complex64:
@@ -399,6 +403,7 @@ napi_value ToTypedArray(mx::array* a, napi_env env) {
     case mx::int16: type = napi_int16_array; break;
     case mx::int32: type = napi_int32_array; break;
     case mx::float32: type = napi_float32_array; break;
+    case mx::float64: type = napi_float64_array; break;
     default:
       napi_throw_type_error(env, nullptr, "No matching TypedArray for dtype.");
       return nullptr;
@@ -565,6 +570,8 @@ napi_status Type<mx::Dtype>::ToNode(napi_env env,
     return ConvertToNode(env, &mx::float16, result);
   if (value == mx::float32)
     return ConvertToNode(env, &mx::float32, result);
+  if (value == mx::float64)
+    return ConvertToNode(env, &mx::float64, result);
   if (value == mx::bfloat16)
     return ConvertToNode(env, &mx::bfloat16, result);
   if (value == mx::complex64)
@@ -778,6 +785,7 @@ void InitArray(napi_env env, napi_value exports) {
           "int64", &mx::int64,
           "float16", &mx::float16,
           "float32", &mx::float32,
+          "float64", &mx::float64,
           "bfloat16", &mx::bfloat16,
           "complex64", &mx::complex64);
 
