@@ -17,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [linux, mac]
+        os: [linux, mac, win]
         arch: [arm64, x64]
         exclude:
           - os: win
@@ -74,12 +74,12 @@ jobs:
 
           yarn build -p ${{ steps.cpu-cores.outputs.count }} ^
                      -G Ninja ^
-                     -DCMAKE_C_COMPILER_LAUNCHER=ccache ^
-                     -DCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
-                     -DCMAKE_BUILD_TYPE=Release ^
-                     -DCMAKE_C_COMPILER=cl ^
-                     -DCMAKE_CXX_COMPILER=cl ^
-                     -DCMAKE_RC_COMPILER=cl
+                     --CDCMAKE_C_COMPILER_LAUNCHER=ccache ^
+                     --CDCMAKE_CXX_COMPILER_LAUNCHER=ccache ^
+                     --CDCMAKE_BUILD_TYPE=Release ^
+                     --CDCMAKE_C_COMPILER=cl ^
+                     --CDCMAKE_CXX_COMPILER=cl ^
+                     --CDCMAKE_RC_COMPILER=rc
 
       - name: Test
         if: matrix.os != 'win'
