@@ -1717,4 +1717,10 @@ describe('ops', () => {
     b.indexPut_(mx.Slice(0, b.length, 2), 0);
     assertArrayAllTrue(mx.arrayEqual(b, mx.array([0, 3, 0, 1])));
   });
+
+  it('sliceWithNegativeStride', () => {
+    const a = mx.random.uniform(0, 1, [128, 4]);
+    const out = a.index(mx.Slice(null, null, -1));
+    assert(mx.arrayEqual(out.index(-1, mx.Slice()), a.index(0, mx.Slice())));
+  });
 });

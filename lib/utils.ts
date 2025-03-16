@@ -260,6 +260,54 @@ export function treeReduce<U>(func: (accumulator: U, currentValue: U) => U,
   return accumulator;
 }
 
+/**
+ * Merges two trees into one containing the values of both.
+ * It can be considered as a deep dict.update method.
+ *
+ * @param treeA - The first tree.
+ * @param treeB - The second tree.
+ * @param mergeFn - An optional function to merge leaves.
+ *
+ * @returns The tree containing the values of both `treeA` and `treeB`.
+ */
+export function treeMerge<A, B>(treeA: A, treeB: B, mergeFn?: (a: A, b: B) => A | B): A | B {
+  if ((Array.isArray(treeA) && treeA.length === 0) ||
+      (typeof treeA === 'object' && treeA !== null && Object.keys(treeA).length === 0)) {
+    treeA = null;
+  }
+  if ((Array.isArray(treeB) && treeB.length == 0) ||
+      (typeof treeB === 'object' && treeB !== null && Object.keys(treeB).length === 0)) {
+    treeB = null;
+  }
+  if (treeA == null && treeB != null) return treeB;
+  if (treeA != null && treeB == null) return treeA;
+
+  if (Array.isArray(treeA) && Array.isArray(treeB)) {
+    let zipped = zipLongest(treeA, treeB);
+    return zipped.map(([a, b]) => treeMerge(a, b, mergeFn)) as A | B;
+  } else if (typeof treeA === 'object' && typeof treeB === 'object') {
+    let keys = new Set([...Object.keys(treeA), ...Object.keys(treeB)]);
+    let merged: any = {};
+    for (let k of keys)
+      merged[k] = treeMerge((treeA as any)[k], (treeB as any)[k], mergeFn);
+    return merged;
+  } else {
+    if (!mergeFn) {
+      throw new Error('Trees contain elements at the same locations but no merge function was provided');
+    }
+    return mergeFn(treeA, treeB);
+  }
+}
+
+// Internal helper to zip two arrays of different lengths.
+function zipLongest<T, U>(arr1: T[], arr2: U[]): [T, U][] {
+  const length = Math.max(arr1.length, arr2.length);
+  let result: [T, U][] = [];
+  for (let i = 0; i < length; i++)
+    result.push([arr1[i], arr2[i]]);
+  return result;
+}
+
 // A nested type that always has T as leaves.
 export type Nested<T> = T | T[] | {[key: string]: Nested<T>};
 export type NestedDict<T> = {[key: string]: Nested<T>};

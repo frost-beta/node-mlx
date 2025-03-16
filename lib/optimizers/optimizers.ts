@@ -177,6 +177,103 @@ export abstract class Optimizer {
 }
 
 /**
+ * Wraps a list of optimizers with corresponding weight predicates/filters
+ * to make it easy to use different optimizers for different weights.
+ *
+ * The predicates take the full "path" of the weight and the weight itself and
+ * return `true` if it should be considered for this optimizer. The last
+ * optimizer in the list is a fallback optimizer and no predicate should be
+ * given for it.
+ */
+export class MultiOptimizer extends Optimizer {
+  #optimizers: Optimizer[];
+  #filters: ((path: string, weight: mx.array) => boolean)[];
+
+  /**
+   * Create a `MultiOptimizer` instance.
+   *
+   * @param optimizers - A list of optimizers to delegate to.
+   * @param filters - A list of predicates that should be one less than the
+   * provided optimizers.
+   */
+  constructor(optimizers: Optimizer[],
+              filters: ((path: string, weight: mx.array) => boolean)[] = []) {
+    super();
+
+    if (filters.length !== optimizers.length - 1)
+      throw new Error(`Given ${filters.length} filters but ${optimizers.length - 1} needed.`);
+
+    this.#optimizers = optimizers;
+    this.#filters = filters.concat([(k: string, g: mx.array) => true]);
+  }
+
+  override init(parameters: NestedDict<mx.array>) {
+    for (let i in this.#optimizers)
+      this.#optimizers[i].init(this.splitDictionary(parameters)[i]);
+  }
+
+  override initSingle(parameter: mx.array,
+                      state: Record<string, mx.array>) {
+    throw new Error('MultiOptimizer does not implement initSingle');
+  }
+
+  override applySingle(gradient: mx.array,
+                       parameter: mx.array,
+                       state: Record<string, mx.array>) {
+    throw new Error('MultiOptimizer does not implement applySingle');
+  }
+
+  override applyGradients(gradients: NestedDict<mx.array>, parameters: Nested<mx.array>): NestedDict<mx.array> {
+    let tree: NestedDict<mx.array> = {};
+    for (let i in this.#optimizers) {
+      const o = this.#optimizers[i];
+      const g = this.splitDictionary(gradients)[i];
+      tree = utils.treeMerge(tree, o.applyGradients(g, parameters)) as NestedDict<mx.array>;
+    }
+    return tree;
+  }
+
+  override get state(): Record<string, unknown> {
+    return {states: this.#optimizers.map(o => o.state)};
+  }
+
+  override set state(state: Record<string, unknown>) {
+    if (!state.hasOwnProperty('states') || (<unknown[]>state['states']).length !== this.#optimizers.length)
+      throw new Error('Invalid state provided');
+    for (let i in this.#optimizers)
+      this.#optimizers[i].state = <Record<string, unknown>>(<unknown[]>state['states'])[i];
+  }
+
+  override get learningRate(): mx.array {
+    return this.#optimizers[0].learningRate;
+  }
+
+  override set learningRate(learningRate: number | mx.array) {
+    for (let o of this.#optimizers)
+      o.learningRate = learningRate;
+  }
+
+  private splitDictionary(gradients: NestedDict<mx.array>): NestedDict<mx.array>[] {
+    if (this.#optimizers.length === 1)
+      return [gradients];
+
+    const parts: Array<[string, mx.array]>[] = [];
+    for (let i = 0; i < this.#optimizers.length; ++i)
+      parts.push([]);
+    for (let [k, g] of utils.treeFlatten(gradients)) {
+      for (let i in this.#filters) {
+        if (this.#filters[i](k, g as mx.array)) {
+          parts[i].push([k, g as mx.array]);
+          break;
+        }
+      }
+    }
+
+    return parts.map(p => utils.treeUnflatten(p) as NestedDict<mx.array>);
+  }
+}
+
+/**
  * The stochastic gradient descent optimizer.
  *
  * @remarks

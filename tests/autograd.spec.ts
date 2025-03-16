@@ -636,4 +636,21 @@ describe('autograd', () => {
     expected.indexPut_(mx.Slice(4, -5, -2), tanB);
     assertArrayAllTrue(mx.allclose(grad, expected));
   });
+
+  // FIXME(zcbenz): https://github.com/ml-explore/mlx/pull/1961
+  xit('gradWithInplaceUpdate', () => {
+    const lossFn = (model: mx.array[]) => {
+      model[1] = mx.array(2.0);
+      return model[0];
+    }
+
+    const model = [
+      mx.array(0.0),
+      mx.array(1.0),
+    ];
+
+    const gradFn = mx.grad(lossFn);
+    gradFn(model);
+    assert.equal(model[1].item(), 2.0);
+  });
 });

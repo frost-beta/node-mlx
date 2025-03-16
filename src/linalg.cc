@@ -23,10 +23,16 @@ mx::array Norm(const mx::array& a,
   }
 }
 
-mx::array Cross(const mx::array& a,
-                const mx::array& b,
-                std::optional<int> axis,
-                mx::StreamOrDevice s) {
+auto Svd(const mx::array& a,
+         std::optional<bool> compute_uv,
+         mx::StreamOrDevice s) {
+  return mx::linalg::svd(a, compute_uv.value_or(true), s);
+}
+
+auto Cross(const mx::array& a,
+           const mx::array& b,
+           std::optional<int> axis,
+           mx::StreamOrDevice s) {
   return mx::linalg::cross(a, b, axis.value_or(-1), s);
 }
 
@@ -39,7 +45,7 @@ void InitLinalg(napi_env env, napi_value exports) {
   ki::Set(env, linalg,
           "norm", &linalg::Norm,
           "qr", &mx::linalg::qr,
-          "svd", &mx::linalg::svd,
+          "svd", &linalg::Svd,
           "inv", &mx::linalg::inv,
           "triInv", &mx::linalg::tri_inv,
           "cholesky", &mx::linalg::cholesky,

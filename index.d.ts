@@ -437,6 +437,7 @@ export namespace core {
     function cross(a: ScalarOrArray, b: ScalarOrArray, axis?: number, s?: StreamOrDevice): array;
     function qr(array: ScalarOrArray, s?: StreamOrDevice): array[];
     function svd(array: ScalarOrArray, s?: StreamOrDevice): array[];
+    function svd(array: ScalarOrArray, computeUv: boolean, s?: StreamOrDevice): array[];
     function eigvalsh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
     function eigh(array: ScalarOrArray, uplo?: string, s?: StreamOrDevice): array[];
     function lu(array: ScalarOrArray, s?: StreamOrDevice): array[];

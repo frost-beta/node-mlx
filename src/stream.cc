@@ -31,11 +31,13 @@ void Synchronize(std::optional<mx::Stream> s) {
 }  // namespace
 
 void InitStream(napi_env env, napi_value exports) {
+  using to_stream_fun = mx::Stream (*)(mx::StreamOrDevice);
+  to_stream_fun to_stream = &mx::to_stream;
   ki::Set(env, exports,
           "Stream", ki::Class<mx::Stream>(),
           "defaultStream", mx::default_stream,
           "setDefaultStream", mx::set_default_stream,
           "newStream", mx::new_stream,
-          "toStream", mx::to_stream,
+          "toStream", to_stream,
           "synchronize", &Synchronize);
 }

@@ -249,7 +249,7 @@ describe('vmap', () => {
       this.retries(4);
 
     const a = mx.random.uniform(0, 1, [3, 4, 2]);
-    const cpuSvd = (x: mx.array) => mx.linalg.svd(x, mx.cpu);
+    const cpuSvd = (x: mx.array) => mx.linalg.svd(x, true, mx.cpu);
 
     let [Us, Ss, Vts] = mx.vmap(cpuSvd, 0)(a);
     assert.deepEqual(Us.shape, [a.shape[0], a.shape[1], a.shape[1]]);
@@ -534,5 +534,14 @@ describe('vmap', () => {
     const fy = mx.vmap(fun, 1)(y);
     assert.deepEqual(fx.shape, [5, 6, 7]);
     assert.deepEqual(fy.shape, [4, 5, 6, 7]);
+  });
+
+  it('vmapFlatten', () => {
+    const fun = (x: mx.array) => mx.flatten(x, 0, 1);
+    const x = mx.zeros([2, 3, 4]);
+
+    assert.deepEqual(mx.vmap(fun)(x).shape, [2, 12]);
+    assert.deepEqual(mx.vmap(fun, 1)(x).shape, [3, 8]);
+    assert.deepEqual(mx.vmap(fun, 2)(x).shape, [4, 6]);
   });
 });

@@ -3,6 +3,7 @@ import {assertArrayAllTrue} from './utils';
 import {assert} from 'chai';
 
 const optimizersDict: Record<string, any> = getAllOptimizers();
+delete optimizersDict['MultiOptimizer'];
 
 describe('optimizers', () => {
   it('optimizerState', () => {
@@ -374,6 +375,42 @@ describe('schedulers', () => {
     // This should work without any errors
     const grads = model.trainableParameters();
     optimizer.update(model, grads);
+  });
+
+  it('multiOptimizer', () => {
+    class Model extends nn.Module {
+      l1: nn.Linear;
+      drop: nn.Dropout;
+      l2: nn.Linear;
+      vals: [nn.Linear, nn.ReLU, nn.ReLU];
+
+      constructor() {
+        super();
+        this.l1 = new nn.Linear(2, 2);
+        this.drop = new nn.Dropout(0.5);
+        this.l2 = new nn.Linear(2, 2);
+        this.vals = [new nn.Linear(2, 2), new nn.ReLU(), new nn.ReLU()];
+      }
+
+      override forward(x: mx.array) {
+        return x;
+      }
+    }
+
+    const model = new Model();
+    const optimizer = new opt.MultiOptimizer(
+      [new opt.Adam(0.001), new opt.SGD(0.1)],
+      [(name: string, weight: mx.array) => weight.shape.length > 1],
+    );
+    optimizer.init(model.trainableParameters());
+
+    assert.equal(Object.keys(optimizer.state.states).length, 2);
+
+    const adamStates = utils.treeFlatten(optimizer.state.states[0]);
+    const sgdStates = utils.treeFlatten(optimizer.state.states[1]);
+    assert.equal((sgdStates.length - 2) * 2, adamStates.length - 2);
+    assert.isFalse(adamStates.some(([k, v]) => k.includes('bias')));
+    assert.isFalse(sgdStates.some(([k, v]) => k.includes('weight')));
   });
 });
 
