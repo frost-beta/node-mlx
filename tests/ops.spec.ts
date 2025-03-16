@@ -755,6 +755,10 @@ describe('ops', () => {
     const x = mx.array(inputs);
     const expected = [NaN, -Infinity, 0.47693628, 0.0, 0.47693628, Infinity, NaN];
     assertArrayAllTrue(mx.allclose(mx.erfinv(x), expected, 1e-5, 1e-5, true));
+
+    const result = mx.erfinv(mx.array(Array(8).fill(0.9999999403953552)));
+    const expected2 = mx.array(Array(8).fill(3.8325066566467285));
+    assertArrayAllTrue(mx.allclose(result, expected2));
   });
 
   it('sin', () => {
@@ -1568,6 +1572,16 @@ describe('ops', () => {
     d = mx.linspace(1, 10, 1);
     expected = tf.linspace(1, 10, 1).arraySync();
     assertArrayAllTrue(mx.isclose(d, expected));
+
+    const ranges = mx.random.normal([16, 2]).tolist() as number[][];
+    const nums = mx.add(2, mx.multiply(mx.random.uniform(0, 1, [16]), 10)).astype(mx.uint32).tolist();
+    for (let i = 0; i < ranges.length; i++) {
+      const [a, b] = ranges[i];
+      const n = nums[i];
+      const d = mx.linspace(a, b, n).tolist() as number[];
+      assert.equal(d[0], a);
+      assert.equal(d[d.length - 1], b);
+    }
   });
 
   it('repeat', () => {

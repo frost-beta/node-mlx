@@ -667,7 +667,7 @@ describe('compile', function() {
     const inputs = Array(20).fill(mx.ones([2, 2, 2, 2]));
     inputs[0] = mx.transpose(inputs[0]);
 
-    const fun = mx.compile((...inputs: mx.array[]) => {
+    const fun1 = mx.compile((...inputs: mx.array[]) => {
       let x = inputs[0];
       for (let y of inputs.slice(1, 10)) {
         x = mx.add(x, y);
@@ -679,8 +679,42 @@ describe('compile', function() {
       return mx.add(x, a);
     });
 
-    const out = fun(...inputs);
+    let out = fun1(...inputs);
     assertArrayAllTrue(mx.allclose(out, mx.full([2, 2], 20)));
+
+    const fun2 = mx.compile((arrs: mx.array[]) => {
+      let arrs1 = arrs;
+      for (let i = 0; i < 6; i++) {
+        const arrs2 = [];
+        for (let j = 0; j < arrs1.length / 2; j += 1) {
+          arrs2.push(mx.add(arrs1[j * 2], arrs1[j * 2 + 1]));
+        };
+        arrs1 = arrs2;
+      }
+      return arrs1[0];
+    });
+
+    const arrs = Array(64).fill(mx.array([1.0, 2.0]));
+    out = fun2(arrs);
+    assertArrayAllTrue(mx.allclose(out, mx.array([64.0, 128.0])));
+  });
+
+  it('compileManyOutputs', () => {
+    function fun(arr: mx.array) {
+      let arrs1 = Array(64).fill(arr);
+      let firstArrs = false;
+      for (let i = 0; i < 6; i++) {
+        const arrs2 = [];
+        for (let j = 0; j < arrs1.length / 2; j += 1) {
+          arrs2.push(mx.add(arrs1[j * 2], arrs1[j * 2 + 1]));
+        };
+        arrs1 = arrs2;
+      }
+      return [arrs1[0], firstArrs];
+    }
+    const funCompiled = mx.compile(fun);
+    const out = funCompiled(mx.array([1.0, 2.0]));
+    assertArrayAllTrue(mx.allclose(out[0], mx.array([64.0, 128.0])));
   });
 
   it('shapelessCompileMatmul', () => {

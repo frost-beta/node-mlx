@@ -55,20 +55,25 @@ describe('fast', () => {
         assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number,
                        tolerances.find(t => t.dtype === dtype)!.eps);
       }
-
-      [dims, , base, scale, offset, traditional] = defaults;
-      const x = mx.random.uniform(0, 1, [1, 1, 4, dims]).swapaxes(1, 2);
-      const rx = ropeOrig(x, dims, traditional, base, scale, offset);
-      const rxFast = mx.fast.rope(
-        mx.multiply(1.0, x),  // multiply here to allow donation
-        dims,
-        traditional,
-        base,
-        scale,
-        offset,
-      );
-     assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, tolerances.find(t => t.dtype === mx.float32)!.eps);
     }
+
+    const [dims, , base, scale, offset, traditional] = defaults;
+    let x = mx.random.uniform(0, 1, [1, 1, 4, dims]).swapaxes(1, 2);
+    const rx = ropeOrig(x, dims, traditional, base, scale, offset);
+    const rxFast = mx.fast.rope(
+      mx.multiply(1.0, x),  // multiply here to allow donation
+      dims,
+      traditional,
+      base,
+      scale,
+      offset,
+    );
+    assert.isBelow(mx.abs(mx.subtract(rx, rxFast)).max().item() as number, tolerances.find(t => t.dtype === mx.float32)!.eps);
+
+    x = mx.multiply(mx.random.uniform(0, 1, [2, T, dims]), 10).astype(mx.int32);
+    assert.throws(() => {
+      mx.fast.rope(x, dims, traditional, base, scale, offset);
+    }, Error);
   });
 
   it('ropeWithFreqs', () => {
