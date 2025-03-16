@@ -23,10 +23,10 @@ mx::array Norm(const mx::array& a,
   }
 }
 
-auto Svd(const mx::array& a,
-         std::optional<bool> compute_uv,
-         mx::StreamOrDevice s) {
-  return mx::linalg::svd(a, compute_uv.value_or(true), s);
+auto Svd(const mx::array& a, ki::Arguments* args) {
+  auto compute_uv = args->TryGetNext<bool>().value_or(true);
+  auto s = args->TryGetNext<mx::StreamOrDevice>().value_or(std::monostate());
+  return mx::linalg::svd(a, compute_uv, s);
 }
 
 auto Cross(const mx::array& a,
