@@ -580,9 +580,28 @@ describe('ops', () => {
   });
 
   it('logsumexp', () => {
-    const x = mx.array([[1.0, 2.0], [3.0, 4.0]]);
-    const expected = 4.44;
-    assert.closeTo(mx.logsumexp(x).item() as number, expected, 0.01);
+    const logsumexp = (x: mx.array, axes = undefined) => {
+      const maxs = mx.max(x, axes, true);
+      return mx.add(mx.log(mx.sum(mx.exp(mx.subtract(x, maxs)), axes, true)), maxs);
+    }
+
+    let x = mx.array([[1.0, 2.0], [3.0, 4.0]]);
+    assert.closeTo(mx.logsumexp(x).item() as number, logsumexp(x).item() as number, 1e-7);
+
+    x = mx.random.uniform(0, 1, [1025]);
+    assertArrayAllTrue(mx.allclose(mx.logsumexp(x), logsumexp(x)));
+
+    // Transposed
+    x = mx.random.uniform(0, 1, [2, 2, 8]).swapaxes(0, 1);
+    assertArrayAllTrue(mx.allclose(mx.logsumexp(x), logsumexp(x)));
+
+    // Broadcast
+    x = mx.broadcastTo(mx.random.uniform(0, 1, [2, 1, 8]), [2, 2, 8]);
+    assertArrayAllTrue(mx.allclose(mx.logsumexp(x), logsumexp(x)));
+
+    // Large
+    x = mx.broadcastTo(mx.random.uniform(0, 1, [2, 1, 8]), [2, 2, 8]);
+    assertArrayAllTrue(mx.allclose(mx.logsumexp(x), logsumexp(x)));
   });
 
   it('mean', () => {
@@ -1243,6 +1262,16 @@ describe('ops', () => {
       const x = mx.full([n], -Infinity);
       assertArrayAllTrue(mx.isnan(mx.softmax(x)));
     }
+
+    // Transposed inputs.
+    const a = mx.random.uniform(0, 1, [32, 32, 32]);
+    const b = mx.softmax(a, -1);
+    const c = mx.softmax(a.transpose(1, 0, 2), -1).transpose(1, 0, 2);
+    assert.equal(mx.abs(mx.subtract(b, c)).max().item(), 0.0);
+
+    assert.throws(() => {
+      mx.softmax(mx.array(1.0), -1);
+    }, Error);
   });
 
   it('concatenate', function() {
