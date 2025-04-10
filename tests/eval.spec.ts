@@ -124,11 +124,9 @@ describe('eval', () => {
 
     let out = mx.vjp(fn, [x], [y]);
     out = mx.vjp(fn, [x], [y]);
-    if (mx.metal.isAvailable()) {
-      const peakMem = mx.metal.getPeakMemory();
-      out = mx.vjp(fn, [x], [y]);
-      assert.equal(peakMem, mx.metal.getPeakMemory());
-    }
+    const peakMem = mx.getPeakMemory();
+    out = mx.vjp(fn, [x], [y]);
+    assert.equal(peakMem, mx.getPeakMemory());
   });
 
   it('asyncEvalWithMultipleStreams', () => {
@@ -150,11 +148,6 @@ describe('eval', () => {
   });
 
   it('donationForNoops', function() {
-    if (!mx.metal.isAvailable()) {
-      this.skip();
-      return;
-    }
-
     const fun1 = (x) => {
       let s = x.shape;
       for (let i = 0; i < 10; i++) {
@@ -169,11 +162,11 @@ describe('eval', () => {
 
     let x = mx.zeros([4096, 4096]);
     mx.eval(x);
-    const pre = mx.metal.getPeakMemory();
+    const pre = mx.getPeakMemory();
     const out = mx.tidy(() => fun1(x));
     mx.dispose(x);
     mx.eval(out);
-    const post = mx.metal.getPeakMemory();
+    const post = mx.getPeakMemory();
     assert.equal(pre, post);
 
     const fun2 = (x) => {
@@ -187,11 +180,11 @@ describe('eval', () => {
 
     x = mx.zeros([4096 * 4096]);
     mx.eval(x);
-    const pre2 = mx.metal.getPeakMemory();
+    const pre2 = mx.getPeakMemory();
     const out2 = mx.tidy(() => fun2(x));
     mx.dispose(x);
     mx.eval(out2);
-    const post2 = mx.metal.getPeakMemory();
+    const post2 = mx.getPeakMemory();
     assert.equal(pre2, post2);
   });
 
@@ -200,8 +193,8 @@ describe('eval', () => {
       this.skip();
       return;
     }
-    const s1 = mx.defaultStream(mx.gpu);
-    const s2 = mx.newStream(mx.gpu);
+    let s1 = mx.defaultStream(mx.gpu);
+    let s2 = mx.newStream(mx.gpu);
 
     let x = mx.array(1.0);
     x = mx.abs(x, s1);
@@ -209,5 +202,18 @@ describe('eval', () => {
       x = mx.abs(x, s2);
     }
     mx.eval(x);
+
+    s1 = mx.defaultStream(mx.gpu);
+    s2 = mx.newStream(mx.gpu);
+    const oldLimit = mx.setMemoryLimit(1000);
+
+    x = mx.ones([512, 512], undefined, s2);
+    for (let i = 0; i < 80; i++) {
+      x = mx.abs(x, s1);
+    }
+    const y = mx.abs(x, s2);
+    const z = mx.abs(y, s2);
+    mx.eval(z);
+    mx.setMemoryLimit(oldLimit);
   });
 });

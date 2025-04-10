@@ -324,7 +324,7 @@ export function klDivLoss(inputs: mx.array,
  *
  * ```math
  * l = \begin{cases}
- *       0.5 (x - y)^2, & \text{if } (x - y) < \beta \\
+ *       0.5 (x - y)^2 / \beta, & \text{if } |x - y| < \beta \\
  *       |x - y| - 0.5 \beta, & \text{otherwise}
  *     \end{cases}
  * ```

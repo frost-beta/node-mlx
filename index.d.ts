@@ -364,7 +364,17 @@ export namespace core {
   function enableCompile(): void;
   function checkpoint<T extends any[], U>(func: (...args: T) => U): (...args: T) => U;
 
-  // Memory management.
+  // Memory.
+  function getActiveMemory(): number;
+  function getPeakMemory(): number;
+  function resetPeakMemory(): void;
+  function getCacheMemory(): number;
+  function setMemoryLimit(limit: number): number;
+  function setWiredLimit(limit: number): number;
+  function setCacheLimit(limit: number): number;
+  function clearCache(): void;
+
+  // JavaScript APIs.
   function tidy<U>(func: () => U): U;
   function dispose(...args: unknown[]): void;
   function getWrappersCount(): number;
@@ -379,14 +389,6 @@ export namespace core {
     }
 
     function isAvailable(): boolean;
-    function getActiveMemory(): number;
-    function getPeakMemory(): number;
-    function resetPeakMemory(): void;
-    function getCacheMemory(): number;
-    function setMemoryLimit(limit: number, relaxed?: boolean): number;
-    function setWiredLimit(limit: number): number;
-    function clearCache(): void;
-    function setCacheLimit(limit: number): number;
     function startCapture(path: string): boolean;
     function stopCapture(): void;
     function deviceInfo(): DeviceInfo;

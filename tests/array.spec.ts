@@ -777,11 +777,6 @@ describe('array', () => {
   });
 
   it('multiOutputLeak', function() {
-    if (!mx.metal.isAvailable()) {
-      this.skip();
-      return;
-    }
-
     const fun = (): void => {
       const a = mx.zeros([2**20]);
       mx.eval(a);
@@ -790,10 +785,10 @@ describe('array', () => {
 
     mx.tidy(() => fun());
     mx.synchronize();
-    let peak1 = mx.metal.getPeakMemory();
+    let peak1 = mx.getPeakMemory();
     mx.tidy(() => fun());
     mx.synchronize();
-    let peak2 = mx.metal.getPeakMemory();
+    let peak2 = mx.getPeakMemory();
     assert.equal(peak1, peak2);
 
    const fun2 = () => {
@@ -804,10 +799,10 @@ describe('array', () => {
 
     mx.tidy(() => fun2());
     mx.synchronize();
-    peak1 = mx.metal.getPeakMemory();
+    peak1 = mx.getPeakMemory();
     mx.tidy(() => fun2());
     mx.synchronize();
-    peak2 = mx.metal.getPeakMemory();
+    peak2 = mx.getPeakMemory();
     assert.equal(peak1, peak2);
   });
 

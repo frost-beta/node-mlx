@@ -9,6 +9,7 @@ namespace mx = mlx::core;
 void InitDevice(napi_env env, napi_value exports);
 void InitStream(napi_env env, napi_value exports);
 void InitArray(napi_env env, napi_value exports);
+void InitMemory(napi_env env, napi_value exports);
 void InitMetal(napi_env env, napi_value exports);
 void InitOps(napi_env env, napi_value exports);
 void InitIO(napi_env env, napi_value exports);
