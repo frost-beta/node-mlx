@@ -346,7 +346,7 @@ export function smoothL1Loss(predictions: mx.array,
     throw Error(`Predictions shape ${predictions.shape} does not match targets shape ${targets.shape}.`);
   }
 
-  let diff = mx.subtract(predictions, targets);
+  let diff = mx.abs(mx.subtract(predictions, targets));
   let loss = mx.where(mx.less(diff, beta),
                       mx.multiply(0.5, mx.divide(mx.square(diff), beta)),
                       mx.subtract(mx.abs(diff), 0.5 * beta));

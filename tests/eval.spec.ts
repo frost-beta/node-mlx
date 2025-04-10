@@ -194,4 +194,20 @@ describe('eval', () => {
     const post2 = mx.metal.getPeakMemory();
     assert.equal(pre2, post2);
   });
+
+  it('multiStreamDeadlock', function() {
+    if (!mx.metal.isAvailable()) {
+      this.skip();
+      return;
+    }
+    const s1 = mx.defaultStream(mx.gpu);
+    const s2 = mx.newStream(mx.gpu);
+
+    let x = mx.array(1.0);
+    x = mx.abs(x, s1);
+    for (let i = 0; i < 1000; i++) {
+      x = mx.abs(x, s2);
+    }
+    mx.eval(x);
+  });
 });
