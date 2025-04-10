@@ -82,7 +82,6 @@ jobs:
                      --CDCMAKE_RC_COMPILER=rc
 
       - name: Test
-        if: matrix.os != 'win'
         run: yarn test
 
       - name: Prepare .node file
