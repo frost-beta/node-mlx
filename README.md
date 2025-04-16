@@ -263,7 +263,7 @@ This project is mixed with C++ and TypeScript code, and uses
 git clone --recursive https://github.com/frost-beta/node-mlx.git
 cd node-mlx
 npm install
-npm run build -p 8
+npm run build -- -p 8
 npm run test
 ```
 
