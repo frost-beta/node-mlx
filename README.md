@@ -288,3 +288,8 @@ The tests and most TypeScript source code were converted from the Python code
 of the official MLX project, when updating the `deps/mlx` submodule, review
 every new commit and make sure changes to Python APIs/tests/implementations are
 also reflected in this repo.
+
+## Contributing
+
+Check out the [contribution guidelines](https://github.com/frost-beta/node-mlx/tree/main/CONTRIBUTING.md) for more information
+on contributing to node-mlx.
