@@ -1,4 +1,4 @@
-export namespace core {
+declare module '*node_mlx.node' {
   // Device.
   type DeviceType = number;
 
@@ -475,11 +475,3 @@ export namespace core {
   const newaxis: null;
 }
 
-// The nn module.
-export * as nn from './lib/nn';
-
-// The optim module.
-export * as optimizers from './lib/optimizers';
-
-// The utils module.
-export * as utils from './lib/utils';
