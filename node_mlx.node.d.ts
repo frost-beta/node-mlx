@@ -20,7 +20,7 @@ declare module '*node_mlx.node' {
   }
 
   function defaultStream(device: DeviceOrType): Stream;
-  function setDefaultStream(): void;
+  function setDefaultStream(stream: Stream): void;
   function newStream(device: DeviceOrType): Stream;
   function toStream(s: StreamOrDevice): Stream;
   function stream(s: StreamOrDevice): Disposable;
