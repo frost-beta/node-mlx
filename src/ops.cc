@@ -847,6 +847,7 @@ void InitOps(napi_env env, napi_value exports) {
           "prod", DimOpWrapper(&mx::prod),
           "min", DimOpWrapper(&mx::min),
           "max", DimOpWrapper(&mx::max),
+          "logcumsumexp", CumOpWrapper(&mx::logcumsumexp),
           "logsumexp", DimOpWrapper(&mx::logsumexp),
           "mean", DimOpWrapper(&mx::mean),
           "variance", &ops::Var,

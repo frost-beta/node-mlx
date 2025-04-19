@@ -208,8 +208,8 @@ export namespace core {
   function broadcastArrays(arrays: array[], s?: StreamOrDevice): array[];
   function broadcastTo(array: ScalarOrArray, shape: number | number[], s?: StreamOrDevice): array;
   function blockMaskedMM(a: ScalarOrArray, b: ScalarOrArray, blockSize: number, maskOut?: ScalarOrArray, maskLhs?: ScalarOrArray, maskRhs?: ScalarOrArray, s?: StreamOrDevice): array;
-  function gatherMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, s?: StreamOrDevice): array;
-  function gatherQMM(x: ScalarOrArray, w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, indicesLhs: ScalarOrArray, indicesRhs: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, s?: StreamOrDevice): array;
+  function gatherMM(a: ScalarOrArray, b: ScalarOrArray, indicesLhs?: ScalarOrArray, indicesRhs?: ScalarOrArray, sortedIndices?: boolean, s?: StreamOrDevice): array;
+  function gatherQMM(x: ScalarOrArray, w: ScalarOrArray, scales: ScalarOrArray, biases: ScalarOrArray, indicesLhs: ScalarOrArray, indicesRhs: ScalarOrArray, transpose: boolean, groupSize: number, bits: number, sortedIndices: boolean, s?: StreamOrDevice): array;
   function ceil(array: ScalarOrArray, s?: StreamOrDevice): array;
   function clip(array: ScalarOrArray, min: ScalarOrArray, max: ScalarOrArray, s?: StreamOrDevice): array;
   function concatenate(arrays?: ScalarOrArray[], axis?: number, s?: StreamOrDevice): array;
