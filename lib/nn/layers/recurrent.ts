@@ -1,4 +1,4 @@
-import {core as mx} from '../../..';
+import {core as mx} from '../../core';
 import {tanh} from './activations';
 import {Module} from './base';
 

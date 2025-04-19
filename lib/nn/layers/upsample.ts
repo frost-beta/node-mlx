@@ -1,4 +1,4 @@
-import {core as mx, utils} from '../../..';
+import {core as mx} from '../../core';
 import {product} from './pytools';
 import {Module} from './base';
 

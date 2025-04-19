@@ -1,4 +1,6 @@
-import {core as mx, nn, utils} from '../..';
+import * as nn from '../nn';
+import * as utils from '../utils';
+import {core as mx} from '../core';
 import {Nested, NestedDict, treeMap} from '../utils';
 
 /**
