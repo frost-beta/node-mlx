@@ -1,4 +1,4 @@
-import {core as mx} from '../../..';
+import {core as mx} from '../../core';
 import {checkpoint} from '../utils';
 import {relu} from './activations';
 import {Module} from './base';

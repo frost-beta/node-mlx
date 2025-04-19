@@ -1,4 +1,4 @@
-import {core as mx} from '../..';
+import {core as mx} from '../core';
 
 /**
  * Make an exponential decay scheduler.

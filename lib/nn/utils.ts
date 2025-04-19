@@ -1,4 +1,4 @@
-import {core as mx} from '../..';
+import {core as mx} from '../core';
 import {Module} from './layers/base';
 import {NestedDict} from '../utils';
 

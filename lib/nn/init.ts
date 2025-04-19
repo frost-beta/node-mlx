@@ -1,4 +1,4 @@
-import {core as mx} from '../..';
+import {core as mx} from '../core';
 
 /**
  * An initializer that returns an array filled with `value`.

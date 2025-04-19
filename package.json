@@ -2,8 +2,12 @@
   "name": "@frost-beta/mlx",
   "version": "0.0.1-dev",
   "description": "Node-API bindings for MLX",
-  "main": "index.js",
-  "types": "index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./*": "./dist/*.js"
+  },
   "scripts": {
     "install": "node install.js",
     "prepack": "tsc --build",

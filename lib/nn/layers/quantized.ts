@@ -1,4 +1,4 @@
-import {core as mx} from '../../..';
+import {core as mx} from '../../core';
 import {toSnakeCase, treeMapWithPath} from '../../utils';
 import {Embedding} from './embedding';
 import {Linear} from './linear';

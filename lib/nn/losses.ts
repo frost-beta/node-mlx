@@ -1,4 +1,4 @@
-import {core as mx} from '../..';
+import {core as mx} from '../core';
 import {deepEqual} from '../utils';
 
 type Reduction = 'none' | 'mean' | 'sum';
@@ -15,7 +15,7 @@ type Reduction = 'none' | 'mean' | 'sum';
  * @param weights - Optional weights for each target. Default: `undefined`.
  * @param axis - The axis over which to compute softmax. Default: `-1`.
  * @param labelSmoothing - Label smoothing factor. Default: `0`.
- * @param reduction - Specifies the reduction to apply to the output: `'none'` | 
+ * @param reduction - Specifies the reduction to apply to the output: `'none'` |
  * `'mean'` | `'sum'`. Default: `'none'`.
  *
  * @returns The computed cross entropy loss.
@@ -370,7 +370,7 @@ export function smoothL1Loss(predictions: mx.array,
  * @param axis - The distribution axis. Default: `-1`.
  * @param p - The norm degree for pairwise distance. Default: `2`.
  * @param margin - Margin for the triplet loss. Defaults to `1.0`.
- * @param eps - Small positive constant to prevent numerical instability. Defaults to `1e-6`. 
+ * @param eps - Small positive constant to prevent numerical instability. Defaults to `1e-6`.
  * @param reduction - Specifies the reduction to apply to the output: `'none'` | `'mean'` | `'sum'`. Default: `'none'`.
  *
  * @returns Computed triplet loss. If reduction is "none", returns a tensor of the same shape as input;
